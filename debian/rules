@@ -162,7 +162,6 @@ install-arch: instscripts
 	dh_installchangelogs -plibexene-smlnj eXene/CHANGES upstream
 	dh_installchangelogs -plibsmlnj-smlnj smlnj-lib/CHANGES upstream
 	dh_installchangelogs -plibckit-smlnj ckit/HISTORY upstream
-	dh_installchangelogs -plibcmlutil-smlnj cml/CHANGES upstream
 
 	dh_install -s
 

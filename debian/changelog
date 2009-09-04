@@ -9,14 +9,13 @@ smlnj (110.70-1) unstable; urgency=low
     - Move smlnj-doc to Section: doc to follow Debian override file.
     - Remove duplicate words from descriptions
   * debian/watch: Added commented watch file.
-  * debian/rules: Add dh_installchangelog calls for libckit-smlnj and
-    libcmlutil-smlnj.
+  * debian/rules: Add dh_installchangelog calls for libckit-smlnj.
   * debian/smlnj-doc.prerm: Call with set -e to follow Debian Policy 10.4.
   * debian/dirs: Deleted, superfluous file.
   * debian/patches/01_fix-bashism.patch: Don't use the builtin "function".
     (Closes: #530119)
   
- -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 23:43:11 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 23:46:49 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 
