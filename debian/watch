@@ -1,0 +1,14 @@
+# Please note that upstream does NOT distribute a monolithic tarball.
+# You have to build the tarball yourself by calling this command:
+#
+#   sh debian/mkorig $VERSION
+#
+# What this watch file does is output the latest value that you can use
+# for $VERSION. This is useful for services like the DEHS.
+# Do not call this watchfile with "uscan". It will download
+# a useless file. What you can do, though, is use "uscan --no-download"
+# to see when you should call debian/mkorig again.
+
+version=3
+http://www.smlnj.org/ \
+		      dist/working/(.*)/index.html
