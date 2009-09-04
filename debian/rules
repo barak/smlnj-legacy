@@ -74,14 +74,14 @@ smlnj: boot
 
 	mkdir -p wrapper
 	for c in `cd bin && ls`; do \
-	  cat debian/_wrapper | sed -f vars.sed -e "s/@CMD@/$$c/g" > wrapper/$$c; \
+	  cat debian/wrapper.in | sed -f vars.sed -e "s/@CMD@/$$c/g" > wrapper/$$c; \
 	  chmod 555 wrapper/$$c; \
 	done
 
-debian/%.postinst: debian/_postinst vars.sed
+debian/%.postinst: debian/postinst.in vars.sed
 	cat $< | sed -f vars.sed -e "s/@PKG@/$*/" > $@
 
-debian/%.prerm: debian/_prerm vars.sed
+debian/%.prerm: debian/_prerm.in vars.sed
 	cat $< | sed -f vars.sed -e "s/@PKG@/$*/" > $@
 
 instscripts: $(postinsts) $(prerms)
