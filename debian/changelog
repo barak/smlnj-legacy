@@ -11,8 +11,9 @@ smlnj (110.70-1) unstable; urgency=low
   * debian/rules: Add dh_installchangelog calls for libckit-smlnj and
     libcmlutil-smlnj.
   * debian/smlnj-doc.prerm: Call with set -e to follow Debian Policy 10.4.
+  * debian/dirs: Deleted, superfluous file.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 22:53:44 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 22:55:05 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 
