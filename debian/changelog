@@ -7,8 +7,9 @@ smlnj (110.70-1) unstable; urgency=low
     - New maintainer (Closes: #428273)
     - Update to Debian Policy 3.8.3.
     - Move smlnj-doc to Section: doc to follow Debian override file.
+  * debian/watch: Added commented watch file.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 22:35:55 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 22:44:38 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 
