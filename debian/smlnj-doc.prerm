@@ -1,5 +1,7 @@
 #! /bin/sh
 
+set -e
+
 # smlnj-doc_110.67-3 had postinst and prerm scripts that would
 # erroneously try to register it as a library, calling a script in
 # smlnj, while having no dependency on smlnj.  Just return
