@@ -7,13 +7,14 @@ smlnj (110.70-1) unstable; urgency=low
     - New maintainer (Closes: #428273)
     - Update to Debian Policy 3.8.3.
     - Move smlnj-doc to Section: doc to follow Debian override file.
+    - Remove duplicate words from descriptions
   * debian/watch: Added commented watch file.
   * debian/rules: Add dh_installchangelog calls for libckit-smlnj and
     libcmlutil-smlnj.
   * debian/smlnj-doc.prerm: Call with set -e to follow Debian Policy 10.4.
   * debian/dirs: Deleted, superfluous file.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 22:55:05 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 23:31:48 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 

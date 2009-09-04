@@ -60,7 +60,7 @@ Description: Useful libraries for Standard ML of New Jersey
   * PP          Pretty-printing library.
   * Reactive    A low-level reactive scripting library.
   * RegExp      Regular-expression library.
-  * Unix        Unix specific utilities.
+  * Unix        A set of unix specific utilities.
 
 Package: ml-lex
 Architecture: i386 amd64 powerpc
@@ -150,7 +150,7 @@ Package: libmlrisctools-smlnj
 Architecture: i386 amd64 powerpc
 Depends: smlnj (= ${binary:Version})
 Description: Library for parsing and pretty printing SML code
- Used by various MLRISC code generator generator.
+ Used by various MLRISC code generators.
 
 Package: nowhere
 Architecture: i386 amd64 powerpc
