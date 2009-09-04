@@ -4,6 +4,7 @@ smlnj (110.70-1) unstable; urgency=low
   * debian/control:
     - Replace obsolete tetex-extra with texlive-latex-extra in
       Build-Depends-Indep.
+    - New maintainer (Closes: #428273)
   
  -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 22:31:24 -0700
 
