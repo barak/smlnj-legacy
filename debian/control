@@ -28,6 +28,7 @@ Description: Standard ML of New Jersey interactive compiler
 
 Package: smlnj-doc
 Architecture: all
+Section: doc
 Suggests: smlnj
 Description: Documentation for Standard ML of New Jersey
  This package contains various documentation for SML/NJ, an
