@@ -81,7 +81,7 @@ smlnj: boot
 debian/%.postinst: debian/postinst.in vars.sed
 	cat $< | sed -f vars.sed -e "s/@PKG@/$*/" > $@
 
-debian/%.prerm: debian/_prerm.in vars.sed
+debian/%.prerm: debian/prerm.in vars.sed
 	cat $< | sed -f vars.sed -e "s/@PKG@/$*/" > $@
 
 instscripts: $(postinsts) $(prerms)
