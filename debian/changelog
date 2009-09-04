@@ -19,8 +19,10 @@ smlnj (110.70-1) unstable; urgency=low
   * debian/patches/01_fix-bashism.patch: Don't use the builtin "function".
     (Closes: #530119)
   * debian/{_wrapper,_postinst,_prerm}: Rename templates to filename.in.
+  * debian/{ml-ulex.1,ml-antlr.1,ml-lpt.manpages}: Add missing manpages for
+    these two binaries.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 23:55:23 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Fri, 04 Sep 2009 01:09:13 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 
