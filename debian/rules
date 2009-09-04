@@ -154,7 +154,7 @@ install-indep:
 install-arch: instscripts
 	dh_testdir
 	dh_testroot
-	dh_clean -k -s
+	dh_prep
 	dh_installdirs -s
 
 	dh_installchangelogs -psmlnj base/compiler/ChangeLog upstream

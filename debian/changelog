@@ -1,6 +1,7 @@
 smlnj (110.70-1) unstable; urgency=low
 
   * New upstream release.
+  * Switch to debhelper compat level 7.
   * debian/control:
     - Replace obsolete tetex-extra with texlive-latex-extra in
       Build-Depends-Indep.
@@ -12,13 +13,14 @@ smlnj (110.70-1) unstable; urgency=low
   * debian/rules: 
     - Add dh_installchangelog calls for libckit-smlnj.
     - Update to reflect namechange of templates in debian directory.
+    - Use dh_prep instead of dh_clean -k.
   * debian/smlnj-doc.prerm: Call with set -e to follow Debian Policy 10.4.
   * debian/dirs: Deleted, superfluous file.
   * debian/patches/01_fix-bashism.patch: Don't use the builtin "function".
     (Closes: #530119)
   * debian/{_wrapper,_postinst,_prerm}: Rename templates to filename.in.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 23:53:12 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 23:55:23 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 
