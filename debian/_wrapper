@@ -1,0 +1,5 @@
+#!/bin/sh
+
+export SMLNJ_HOME=${SMLNJ_HOME:-@SMLNJ_HOME@}
+
+exec $SMLNJ_HOME/bin/@CMD@ $@

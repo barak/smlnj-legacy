@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+SMLNJ_HOME=/usr/lib/smlnj
+
+list=/var/lib/dpkg/info/$1.list
+
+for l in $(grep "$SMLNJ_HOME/lib/[^.][^/]*$" $list) ; do
+    base=$(basename $l)
+    $SMLNJ_HOME/bin/register $base $base
+done
+
+for b in $(grep "$SMLNJ_HOME/bin/[^.][^/]*$" $list) ; do
+    base=$(basename $b)
+    $SMLNJ_HOME/bin/register $base ../bin
+done

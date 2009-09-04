@@ -1,0 +1,43 @@
+.TH ml-build 1 "October 25, 2002"
+.SH NAME
+ml-build \- for generating standalone programs
+.SH SYNOPSIS
+.B ml-build
+.RI "[ " DU-options " ]" " root-group main-function heapfile"
+.br
+.SH DESCRIPTION
+This manual page documents briefly the
+.B ml-build
+command.
+This manual page was written for the Debian distribution
+because the original program does not have a manual page. 
+The
+.B ml-build
+script is part of the 
+.B SML/NJ CM 
+(Compilation and Library Manager) that is used to generate standalone
+programs.
+.SH OPTIONS
+A summary of options is included below.
+.TP 
+.BI -D name = value
+Set CM variable to given value.
+.TP
+.BI -D name
+Set CM variable to 1.
+.TP
+.BI -U name
+Unset CM variable.
+.SH SEE ALSO
+.BR sml (1),
+.BR ml-lex (1),
+.BR ml-makedepend (1),
+.BR ml-yacc (1).
+.br
+The programs are documented fully by
+.IR "CM: The SML/NJ Compilation and Library Manager, User Manual" , 
+Matthias Blume, which is
+available via <http://cm.bell-labs.com/cm/cs/what/smlnj/doc/CM/new.pdf>.
+.SH AUTHOR
+This manual page was written by Aaron Matthew Read <amread@nyx.net>,
+for the Debian GNU/Linux system (but may be used by others).

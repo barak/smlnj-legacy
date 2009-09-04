@@ -1,0 +1,101 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH SML 1 "October 25, 2002"
+.SH NAME
+sml \- SML compiler
+.SH SYNOPSIS
+.B sml
+.RI "[ " rtsargs " ] [ " options " ] [" files " ]"
+.SH DESCRIPTION
+This manual page documents briefly the
+.B sml
+command.
+This manual page was written for the Debian distribution
+because the original program does not have a manual page.
+This is a compiler for Standard ML which may be used 
+interactively.
+.SH OPTIONS
+A summary of options is included below.
+.SS rtsargs:
+.TP
+.BI @SMLload= heapimage
+Start specified heap image.
+.TP
+.BI @SMLalloc= size
+Specify size of allocation area.
+.TP
+.BI @SMLcmdname= name
+Set command name.
+.TP
+.B @SMLquiet
+Load heap image silently.
+.TP
+.B @SMLverbose
+Show heap image load progress.
+.TP
+.B @SMLobjects
+Show list of executable objects.
+.TP
+.BI @SMLdebug= file
+Write debugging info to file.
+.SS options:
+.TP
+.BI -D name = value
+Set CM variable to given value.
+.TP
+.BI -D name
+Set CM variable to 1.
+.TP
+.BI -U name
+Unset CM variable.
+.TP
+.BI -C control = value
+Set named control.
+.TP
+.B -H
+Produce complete help listing.
+.TP
+.B -h
+Produce minimal help listing.
+.TP
+.BI -h level
+Help with obscurity limit.
+.TP
+.B -S
+List all current settings.
+.TP
+.BI -s level
+Limited list of settings.
+
+.SS files:
+.TP
+.I file.cm        
+CM.make or CM.autoload.
+.TP
+.B -m
+Switch to CM.make.
+.TP
+.B -a
+Switch to CM.autoload; default.
+.TP
+.I file.sig
+Use.
+.TP
+.I file.sml
+Use.
+.TP
+.I file.fun
+Use.
+
+
+.SH SEE ALSO
+.BR ml-build (1),
+.BR ml-lex (1),
+.BR ml-makedepend (1),
+.BR ml-yacc (1).
+.br
+Standard ML is defined in
+.IR "The Definition of Standard ML" ,
+Robin Milner, Mads Tofte, Robert Harper and David MacQueen.
+.SH AUTHOR
+This manual page was written by Aaron Matthew Read <amread@nyx.net>,
+for the Debian GNU/Linux system (but may be used by others).

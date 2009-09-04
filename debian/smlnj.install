@@ -1,0 +1,5 @@
+bin/.heap/sml.*linux usr/lib/smlnj/bin/.heap
+bin/sml bin/ml-build bin/ml-makedepend usr/lib/smlnj/bin
+lib/SMLNJ-MLRISC lib/SMLNJ-BASIS lib/burg-ext.cm lib/dir-tool.cm lib/grm-ext.cm lib/lex-ext.cm lib/make-tool.cm lib/mlburg-tool.cm lib/mllex-tool.cm lib/mlyacc-tool.cm lib/noweb-tool.cm lib/nw-ext.cm lib/pgraph.cm lib/pickle-lib.cm lib/shell-tool.cm lib/smlnj lib/smlnj-tdp usr/lib/smlnj/lib
+wrapper/ml-build wrapper/ml-makedepend wrapper/sml usr/bin
+MLRISC/demo/* usr/share/doc/smlnj/MLRISC-demo/

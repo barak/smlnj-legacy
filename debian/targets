@@ -1,0 +1,43 @@
+# targets file for Debian, to be copied as config/targets
+# See the upstream file for more details about this file
+
+request src-smlnj
+request ml-ulex
+# WARNING: This is incompatible with ml-ulex-lex-ext!!
+#request ml-ulex-lex-ext
+# WARNING: This is incompatible with ml-lex-mllex-tool!!
+request ml-ulex-mllex-tool
+request ml-lex
+# WARNING: This is incompatible with ml-ulex-mllex-tool!!
+#request ml-lex-mllex-tool
+# WARNING: This is incompatible with ml-ulex-lex-ext!!
+request ml-lex-lex-ext
+request ml-yacc
+# WARNING: This is incompatible with ml-antlr-grm-ext!!
+request ml-yacc-grm-ext
+request ml-antlr
+# WARNING: This is incompatible with ml-yacc-grm-ext!!
+#request ml-antlr-grm-ext
+request ml-lpt-lib
+request ml-burg
+request smlnj-lib
+request pgraph-util
+request tdp-util
+request cml
+request cml-lib
+request eXene
+request mlrisc
+request ckit
+
+# This preview release currently works under X86/Linux, Sparc/Solaris,
+# PPC/MacOSX, and X86/Win32.
+#
+request ml-nlffi-lib
+# This preview release currently works under X86/Linux, Sparc/Solaris,
+# PPC/MacOSX, and X86/Win32.
+#
+request ml-nlffigen
+
+request mlrisc-tools
+request nowhere
+request heap2asm

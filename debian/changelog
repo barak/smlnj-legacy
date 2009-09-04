@@ -1,0 +1,199 @@
+smlnj (110.70-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 22:27:54 -0700
+
+smlnj (110.69-1) unstable; urgency=low
+
+  * Orphaned package.
+  * New upstream release.
+  * Standards-Version 3.8.1 (no changes necessary).
+  * Use 110.68's bootstrap images instead of 110.69's.
+
+ -- Kari Pahula <kaol@debian.org>  Sat, 06 Jun 2009 14:54:02 +0300
+
+smlnj (110.67-4) unstable; urgency=low
+
+  * Don't create postinst/prerm scripts that would try to register
+    smlnj-doc as a library.  (Closes: #502752)
+
+ -- Kari Pahula <kaol@debian.org>  Sun, 19 Oct 2008 20:04:36 +0300
+
+smlnj (110.67-3) unstable; urgency=high
+
+  * Fixed an FTBFS due to missing ghostscript dependency in
+    Build-Depends-Indep (transfig only Recommends it) (Closes: #486957)
+  * Actually put something in smlnj-doc's long description. (Closes: #487199)
+
+ -- Kari Pahula <kaol@debian.org>  Wed, 02 Jul 2008 10:56:31 +0300
+
+smlnj (110.67-2) unstable; urgency=low
+
+  * Fixed an FTBFS due to a faulty check on whether Build-Depends-Indep
+    were installed.
+
+ -- Kari Pahula <kaol@debian.org>  Mon, 09 Jun 2008 22:44:50 +0300
+
+smlnj (110.67-1) unstable; urgency=low
+
+  * New upstream release
+  * Fixed typo ml-antrl -> ml-antlr in ml-lpt's description (Closes: #442949)
+  * Set homepage field in debian/control.
+  * Built some more documentation and set up smlnj-doc package for them.
+  * Added amd64 as an architecture, using gcc-multilib emulation layer.
+  * Don't even try to build on sparc.
+
+ -- Kari Pahula <kaol@debian.org>  Sat, 24 May 2008 22:11:34 +0300
+
+smlnj (110.65-1) unstable; urgency=low
+
+  * New upstream release
+  * Added package ml-lpt (Closes: #417906)
+  * Install smlnj's changelog (Closes: #412040)
+  * smlnj now Recommends libsmlnj-smlnj
+
+ -- Kari Pahula <kaol@debian.org>  Mon, 06 Aug 2007 07:17:09 +0300
+
+smlnj (110.62-1) unstable; urgency=low
+
+  * New upstream release
+  * Set architecture to i386 sparc powerpc
+  * Removed the broken hack to add symlinks to modules in the library dir
+  * Install base pathconfig rules to smlnj-runtime package (Closes: #409714)
+  * Added -f to rm /usr/lib/smlnj/lib/pathconfig in smlnj-runtime's postrm
+
+ -- Kari Pahula <kaol@debian.org>  Thu, 22 Feb 2007 12:46:17 +0200
+
+smlnj (110.60-1) experimental; urgency=low
+
+  * New release (Closes: #283407, #375537)
+  * New maintainer (Closes: #319801)
+  * Make sure that the build path doesn't get in the run and link scripts
+    (Closes: #329875)
+  * Changed the Debian build scripts to take the new 110.60 directory
+    layout into account
+  * Install some more documents and examples
+  * Make sure that /usr/bin/sml finds the modules from the directories
+    where it expects to.
+  
+    [Aaron Matthew Read]
+  * Bootstraps from an included image. (Closes: #308877, #362445)
+  * Purges itself cleanly now. (Closes: #328486)
+
+ -- Kari Pahula <kaol@debian.org>  Fri, 24 Nov 2006 00:17:57 +0200
+
+smlnj (110.54-1) unstable; urgency=low
+
+  * Upstream release of 110.54.
+
+ -- Aaron Matthew Read <amread@nyx.net>  Sun, 12 Jun 2005 17:51:24 -0700
+
+smlnj (110.53-1) unstable; urgency=low
+
+  * Upstream release of 110.53. closes:#283407
+  * Supply bootstrap images as part of the source package. Use these
+    images to bootstrap the build, rather than an installed
+    compiler. closes:#308877
+
+ -- Aaron Matthew Read <amread@nyx.net>  Fri, 13 May 2005 14:28:36 -0700
+
+smlnj (110.52-1) unstable; urgency=low
+
+  * Upstream release of 110.52.
+  * arch-n-opsys recognizes x86_64. closes: #286817
+
+ -- Aaron Matthew Read <amread@nyx.net>  Wed, 22 Dec 2004 12:25:57 -0800
+
+smlnj (110.51-1) unstable; urgency=low
+
+  * Upstream release of 110.51. closes:#283407
+
+ -- Aaron Matthew Read <amread@nyx.net>  Sun, 28 Nov 2004 15:12:55 -0800
+
+smlnj (110.50-1) unstable; urgency=low
+
+  * Upstream release of 110.50.
+  * Better short descriptions. closes:#277432, #276839
+
+ -- Aaron Matthew Read <amread@nyx.net>  Fri, 29 Oct 2004 11:26:58 -0700
+
+smlnj (110.49-1) unstable; urgency=low
+
+  * Upstream release of 110.49.
+
+ -- Aaron Matthew Read <amread@nyx.net>  Wed, 15 Sep 2004 11:27:40 -0700
+
+smlnj (110.48-3) unstable; urgency=low
+
+  * Include scripts to maintain the pathconfig file.
+
+ -- Aaron Matthew Read <amread@nyx.net>  Mon, 13 Sep 2004 00:10:15 -0700
+
+smlnj (110.48-2) unstable; urgency=low
+
+  * Include documentation and examples.
+  * Upstream made Option an alias for Option.Option. closes:#184125
+
+ -- Aaron Matthew Read <amread@nyx.net>  Thu,  9 Sep 2004 19:04:18 -0700
+
+smlnj (110.48-1) unstable; urgency=low
+
+  * Upstream release of 110.48.
+
+ -- Aaron Matthew Read <amread@nyx.net>  Thu,  12 Aug 2004 11:30:52 -0700
+
+smlnj (110.47-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Aaron Matthew Read <amread@nyx.net>  Sat,  7 Aug 2004 16:49:52 -0700
+
+smlnj (110.46-2) unstable; urgency=low
+
+  * Added new binary packages: libpgraph-smlnj, libcml-smlnj, libcmlutil-smlnj,
+    libexene-smlnj, libckit-smlnj, libmlnlffi-smlnj, ml-nlffigen,
+    libmlrisctools-smlnj, nowhere. closes:#186538
+
+ -- Aaron Matthew Read <amread@nyx.net>  Wed, 21 Jul 2004 00:57:39 -0700
+
+smlnj (110.46-1) unstable; urgency=low
+
+  * New upstream release.
+  * New packaging using debhelper.
+
+ -- Aaron Matthew Read <amread@nyx.net>  Sun, 18 Jul 2004 19:18:01 -0700
+
+smlnj-runtime (110.45-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Aaron Matthew Read <amread@nyx.net>  Sun,  7 Mar 2004 15:51:54 -0800
+
+smlnj-runtime (110.44-2) unstable; urgency=low
+
+  * Bug fix: postinst script fails if /usr/local is mounted read-only,
+    thanks to Laurent Bonnaud. closes:#228708
+
+ -- Aaron Matthew Read <amread@nyx.net>  Tue, 20 Jan 2004 11:16:42 -0800
+
+smlnj-runtime (110.44-1) unstable; urgency=low
+
+  * New upstream release.
+  * smlnj-runtime: hppa port. closes:Bug#199328
+
+ -- Aaron Matthew Read <amread@nyx.net>  Tue,  9 Dec 2003 00:19:27 -0800
+
+smlnj-runtime (110.42-2) unstable; urgency=low
+
+  * Fixed compile problem with new C Preprocessor. closes:Bug#195036
+
+ -- Aaron Matthew Read <amread@nyx.net>  Wed, 28 May 2003 21:02:32 -0700
+
+smlnj-runtime (110.42-1) unstable; urgency=low
+
+  * Split compiler, tools, and runtime system into separate packages.
+    This way, applications written in SML will depend only on the (small)
+    smlnj-runtime package.
+
+ -- Aaron Matthew Read <amread@nyx.net>  Tue, 14 Jan 2003 20:18:39 -0800

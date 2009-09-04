@@ -1,0 +1,3 @@
+bin/.heap/ml-lex.*linux usr/lib/smlnj/bin/.heap
+bin/ml-lex usr/lib/smlnj/bin
+wrapper/ml-lex usr/bin

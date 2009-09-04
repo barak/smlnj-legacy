@@ -1,0 +1,4 @@
+bin/.heap/ml-yacc.*linux usr/lib/smlnj/bin/.heap
+bin/ml-yacc usr/lib/smlnj/bin
+lib/SMLNJ-ML-YACC-LIB usr/lib/smlnj/lib
+wrapper/ml-yacc usr/bin

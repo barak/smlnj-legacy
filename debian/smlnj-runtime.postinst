@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+SMLNJ_HOME=/usr/lib/smlnj
+
+touch $SMLNJ_HOME/lib/pathconfig
+chmod 664 $SMLNJ_HOME/lib/pathconfig
+
+$SMLNJ_HOME/bin/register bindir ../bin
+
+#DEBHELPER#

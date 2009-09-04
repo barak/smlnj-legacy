@@ -1,0 +1,59 @@
+Creating Upstream Tarball
+-------------------------
+
+The upstream maintainers distribute SML/NJ as a collection of
+tarballs. This source package requires all of them, so the Debian orig
+tar file contains all the upstream tarballs placed where the upstream
+install.sh script expects them to be unpacked.
+
+For example:
+
+    smlnj-110.x.orig/ckit.tgz
+    smlnj-110.x.orig/config.tgz
+    smlnj-110.x.orig/src/MLRISC.tgz
+    smlnj-110.x.orig/src/cm.tgz
+    smlnj-110.x.orig/src/cml.tgz
+    smlnj-110.x.orig/src/compiler.tgz
+    smlnj-110.x.orig/src/eXene.tgz
+    smlnj-110.x.orig/src/ml-burg.tgz
+    smlnj-110.x.orig/src/ml-lex.tgz
+    smlnj-110.x.orig/src/ml-nlffi-lib.tgz
+    smlnj-110.x.orig/src/ml-nlffigen.tgz
+    smlnj-110.x.orig/src/ml-yacc.tgz
+    smlnj-110.x.orig/src/runtime.tgz
+    smlnj-110.x.orig/src/smlnj-c.tgz
+    smlnj-110.x.orig/src/smlnj-lib.tgz
+    smlnj-110.x.orig/src/system.tgz
+    smlnj-110.x.orig/src/tools.tgz
+
+The upstream boot images, used to create the bootstrap compiler are
+kept in the bootstrap directory, like this:
+
+    smlnj-110.x.orig/bootstrap/boot.alpha32-unix.tgz
+    smlnj-110.x.orig/bootstrap/boot.hppa-unix.tgz
+    smlnj-110.x.orig/bootstrap/boot.mipseb-unix.tgz
+    smlnj-110.x.orig/bootstrap/boot.ppc-unix.tgz
+    smlnj-110.x.orig/bootstrap/boot.sparc-unix.tgz
+    smlnj-110.x.orig/bootstrap/boot.x86-unix.tgz
+
+Use the mkorig script in this directory to create the upstream tarball
+as used by Debian.The script takes the upstream version number as an
+argument. For example:
+
+$ mkorig 110.53
+
+
+SML/NJ for amd64 architecture
+-----------------------------
+
+This version of the smlnj package for the amd64 architecture has i386
+binaries in it.  As the upstream says it:
+    # As long as we do not natively support the amd64 architecture,
+    # we should fallback to the x86 compatibility mode.  --Stef
+      x86_64) ARCH=x86;;
+
+Building packages at all for amd64 is arguably broken under these
+circumstances, but it still seemed like the better option.  As long as
+you're aware of this.
+
+ -- Kari Pahula <kaol@debian.org>, Sat, 24 May 2008 17:52:06 +0300

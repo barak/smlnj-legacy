@@ -1,0 +1,178 @@
+Source: smlnj
+Section: devel
+Priority: optional
+Maintainer: Debian QA Group <packages@qa.debian.org>
+Build-Depends: debhelper (>= 5), gcc-multilib [amd64]
+Build-Depends-Indep: texlive-latex-base, texlive-pictures, texlive-math-extra, texlive-latex-recommended, transfig, texlive-generic-extra, tetex-extra, dvi2ps, dvipdfmx, ghostscript
+Standards-Version: 3.8.1
+Homepage: http://www.smlnj.org/
+
+Package: smlnj
+Architecture: i386 amd64 powerpc
+Depends: smlnj-runtime (= ${binary:Version})
+Replaces: sml-nj
+Recommends: libsmlnj-smlnj
+Suggests: smlnj-doc
+Description: Standard ML of New Jersey interactive compiler
+ SML/NJ is an implementation of the Standard ML programming language.
+ Standard ML has many features, including type safety, polymorphism,
+ algebraic data types with pattern matching, higher-order functions,
+ and a sophisticated module system. It is especially well-suited for
+ writing compilers and other language processors.
+ .
+ This package includes the interactive compiler (sml), the compilation
+ manager (CM), and some essential libraries.  It is a "working"
+ version, but believed to be stable.
+ .
+ Install this package if you want to program in SML.
+
+Package: smlnj-doc
+Architecture: all
+Suggests: smlnj
+Description: Documentation for Standard ML of New Jersey
+ This package contains various documentation for SML/NJ, an
+ implementation of the Standard ML programming language.
+ .
+ More documentation can be found on the web site.
+
+Package: smlnj-runtime
+Architecture: i386 amd64 powerpc
+Depends: ${shlibs:Depends}
+Description: Standard ML of New Jersey runtime system
+ SML/NJ is an implementation of the Standard ML programming language.
+ This package includes the runtime system only -- it provides garbage
+ collection and other support for compiled SML programs.
+ .
+ Install this package if you want to run programs compiled with SML/NJ.
+
+Package: libsmlnj-smlnj
+Architecture: i386 amd64 powerpc
+Depends: smlnj (= ${binary:Version})
+Description: Useful libraries for Standard ML of New Jersey
+ A library for SML, including:
+  * Util        A general utility library.
+  * Controls    A library of support code for managing application controls.
+  * HashCons    A library supporting hash-consing of data structures and
+                efficient sets and maps using hash-consed keys.
+  * HTML        Provides parsing and pretty printing of HTML.
+  * INet        Networking utilities.
+  * PP          Pretty-printing library.
+  * Reactive    A low-level reactive scripting library.
+  * RegExp      Regular-expression library.
+  * Unix        Unix specific utilities.
+
+Package: ml-lex
+Architecture: i386 amd64 powerpc
+Depends: smlnj-runtime (= ${binary:Version})
+Description: Lexical analyzer generator for Standard ML
+ Lexical analysis is the problem of segmenting input into words and
+ recognizing different classes of words.  ml-lex uses regular
+ expressions to describe classes of words.  It transforms a simple
+ declarative language specification into an efficient SML program for
+ analyzing that language.
+ .
+ Install this package if you want to produce a lexer in Standard ML.
+
+Package: ml-yacc
+Architecture: i386 amd64 powerpc
+Depends: smlnj-runtime (= ${binary:Version})
+Description: Parser generator for Standard ML
+ SML version of the yacc program, generates a parser for a LALR language.
+ This package is useful for SML developers requiring a parser in their
+ work.
+
+Package: ml-burg
+Architecture: i386 amd64 powerpc
+Depends: ml-lex (= ${binary:Version})
+Description: Code generator generator for Standard ML
+ ml-burg generates a Standard ML program to perform bottom-up
+ rewriting of an input tree.  Cost information associated with each
+ rewrite rule is used to derive the minimum rewrite cost for the
+ entire tree.  A successful reduction corresponds to rewriting the
+ input tree to a special non-terminal symbol called the "start"
+ non-terminal.  Upon successful reduction, facilities are provided to
+ walk the tree emitting semantic actions corresponding to the rules
+ that matched.
+ .
+ Install this package if you want to write a compiler in SML using a
+ burg specification.
+
+Package: libpgraphutil-smlnj
+Architecture: i386 amd64 powerpc
+Depends: smlnj (= ${binary:Version})
+Description: CM portable graph utility library
+ Utility routines for use with portable dependency graphs.
+
+Package: libcml-smlnj
+Architecture: i386 amd64 powerpc
+Depends: libsmlnj-smlnj (= ${binary:Version})
+Description: Concurrent ML
+ An SML library for message-passing concurrency.
+
+Package: libcmlutil-smlnj
+Architecture: i386 amd64 powerpc
+Depends: libcml-smlnj (= ${binary:Version})
+Description: Concurrent ML utility library
+ Generally useful thread safe libraries for Concurrent ML.
+
+Package: libexene-smlnj
+Architecture: i386 amd64 powerpc
+Depends: libcml-smlnj (= ${binary:Version}), libcmlutil-smlnj (= ${binary:Version})
+Description: SML library for the X Window System
+ A multi-threaded X Window System toolkit written in Concurrent ML.
+
+Package: libckit-smlnj
+Architecture: i386 amd64 powerpc
+Depends: smlnj (= ${binary:Version})
+Description: A library for parsing and type-checking C programs
+ ckit is a C front end written in SML that translates C source code (after
+ preprocessing) into abstract syntax represented as a set of SML datatypes.
+ It also provides facilities for extending the C language with additional
+ syntactic constructs, which can be useful for implementing "C-like"
+ domain-specific languages as well as C dialects.
+
+Package: libmlnlffi-smlnj
+Architecture: i386 amd64 powerpc
+Depends: smlnj (= ${binary:Version})
+Recommends: ml-nlffigen
+Description: No Longer Foreign Function Interface
+ Allows ML programs to inspect and manipulate C data structures directly.
+
+Package: ml-nlffigen
+Architecture: i386 amd64 powerpc
+Depends: libsmlnj-smlnj (= ${binary:Version}), libckit-smlnj (= ${binary:Version})
+Description: ML generator for C glue code
+ The tool generates ML glue code from C source code for use with the
+ ML "No Longer Foreign Function Interface" library.
+
+Package: libmlrisctools-smlnj
+Architecture: i386 amd64 powerpc
+Depends: smlnj (= ${binary:Version})
+Description: Library for parsing and pretty printing SML code
+ Used by various MLRISC code generator generator.
+
+Package: nowhere
+Architecture: i386 amd64 powerpc
+Depends: libmlrisctools-smlnj (= ${binary:Version})
+Description: Translates programs from an extended Standard ML to Standard ML
+ Translates programs with conditional patterns, such as where clauses, into
+ legal SML code.
+
+Package: ml-lpt
+Architecture: i386 amd64 powerpc
+Depends: smlnj (= ${binary:Version})
+Provides: ml-ulex, ml-antlr
+Description: SML/NJ language processing tools
+ Tradition has it that when a new programming language is introduced,
+ new scanner and parser generators are written in that language, and
+ generate code for that language.  Traditional also has it that the
+ new tools are modeled after the old lex and yacc tools, both in terms
+ of the algorithms used, and often the syntax as well.  The language
+ Standard ML is no exception: ml-lex and ml-yacc are the SML
+ incarnations of the old Unix tools.
+ .
+ This package has two new tools, ml-ulex and ml-antlr, that follow
+ tradition in separating scanning from parsing, but break from
+ tradition in their implementation: ml-ulex is based on regular
+ expression derivatives rather than subset-construction, and ml-antlr
+ is based on LL(k) parsing rather than LALR(1) parsing.

@@ -1,0 +1,3 @@
+bin/.heap/nowhere.*linux usr/lib/smlnj/bin/.heap
+bin/nowhere usr/lib/smlnj/bin
+wrapper/nowhere usr/bin

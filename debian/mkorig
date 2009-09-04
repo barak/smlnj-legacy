@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Builds upstream tarball
+# Uses the new layout of 110.60 version
+
+if [ $# -eq 0 ] ; then
+    echo "Usage: mkorig version"
+    exit 1
+fi
+
+version=$1
+orig=smlnj_$version.orig
+
+url=http://smlnj.cs.uchicago.edu/dist/working
+
+root_tarballs="ckit config pgraph smlnj-lib MLRISC cml eXene heap2asm \
+	       ml-burg ml-lex ml-yacc smlnj-c nlffi ml-lpt \
+	       trace-debug-profile"
+base_tarballs="cm compiler runtime system"
+archs="x86 ppc sparc"
+
+mkdir -p $orig
+for t in $root_tarballs ; do
+    wget -O $orig/$t.tgz $url/$version/$t.tgz
+done
+
+mkdir -p $orig/bootstrap
+for t in $archs ; do
+    img=boot.$t-unix.tgz
+    wget -O $orig/bootstrap/$img $url/$version/$img
+done
+
+mkdir -p $orig/base
+for t in $base_tarballs ; do
+    wget -O $orig/base/$t.tgz $url/$version/$t.tgz
+done
+
+tar zcf $orig.tar.gz $orig
+rm -rf $orig

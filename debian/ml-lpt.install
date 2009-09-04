@@ -1,0 +1,9 @@
+bin/.heap/ml-antlr.*linux	usr/lib/smlnj/bin/.heap
+bin/.heap/ml-ulex.*linux	usr/lib/smlnj/bin/.heap
+bin/ml-antlr			usr/lib/smlnj/bin
+bin/ml-ulex			usr/lib/smlnj/bin
+wrapper/ml-ulex			usr/bin
+wrapper/ml-antlr		usr/bin
+lib/ml-antlr-tool.cm		usr/lib/smlnj/lib
+lib/ml-ulex-tool.cm		usr/lib/smlnj/lib
+lib/ml-lpt-lib.cm		usr/lib/smlnj/lib

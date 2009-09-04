@@ -1,0 +1,3 @@
+bin/.heap/ml-burg.*linux usr/lib/smlnj/bin/.heap
+bin/ml-burg usr/lib/smlnj/bin
+wrapper/ml-burg usr/bin

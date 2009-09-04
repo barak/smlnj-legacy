@@ -1,0 +1,208 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# $Id: rules,v 1.3 2005/06/14 05:37:51 amread Exp $
+
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+#
+# Modified to make a template file for a multi-binary package with separated
+# build-arch and build-indep targets  by Bill Allombert 2001
+
+export DH_OPTIONS
+
+SHELL=/bin/sh
+
+ROOT=$(shell pwd)
+
+CONFIGDIR=$(ROOT)/config
+SRCDIR=$(ROOT)/src
+BS_SML=$(ROOT)/bootstrap/bin/sml
+BS_LINK=$(ROOT)/bootstrap/bin/.link-sml
+
+SMLNJ_HOME=/usr/lib/smlnj
+BINDIR=$(SMLNJ_HOME)/bin
+HEAPDIR=$(BINDIR)/heap
+RUNDIR=$(BINDIR)/run
+LIBDIR=$(BINDIR)/lib
+
+VERSION=$(shell cat $(CONFIGDIR)/version)
+
+debscripts=$(addprefix debian/,deregister mkorig pkg-deregister pkg-register register)
+
+srcdirs=$(basename $(shell ls *tgz))
+basedirs=$(basename $(notdir $(wildcard base/*tgz)))
+
+notlibs=smlnj-runtime smlnj-doc
+libpkgs=$(filter-out $(notlibs),$(shell dh_listpackages))
+postinsts=$(addsuffix .postinst,$(addprefix debian/,$(libpkgs)))
+prerms=$(addsuffix .prerm,$(addprefix debian/,$(libpkgs)))
+
+BUILD_DOC=$(shell test -x /usr/bin/latex && echo 1 || echo 0)
+
+vars.sed:
+	echo "s,@SHELL@,$(SHELL),g" > vars.sed
+	echo "s,@SMLNJ_HOME@,$(SMLNJ_HOME)," >> vars.sed
+	echo "s,@BINDIR@,$(BINDIR)," >> vars.sed
+	echo "s,@VERSION@,$(VERSION)," >> vars.sed
+
+arch-n-opsys: $(CONFIGDIR)/_arch-n-opsys vars.sed
+	cat $< | sed -f vars.sed > $@
+	chmod 777 $@
+
+$(BS_SML):
+	for f in *tgz; do tar zxf $$f -C bootstrap; done
+	mkdir -p bootstrap/base
+	for f in base/*tgz; do tar zxf $$f -C bootstrap/base; done
+	cd bootstrap && URLGETTER=/bin/false ./config/install.sh
+
+boot.%.tgz: $(BS_SML)
+	cd base/system && echo "CMB.make();" | $< "\$$smlnj/cmb.cm";
+	cd base/system/sml.boot.$* \
+	   && $(BS_LINK) @SMLboot=BOOTLIST @SMLheap=sml @SMLalloc=1M \
+	                 @SMLrebuild="foo"
+	rm -r base/system/sml.boot.$*
+	rm -r base/system/*.bin.$*
+	mv base/system/foo.boot.$* base/system/sml.boot.$*
+	cd base/system && tar zcf $(ROOT)/$@ sml.boot.$*;
+
+boot: arch-n-opsys
+	eval `./arch-n-opsys` && $(MAKE) -f debian/rules boot.$$ARCH-unix.tgz;
+
+smlnj: boot
+	config/install.sh
+
+	mkdir -p wrapper
+	for c in `cd bin && ls`; do \
+	  cat debian/_wrapper | sed -f vars.sed -e "s/@CMD@/$$c/g" > wrapper/$$c; \
+	  chmod 555 wrapper/$$c; \
+	done
+
+debian/%.postinst: debian/_postinst vars.sed
+	cat $< | sed -f vars.sed -e "s/@PKG@/$*/" > $@
+
+debian/%.prerm: debian/_prerm vars.sed
+	cat $< | sed -f vars.sed -e "s/@PKG@/$*/" > $@
+
+instscripts: $(postinsts) $(prerms)
+
+# Architecture
+build: build-arch build-indep
+
+build-arch: build-arch-stamp
+build-arch-stamp:
+	mkdir -p debscripts
+	install -m 555 $(debscripts) debscripts
+
+	cd base && for t in $(basedirs); do tar zxf $$t.tgz; done
+	for t in $(srcdirs); do tar zxf $$t.tgz; done
+
+	cat debian/patches/* | patch -N -p1 1>/dev/null || true
+	cp config/targets config/targets.orig
+	cp debian/targets config/targets
+	$(MAKE) -f debian/rules smlnj
+
+	touch build-arch-stamp
+
+build-indep: build-indep-stamp
+build-indep-stamp:
+ifeq ($(BUILD_DOC),1)
+	cd base/cm/Doc; latex manual.tex && latex manual.tex && dvipdfmx -o cm_manual.pdf manual.dvi
+	cd ml-lpt/doc; latex manual.tex && latex manual.tex && dvipdfmx -o ml-lpt_manual.pdf manual.dvi
+	cd nlffi/lib/Doc/manual; latex nlffi.tex && latex nlffi.tex && dvipdfmx nlffi.dvi
+	cd MLRISC/Doc; make
+	cd MLRISC/Tools/Doc; make
+	cd ml-lex; latex lexgen.tex && latex lexgen.tex && dvipdfmx lexgen.dvi
+else
+	@echo '*********************************************************'
+	@echo Not building documentation since Build-Depends-Indep were
+	@echo not installed.  If you got this message on a buildd, then
+	@echo this is normal since they call the build-indep target
+	@echo without having the dependencies installed.
+	@echo '*********************************************************'
+endif
+	touch build-indep-stamp
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-arch-stamp build-indep-stamp
+
+	rm -f vars.sed
+	rm -f $(prerms) $(postinsts)
+	rm -f arch-n-opsys
+	rm -f boot*tgz
+	cd bootstrap && rm -rf bin ckit config lib src
+	rm -rf $(SRCDIR)/system/foo.* $(SRCDIR)/system/sml.*
+	rm -rf bin lib wrapper debscripts
+
+	cd base && rm -rf $(basedirs)
+	rm -rf $(srcdirs)
+	rm -rf sml.boot.*
+
+	cd bootstrap && rm -rf `ls | grep -v unix.tgz`
+
+	dh_clean
+
+install: install-arch install-indep
+
+install-indep:
+	dh_testdir
+	dh_testroot
+	dh_installdirs -i
+	dh_install -i
+
+install-arch: instscripts
+	dh_testdir
+	dh_testroot
+	dh_clean -k -s
+	dh_installdirs -s
+
+	dh_installchangelogs -psmlnj base/compiler/ChangeLog upstream
+	dh_installchangelogs -plibcml-smlnj cml/CHANGES upstream
+	dh_installchangelogs -plibexene-smlnj eXene/CHANGES upstream
+	dh_installchangelogs -plibsmlnj-smlnj smlnj-lib/CHANGES upstream
+
+	dh_install -s
+
+# make sure that the build path doesn't sneak in the link and run scripts
+	sed -i 's/BIN_DIR=".*smlnj.*"/BIN_DIR="\/usr\/lib\/smlnj\/bin\/"/' $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/bin/.*-sml
+# install base pathconfig rules to smlnj-runtime package
+	install -m 644 config/extrapathconfig $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/lib/pathconfig
+
+
+binary-common:
+
+binary-arch: build-arch install-arch
+	dh_testdir -a
+	dh_testroot -a 
+	dh_installchangelogs -a
+	dh_installdocs --exclude=".cvsignore" -a
+	dh_installexamples --exclude=".cvsignore" -a
+	dh_installman -a
+	dh_strip -a
+	dh_compress -a
+	dh_fixperms -a
+	dh_installdeb -a
+	dh_shlibdeps -a
+	dh_gencontrol -a
+	dh_md5sums -a
+	dh_builddeb -a
+
+binary-indep: build-indep install-indep
+	dh_testdir -i
+	dh_testroot -i 
+	dh_installchangelogs -i
+	dh_installdocs --exclude=".cvsignore" -i
+	dh_installexamples --exclude=".cvsignore" -i
+	dh_installman -i
+	dh_strip -i
+	dh_compress -i
+	dh_fixperms -i
+	dh_installdeb -i
+	dh_shlibdeps -i
+	dh_gencontrol -i
+	dh_md5sums -i
+	dh_builddeb -i
+
+binary: binary-arch binary-indep
+.PHONY: build clean binary-arch binary-indep binary install install-arch install-indep
