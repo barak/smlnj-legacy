@@ -3,7 +3,7 @@ Section: devel
 Priority: optional
 Maintainer: Debian QA Group <packages@qa.debian.org>
 Build-Depends: debhelper (>= 5), gcc-multilib [amd64]
-Build-Depends-Indep: texlive-latex-base, texlive-pictures, texlive-math-extra, texlive-latex-recommended, transfig, texlive-generic-extra, tetex-extra, dvi2ps, dvipdfmx, ghostscript
+Build-Depends-Indep: texlive-latex-base, texlive-pictures, texlive-math-extra, texlive-latex-recommended, transfig, texlive-generic-extra, texlive-latex-extra, dvi2ps, dvipdfmx, ghostscript
 Standards-Version: 3.8.1
 Homepage: http://www.smlnj.org/
 

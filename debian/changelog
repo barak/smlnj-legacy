@@ -1,8 +1,11 @@
 smlnj (110.70-1) unstable; urgency=low
 
   * New upstream release.
-
- -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 22:27:54 -0700
+  * debian/control:
+    - Replace obsolete tetex-extra with texlive-latex-extra in
+      Build-Depends-Indep.
+  
+ -- Daniel Moerner <dmoerner@gmail.com>  Thu, 03 Sep 2009 22:31:24 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 
