@@ -101,26 +101,37 @@ Description: Code generator generator for Standard ML
 Package: libpgraphutil-smlnj
 Architecture: i386 amd64 powerpc
 Depends: smlnj (= ${binary:Version})
-Description: CM portable graph utility library
- Utility routines for use with portable dependency graphs.
+Description: Portable graph utility library for SML Compilation Manager
+ Utility routines for use with portable dependency graphs. This
+ package contains support to build list-of-edges dependency graphs and
+ convert them back into valid SML code.
 
 Package: libcml-smlnj
 Architecture: i386 amd64 powerpc
 Depends: libsmlnj-smlnj (= ${binary:Version})
-Description: Concurrent ML
- An SML library for message-passing concurrency.
+Description: Concurrent ML extension of SML
+ An SML library for message-passing concurrency. This library adds
+ threading support to SML. Each thread is then manually executed by
+ running a separate function, rather than being called directly by the
+ top-level SML loop.
 
 Package: libcmlutil-smlnj
 Architecture: i386 amd64 powerpc
 Depends: libcml-smlnj (= ${binary:Version})
 Description: Concurrent ML utility library
- Generally useful thread safe libraries for Concurrent ML.
+ Not all modules in the normal SML/NJ library are thread safe. This
+ library provides thread-safe implementations of these
+ libraries.
 
 Package: libexene-smlnj
 Architecture: i386 amd64 powerpc
 Depends: libcml-smlnj (= ${binary:Version}), libcmlutil-smlnj (= ${binary:Version})
-Description: SML library for the X Window System
- A multi-threaded X Window System toolkit written in Concurrent ML.
+Description: Concurrent ML library for the X Window System
+ A multi-threaded X Window System toolkit written in Concurrent
+ ML. Many other windowing toolkits, such as Xlib, register separate
+ functions that are called by a centralized event processing loop. In
+ contrast, eXene maintains each window and graphical object in a
+ separate thread that has the ability to update itself.
 
 Package: libckit-smlnj
 Architecture: i386 amd64 powerpc
@@ -137,27 +148,38 @@ Architecture: i386 amd64 powerpc
 Depends: smlnj (= ${binary:Version})
 Recommends: ml-nlffigen
 Description: No Longer Foreign Function Interface
- Allows ML programs to inspect and manipulate C data structures directly.
+ Allows ML programs to inspect and manipulate C data structures
+ directly. This is implemented through three separate libraries, one
+ that provides a user-code accessible frontend, one that
+ implements this, and another that handles low-level raw memory
+ access.
 
 Package: ml-nlffigen
 Architecture: i386 amd64 powerpc
 Depends: libsmlnj-smlnj (= ${binary:Version}), libckit-smlnj (= ${binary:Version})
 Description: ML generator for C glue code
- The tool generates ML glue code from C source code for use with the
- ML "No Longer Foreign Function Interface" library.
+ This tool reads in C source code and outputs ML code and a CM
+ description file for use with the ML "No Longer Foreign Function
+ Interface" library. This tool works by separating each top-level C
+ declaration into a new ML source file. For large programs, this
+ puts some strain on the SML Compilation Manager, but this should only
+ marginally increase the program run-time.
 
 Package: libmlrisctools-smlnj
 Architecture: i386 amd64 powerpc
 Depends: smlnj (= ${binary:Version})
-Description: Library for parsing and pretty printing SML code
- Used by various MLRISC code generators.
+Description: Library for generating MLRISC modules
+ The MLRISC system allows an easy way to create a back-end to convert
+ SML into machine code. These tools provide an easy way to generate
+ MLRISC modules from machine descriptions.
 
 Package: nowhere
 Architecture: i386 amd64 powerpc
 Depends: libmlrisctools-smlnj (= ${binary:Version})
 Description: Translates programs from an extended Standard ML to Standard ML
- Translates programs with conditional patterns, such as where clauses, into
- legal SML code.
+ This is a source-to-source translation tool that expands case
+ expressions that use conditional patterns. Conditional patterns that
+ use the "where" keyword are converted into SML.
 
 Package: ml-lpt
 Architecture: i386 amd64 powerpc

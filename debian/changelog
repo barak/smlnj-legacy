@@ -9,6 +9,8 @@ smlnj (110.70-1) unstable; urgency=low
     - Update to Debian Policy 3.8.3.
     - Move smlnj-doc to Section: doc to follow Debian override file.
     - Remove duplicate words from descriptions
+    - Expand and correct short and long descriptions for almost all
+      shipped packages. (Closes: #493601)
   * debian/watch: Added commented watch file.
   * debian/rules: 
     - Add dh_installchangelog calls for libckit-smlnj.
@@ -22,7 +24,7 @@ smlnj (110.70-1) unstable; urgency=low
   * debian/{ml-ulex.1,ml-antlr.1,ml-lpt.manpages}: Add missing manpages for
     these two binaries.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Fri, 04 Sep 2009 01:09:13 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Wed, 09 Sep 2009 22:17:58 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 
