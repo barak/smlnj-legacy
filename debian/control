@@ -8,7 +8,7 @@ Standards-Version: 3.8.3
 Homepage: http://www.smlnj.org/
 
 Package: smlnj
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: smlnj-runtime (= ${binary:Version})
 Replaces: sml-nj
 Recommends: libsmlnj-smlnj
@@ -37,7 +37,7 @@ Description: Documentation for Standard ML of New Jersey
  More documentation can be found on the web site.
 
 Package: smlnj-runtime
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: ${shlibs:Depends}
 Description: Standard ML of New Jersey runtime system
  SML/NJ is an implementation of the Standard ML programming language.
@@ -47,7 +47,7 @@ Description: Standard ML of New Jersey runtime system
  Install this package if you want to run programs compiled with SML/NJ.
 
 Package: libsmlnj-smlnj
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: smlnj (= ${binary:Version})
 Description: Useful libraries for Standard ML of New Jersey
  A library for SML, including:
@@ -63,7 +63,7 @@ Description: Useful libraries for Standard ML of New Jersey
   * Unix        A set of unix specific utilities.
 
 Package: ml-lex
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: smlnj-runtime (= ${binary:Version})
 Description: Lexical analyzer generator for Standard ML
  Lexical analysis is the problem of segmenting input into words and
@@ -75,7 +75,7 @@ Description: Lexical analyzer generator for Standard ML
  Install this package if you want to produce a lexer in Standard ML.
 
 Package: ml-yacc
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: smlnj-runtime (= ${binary:Version})
 Description: Parser generator for Standard ML
  SML version of the yacc program, generates a parser for a LALR language.
@@ -83,7 +83,7 @@ Description: Parser generator for Standard ML
  work.
 
 Package: ml-burg
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: ml-lex (= ${binary:Version})
 Description: Code generator generator for Standard ML
  ml-burg generates a Standard ML program to perform bottom-up
@@ -99,7 +99,7 @@ Description: Code generator generator for Standard ML
  burg specification.
 
 Package: libpgraphutil-smlnj
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: smlnj (= ${binary:Version})
 Description: Portable graph utility library for SML Compilation Manager
  Utility routines for use with portable dependency graphs. This
@@ -107,7 +107,7 @@ Description: Portable graph utility library for SML Compilation Manager
  convert them back into valid SML code.
 
 Package: libcml-smlnj
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: libsmlnj-smlnj (= ${binary:Version})
 Description: Concurrent ML extension of SML
  An SML library for message-passing concurrency. This library adds
@@ -116,7 +116,7 @@ Description: Concurrent ML extension of SML
  top-level SML loop.
 
 Package: libcmlutil-smlnj
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: libcml-smlnj (= ${binary:Version})
 Description: Concurrent ML utility library
  Not all modules in the normal SML/NJ library are thread safe. This
@@ -124,7 +124,7 @@ Description: Concurrent ML utility library
  libraries.
 
 Package: libexene-smlnj
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: libcml-smlnj (= ${binary:Version}), libcmlutil-smlnj (= ${binary:Version})
 Description: Concurrent ML library for the X Window System
  A multi-threaded X Window System toolkit written in Concurrent
@@ -134,7 +134,7 @@ Description: Concurrent ML library for the X Window System
  separate thread that has the ability to update itself.
 
 Package: libckit-smlnj
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: smlnj (= ${binary:Version})
 Description: A library for parsing and type-checking C programs
  ckit is a C front end written in SML that translates C source code (after
@@ -144,7 +144,7 @@ Description: A library for parsing and type-checking C programs
  domain-specific languages as well as C dialects.
 
 Package: libmlnlffi-smlnj
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: smlnj (= ${binary:Version})
 Recommends: ml-nlffigen
 Description: No Longer Foreign Function Interface
@@ -155,7 +155,7 @@ Description: No Longer Foreign Function Interface
  access.
 
 Package: ml-nlffigen
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: libsmlnj-smlnj (= ${binary:Version}), libckit-smlnj (= ${binary:Version})
 Description: ML generator for C glue code
  This tool reads in C source code and outputs ML code and a CM
@@ -166,7 +166,7 @@ Description: ML generator for C glue code
  marginally increase the program run-time.
 
 Package: libmlrisctools-smlnj
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: smlnj (= ${binary:Version})
 Description: Library for generating MLRISC modules
  The MLRISC system allows an easy way to create a back-end to convert
@@ -174,7 +174,7 @@ Description: Library for generating MLRISC modules
  MLRISC modules from machine descriptions.
 
 Package: nowhere
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: libmlrisctools-smlnj (= ${binary:Version})
 Description: Translates programs from an extended Standard ML to Standard ML
  This is a source-to-source translation tool that expands case
@@ -182,7 +182,7 @@ Description: Translates programs from an extended Standard ML to Standard ML
  use the "where" keyword are converted into SML.
 
 Package: ml-lpt
-Architecture: i386 amd64 powerpc
+Architecture: i386 amd64 powerpc sparc
 Depends: smlnj (= ${binary:Version})
 Provides: ml-ulex, ml-antlr
 Description: SML/NJ language processing tools
