@@ -17,6 +17,7 @@ smlnj (110.70-1) unstable; urgency=low
     - Add dh_installchangelog calls for libckit-smlnj.
     - Update to reflect namechange of templates in debian directory.
     - Use dh_prep instead of dh_clean -k.
+    - Switch to separate unpack-source target and update .PHONY.
   * debian/smlnj-doc.prerm: Call with set -e to follow Debian Policy 10.4.
   * debian/dirs: Deleted, superfluous file.
   * debian/patches/01_fix-bashism.patch: Don't use the builtin "function".
@@ -25,7 +26,7 @@ smlnj (110.70-1) unstable; urgency=low
   * debian/{ml-ulex.1,ml-antlr.1,ml-lpt.manpages}: Add missing manpages for
     these two binaries.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Fri, 18 Sep 2009 00:47:00 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Sun, 20 Sep 2009 12:17:51 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 

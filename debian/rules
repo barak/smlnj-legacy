@@ -86,16 +86,17 @@ debian/%.prerm: debian/prerm.in vars.sed
 
 instscripts: $(postinsts) $(prerms)
 
+unpack-source:
+	cd base && for t in $(basedirs); do tar zxf $$t.tgz; done
+	for t in $(srcdirs); do tar zxf $$t.tgz; done
+
 # Architecture
 build: build-arch build-indep
 
-build-arch: build-arch-stamp
+build-arch: unpack-source build-arch-stamp
 build-arch-stamp:
 	mkdir -p debscripts
 	install -m 555 $(debscripts) debscripts
-
-	cd base && for t in $(basedirs); do tar zxf $$t.tgz; done
-	for t in $(srcdirs); do tar zxf $$t.tgz; done
 
 	cat debian/patches/* | patch -N -p1 1>/dev/null || true
 	cp config/targets config/targets.orig
@@ -206,4 +207,4 @@ binary-indep: build-indep install-indep
 	dh_builddeb -i
 
 binary: binary-arch binary-indep
-.PHONY: build clean binary-arch binary-indep binary install install-arch install-indep
+.PHONY: unpack-source build build-arch build-indep clean binary-arch binary-indep binary install install-arch install-indep
