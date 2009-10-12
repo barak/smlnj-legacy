@@ -1,4 +1,4 @@
-smlnj (110.70-1) unstable; urgency=low
+smlnj (110.71-1) unstable; urgency=low
 
   * New upstream release.
   * Switch to debhelper compat level 7.
@@ -26,7 +26,7 @@ smlnj (110.70-1) unstable; urgency=low
   * debian/{ml-ulex.1,ml-antlr.1,ml-lpt.manpages}: Add missing manpages for
     these two binaries.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Sun, 20 Sep 2009 12:17:51 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Mon, 12 Oct 2009 16:24:13 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 
