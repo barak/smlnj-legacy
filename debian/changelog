@@ -31,7 +31,7 @@ smlnj (110.71-1) unstable; urgency=low
   * debian/watch: Added commented watch file which calls debian/mkorig.
   * debian/{_wrapper,_postinst,_prerm}: Rename templates to filename.in.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Fri, 16 Oct 2009 01:07:21 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Fri, 16 Oct 2009 01:50:20 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 

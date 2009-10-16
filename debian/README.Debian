@@ -40,8 +40,13 @@ Use the mkorig script in this directory to create the upstream tarball
 as used by Debian. Support for the mkorig script has now been
 integrated into the debian/watch file. Just calling "uscan" will now
 automatically build a new tarball, if a new upstream version is
-available. You can still call mkorig manually, although the syntax is
-a bit different:
+available. You will need to manually make the mkorig script executable:
+
+$ chmod +x debian/mkorig
+$ uscan --verbose
+
+You can still call mkorig manually, although the syntax is a bit
+different:
 
 $ mkorig --upstream-version 110.53
 

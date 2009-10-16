@@ -1,6 +1,11 @@
 # This watchfile will call the debian/mkorig script, which will
 # download the individual parts of the upstream distribution and construct
 # a tarball from them in the directory below the source directory.
+#
+# For this watchfile to download the tarball, you will need to run:
+#
+# $ chmod +x debian/mkorig
+#
 
 version=3
 http://www.smlnj.org/ \
