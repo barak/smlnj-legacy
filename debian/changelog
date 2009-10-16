@@ -12,9 +12,13 @@ smlnj (110.71-1) unstable; urgency=low
     - Expand and correct short and long descriptions for almost all
       shipped packages. (Closes: #493601)
     - Renable sparc in Architecture line.
-  * debian/watch: Added commented watch file which calls debian/mkorig.
+  * debian/dirs: Deleted, superfluous file.
   * debian/mkorig: Modified script so it can be called automatically by
     uscan.
+  * debian/{ml-ulex.1,ml-antlr.1,ml-lpt.manpages}: Add missing manpages for
+    these two binaries.
+  * debian/patches/01_fix-bashism.patch: Don't use the builtin "function".
+    (Closes: #530119)
   * debian/README.Debian: Updated to reflect changes to debian/mkorig.
   * debian/rules: 
     - Add dh_installchangelog calls for libckit-smlnj.
@@ -22,14 +26,10 @@ smlnj (110.71-1) unstable; urgency=low
     - Use dh_prep instead of dh_clean -k.
     - Switch to separate unpack-source target and update .PHONY.
   * debian/smlnj-doc.prerm: Call with set -e to follow Debian Policy 10.4.
-  * debian/dirs: Deleted, superfluous file.
-  * debian/patches/01_fix-bashism.patch: Don't use the builtin "function".
-    (Closes: #530119)
+  * debian/watch: Added commented watch file which calls debian/mkorig.
   * debian/{_wrapper,_postinst,_prerm}: Rename templates to filename.in.
-  * debian/{ml-ulex.1,ml-antlr.1,ml-lpt.manpages}: Add missing manpages for
-    these two binaries.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Fri, 16 Oct 2009 01:02:51 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Fri, 16 Oct 2009 01:03:21 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 
