@@ -3,13 +3,18 @@
 # Builds upstream tarball
 # Uses the new layout of 110.60 version
 
-if [ $# -eq 0 ] ; then
-    echo "Usage: mkorig version"
+# Updated by Daniel Moerner in October 2009 to accept --upstream-version
+# argument so this script can be called by uscan.
+
+if [ "$1" -ne "--upstream-version" ] ; then
+    echo "Usage: mkorig --upstream-version version"
     exit 1
 fi
 
+shift
+
 version=$1
-orig=smlnj_$version.orig
+orig=../smlnj_$version.orig
 
 url=http://smlnj.cs.uchicago.edu/dist/working
 
