@@ -25,11 +25,13 @@ smlnj (110.71-1) unstable; urgency=low
     - Update to reflect namechange of templates in debian directory.
     - Use dh_prep instead of dh_clean -k.
     - Switch to separate unpack-source target and update .PHONY.
-  * debian/smlnj-doc.prerm: Call with set -e to follow Debian Policy 10.4.
+  * debian/smlnj-doc.prerm: Remove this file; it was needed to fix a bug
+    related to upgrades from smlnj-doc_110.67-3. This version predates Lenny
+    and was never in a release of Debian stable.
   * debian/watch: Added commented watch file which calls debian/mkorig.
   * debian/{_wrapper,_postinst,_prerm}: Rename templates to filename.in.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Fri, 16 Oct 2009 01:03:21 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Fri, 16 Oct 2009 01:07:21 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 
