@@ -37,11 +37,13 @@ kept in the bootstrap directory, like this:
     smlnj-110.x.orig/bootstrap/boot.x86-unix.tgz
 
 Use the mkorig script in this directory to create the upstream tarball
-as used by Debian.The script takes the upstream version number as an
-argument. For example:
+as used by Debian. Support for the mkorig script has now been
+integrated into the debian/watch file. Just calling "uscan" will now
+automatically build a new tarball, if a new upstream version is
+available. You can still call mkorig manually, although the syntax is
+a bit different:
 
-$ mkorig 110.53
-
+$ mkorig --upstream-version 110.53
 
 SML/NJ for amd64 architecture
 -----------------------------
@@ -56,4 +58,4 @@ Building packages at all for amd64 is arguably broken under these
 circumstances, but it still seemed like the better option.  As long as
 you're aware of this.
 
- -- Kari Pahula <kaol@debian.org>, Sat, 24 May 2008 17:52:06 +0300
+ -- Daniel Moerner <dmoerner@gmail.com>, Fri, 16 Oct 2009 01:01:37 -0700

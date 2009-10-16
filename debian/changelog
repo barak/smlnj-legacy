@@ -15,6 +15,7 @@ smlnj (110.71-1) unstable; urgency=low
   * debian/watch: Added commented watch file which calls debian/mkorig.
   * debian/mkorig: Modified script so it can be called automatically by
     uscan.
+  * debian/README.Debian: Updated to reflect changes to debian/mkorig.
   * debian/rules: 
     - Add dh_installchangelog calls for libckit-smlnj.
     - Update to reflect namechange of templates in debian directory.
@@ -28,7 +29,7 @@ smlnj (110.71-1) unstable; urgency=low
   * debian/{ml-ulex.1,ml-antlr.1,ml-lpt.manpages}: Add missing manpages for
     these two binaries.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Fri, 16 Oct 2009 00:56:36 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Fri, 16 Oct 2009 01:02:51 -0700
 
 smlnj (110.69-1) unstable; urgency=low
 
