@@ -4,7 +4,7 @@ smlnj (110.71-1) unstable; urgency=low
   * Switch to debhelper compat level 7.
   * debian/control:
     - Replace obsolete tetex-extra with texlive-latex-extra in
-      Build-Depends-Indep.
+      Build-Depends-Indep. (Closes: #562359)
     - New maintainer (Closes: #428273)
     - Update to Debian Policy 3.8.3.
     - Move smlnj-doc to Section: doc to follow Debian override file.
@@ -20,7 +20,7 @@ smlnj (110.71-1) unstable; urgency=low
   * debian/patches/01_fix-bashism.patch: Don't use the builtin "function".
     (Closes: #530119)
   * debian/README.Debian: Updated to reflect changes to debian/mkorig.
-  * debian/rules: 
+  * debian/rules:
     - Add dh_installchangelog calls for libckit-smlnj.
     - Update to reflect namechange of templates in debian directory.
     - Use dh_prep instead of dh_clean -k.
@@ -31,7 +31,7 @@ smlnj (110.71-1) unstable; urgency=low
   * debian/watch: Added commented watch file which calls debian/mkorig.
   * debian/{_wrapper,_postinst,_prerm}: Rename templates to filename.in.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Fri, 16 Oct 2009 01:50:20 -0700
+ -- Daniel Moerner <dmoerner@gmail.com>  Sun, 07 Feb 2010 14:02:23 -0800
 
 smlnj (110.69-1) unstable; urgency=low
 
