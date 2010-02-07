@@ -1,6 +1,8 @@
-smlnj (110.71-1) unstable; urgency=low
+smlnj (110.72-1) unstable; urgency=low
 
   * New upstream release.
+    - Upstream has intregrated a patch I forwarded to remove bashisms.
+      (Closes: #530119)
   * Switch to debhelper compat level 7.
   * debian/control:
     - Replace obsolete tetex-extra with texlive-latex-extra in
@@ -17,8 +19,6 @@ smlnj (110.71-1) unstable; urgency=low
     uscan.
   * debian/{ml-ulex.1,ml-antlr.1,ml-lpt.manpages}: Add missing manpages for
     these two binaries.
-  * debian/patches/01_fix-bashism.patch: Don't use the builtin "function".
-    (Closes: #530119)
   * debian/README.Debian: Updated to reflect changes to debian/mkorig.
   * debian/rules:
     - Add dh_installchangelog calls for libckit-smlnj.
@@ -31,7 +31,7 @@ smlnj (110.71-1) unstable; urgency=low
   * debian/watch: Added commented watch file which calls debian/mkorig.
   * debian/{_wrapper,_postinst,_prerm}: Rename templates to filename.in.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Sun, 07 Feb 2010 14:03:06 -0800
+ -- Daniel Moerner <dmoerner@gmail.com>  Sun, 07 Feb 2010 14:07:59 -0800
 
 smlnj (110.69-1) unstable; urgency=low
 
