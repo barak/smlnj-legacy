@@ -6,7 +6,7 @@ smlnj (110.71-1) unstable; urgency=low
     - Replace obsolete tetex-extra with texlive-latex-extra in
       Build-Depends-Indep. (Closes: #562359)
     - New maintainer (Closes: #428273)
-    - Update to Debian Policy 3.8.3.
+    - Update to Debian Policy 3.8.4.
     - Move smlnj-doc to Section: doc to follow Debian override file.
     - Remove duplicate words from descriptions
     - Expand and correct short and long descriptions for almost all
@@ -31,7 +31,7 @@ smlnj (110.71-1) unstable; urgency=low
   * debian/watch: Added commented watch file which calls debian/mkorig.
   * debian/{_wrapper,_postinst,_prerm}: Rename templates to filename.in.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Sun, 07 Feb 2010 14:02:23 -0800
+ -- Daniel Moerner <dmoerner@gmail.com>  Sun, 07 Feb 2010 14:03:06 -0800
 
 smlnj (110.69-1) unstable; urgency=low
 

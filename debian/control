@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Daniel Moerner <dmoerner@gmail.com>
 Build-Depends: debhelper (>= 7), gcc-multilib [amd64]
 Build-Depends-Indep: texlive-latex-base, texlive-pictures, texlive-math-extra, texlive-latex-recommended, transfig, texlive-generic-extra, texlive-latex-extra, dvi2ps, dvipdfmx, ghostscript
-Standards-Version: 3.8.3
+Standards-Version: 3.8.4
 Homepage: http://www.smlnj.org/
 
 Package: smlnj
