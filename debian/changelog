@@ -7,6 +7,8 @@ smlnj (110.72-1) unstable; urgency=low
   * debian/control:
     - Replace obsolete tetex-extra with texlive-latex-extra in
       Build-Depends-Indep. (Closes: #562359)
+    - Remove dvipdfmx from Build-Depends-Indep (superfluous).
+    - Remove dvi2ps from Build-Depends-Indep (in texlive-binaries)
     - New maintainer (Closes: #428273)
     - Update to Debian Policy 3.8.4.
     - Move smlnj-doc to Section: doc to follow Debian override file.
@@ -32,7 +34,7 @@ smlnj (110.72-1) unstable; urgency=low
   * debian/watch: Added commented watch file which calls debian/mkorig.
   * debian/{_wrapper,_postinst,_prerm}: Rename templates to filename.in.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Sun, 07 Feb 2010 14:14:25 -0800
+ -- Daniel Moerner <dmoerner@gmail.com>  Sun, 07 Feb 2010 15:35:32 -0800
 
 smlnj (110.69-1) unstable; urgency=low
 
