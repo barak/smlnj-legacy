@@ -1,0 +1,79 @@
+diff --git a/MLRISC/Doc/latex/graphs.tex b/MLRISC/Doc/latex/graphs.tex
+index 01e626d..992f64a 100644
+--- a/MLRISC/Doc/latex/graphs.tex
++++ b/MLRISC/Doc/latex/graphs.tex
+@@ -877,7 +877,7 @@ with sources and targets in $S$.  $S$ must be a subset of $V$.
+ 
+ \begin{wrapfigure}{r}{3in}
+   \begin{Boxit}
+-  \psfig{figure=../pictures/eps/trace.eps,width=2.8in}
++  \epsfig{figure=../pictures/eps/trace.eps,width=2.8in}
+   \end{Boxit}
+   \label{fig:trace-view}
+   \caption{A trace view}
+@@ -910,7 +910,7 @@ be both since it exits from \sml{G} and enters into \sml{A}.
+ \end{SML}
+ \begin{wrapfigure}{r}{3in}
+   \begin{Boxit}
+-  \psfig{figure=../pictures/eps/subgraph.eps,width=2.8in}
++  \epsfig{figure=../pictures/eps/subgraph.eps,width=2.8in}
+   \end{Boxit}
+   \label{fig:acyclic-subgraph-view}
+   \caption{An acyclic subgraph}
+diff --git a/MLRISC/Doc/latex/mlrisc-ir.tex b/MLRISC/Doc/latex/mlrisc-ir.tex
+index c346baa..f437e22 100644
+--- a/MLRISC/Doc/latex/mlrisc-ir.tex
++++ b/MLRISC/Doc/latex/mlrisc-ir.tex
+@@ -187,7 +187,7 @@ operate on more complex representations which use this
+ representation as the base layer.  
+ \begin{wrapfigure}{r}{4.5in}
+    \begin{Boxit}
+-   \psfig{figure=../pictures/eps/mlrisc-IR.eps,width=4.5in} 
++   \epsfig{figure=../pictures/eps/mlrisc-IR.eps,width=4.5in} 
+    \end{Boxit}
+    \caption{The MLRISC IR}
+ \end{wrapfigure}
+@@ -514,7 +514,7 @@ These functions have the following meanings:
+    \end{SML}
+ \begin{Figure}
+ \begin{boxit}
+-\cpsfig{figure=../pictures/eps/tail-duplication.eps,width=3in}
++\cepsfig{figure=../pictures/eps/tail-duplication.eps,width=3in}
+ \end{boxit}
+ \label{fig:tail-duplication} 
+ \caption{Tail-duplication}
+diff --git a/MLRISC/Doc/latex/mltex.sty b/MLRISC/Doc/latex/mltex.sty
+index 04d3477..8a30680 100644
+--- a/MLRISC/Doc/latex/mltex.sty
++++ b/MLRISC/Doc/latex/mltex.sty
+@@ -5,7 +5,7 @@
+ \ProvidesPackage{mltex}[2000/2/12 defines mltex environment]
+ 
+ \usepackage{latexsym}
+-\usepackage{psfig}
++\usepackage{epsfig}
+ \usepackage{fancyheadings}
+ \usepackage{sml}
+ \usepackage{color}
+@@ -34,7 +34,7 @@
+ 
+ % Images and Figures
+ \newcommand{\image}[3]{}
+-\newcommand{\cpsfig}[1]{\centerline{\psfig{#1}}}
++\newcommand{\cepsfig}[1]{\centerline{\epsfig{#1}}}
+ 
+ % Formatting
+ \newenvironment{Bold}{\begingroup\bf}{\endgroup}
+diff --git a/MLRISC/Doc/latex/mltex.tex b/MLRISC/Doc/latex/mltex.tex
+index c9cbdbb..343d6fe 100644
+--- a/MLRISC/Doc/latex/mltex.tex
++++ b/MLRISC/Doc/latex/mltex.tex
+@@ -104,7 +104,7 @@ environments and macros, and will translate them into HTML equivalents.
+   \section \subsection \subsubsection \paragraph
+   \ref \label 
+   \noindent \linebreak 
+-  \psfig  
++  \epsfig  
+ \end{verbatim}  
+ 
+ \subsection{Bugs and Shortcomings}

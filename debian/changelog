@@ -33,8 +33,12 @@ smlnj (110.72-1) unstable; urgency=low
     and was never in a release of Debian stable.
   * debian/watch: Added commented watch file which calls debian/mkorig.
   * debian/{_wrapper,_postinst,_prerm}: Rename templates to filename.in.
+  * debian/patches/use-psfig-not-epsfig.diff: SML/NJ's documentation still
+    includes deprecated calls to psfig.sty, which has been removed from
+    Debian. This patch uses the wrapper epsfig.sty. Long term, upstream
+    has been encouraged to port SML/NJ to use the graphicx package.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Sun, 07 Feb 2010 15:35:32 -0800
+ -- Daniel Moerner <dmoerner@gmail.com>  Sun, 07 Feb 2010 17:23:31 -0800
 
 smlnj (110.69-1) unstable; urgency=low
 
