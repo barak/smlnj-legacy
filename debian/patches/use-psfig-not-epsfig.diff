@@ -1,3 +1,13 @@
+Description: Port MLRISC latex documentation to epsfig.sty
+ Upstream uses the deprecated psfig.sty package, which is no longer in
+ TeXLive 2009. This patch uses the drop-in substitute wrapper, epsfig.sty.
+ .
+ The long-term solution will be to port the documentation to use the
+ graphicx package directly.
+Forwarded: http://smlnj-gforge.cs.uchicago.edu/tracker/index.php?func=detail&aid=53&group_id=33&atid=215
+Author: Daniel Moerner <dmoerner@gmail.com>
+Last-Update: 2010-02-09
+
 diff --git a/MLRISC/Doc/latex/graphs.tex b/MLRISC/Doc/latex/graphs.tex
 index 01e626d..992f64a 100644
 --- a/MLRISC/Doc/latex/graphs.tex
