@@ -1,7 +1,7 @@
 smlnj (110.72-1) unstable; urgency=low
 
   * New upstream release.
-    - Upstream has intregrated a patch I forwarded to remove bashisms.
+    - Upstream has integrated a patch I forwarded to remove bashisms.
       (Closes: #530119)
   * Switch to debhelper compat level 7.
   * debian/control:
@@ -44,7 +44,7 @@ smlnj (110.72-1) unstable; urgency=low
     Debian. This patch uses the wrapper epsfig.sty. Long term, upstream
     has been encouraged to port SML/NJ to use the graphicx package.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Wed, 24 Feb 2010 02:06:34 -0800
+ -- Daniel Moerner <dmoerner@gmail.com>  Wed, 24 Feb 2010 02:53:56 -0800
 
 smlnj (110.69-1) unstable; urgency=low
 
