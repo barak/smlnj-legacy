@@ -25,6 +25,7 @@ smlnj (110.72-1) unstable; urgency=low
     uscan.
   * debian/{ml-ulex.1,ml-antlr.1,ml-lpt.manpages}: Add missing manpages for
     these two binaries.
+  * debian/ml-lpt.doc-base: Added doc-base registration for manual.
   * debian/README.Debian: Updated to reflect changes to debian/mkorig.
   * debian/rules:
     - Add dh_installchangelog calls for libckit-smlnj.
@@ -41,7 +42,7 @@ smlnj (110.72-1) unstable; urgency=low
     Debian. This patch uses the wrapper epsfig.sty. Long term, upstream
     has been encouraged to port SML/NJ to use the graphicx package.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Wed, 24 Feb 2010 00:55:58 -0800
+ -- Daniel Moerner <dmoerner@gmail.com>  Wed, 24 Feb 2010 01:02:10 -0800
 
 smlnj (110.69-1) unstable; urgency=low
 
