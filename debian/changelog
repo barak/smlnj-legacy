@@ -19,6 +19,8 @@ smlnj (110.72-1) unstable; urgency=low
     - Add ${misc:Depends} to binary packages for debhelper.
   * debian/dirs: Deleted, superfluous file.
   * debian/libckit-smlnj.doc-base: Added doc-base registration.
+  * debian/libmlnlffi-smlnj.{docs,doc-base}: Don't ship latex source, and
+    add doc-base registration.
   * debian/mkorig: Modified script so it can be called automatically by
     uscan.
   * debian/{ml-ulex.1,ml-antlr.1,ml-lpt.manpages}: Add missing manpages for
@@ -39,7 +41,7 @@ smlnj (110.72-1) unstable; urgency=low
     Debian. This patch uses the wrapper epsfig.sty. Long term, upstream
     has been encouraged to port SML/NJ to use the graphicx package.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Wed, 24 Feb 2010 00:51:59 -0800
+ -- Daniel Moerner <dmoerner@gmail.com>  Wed, 24 Feb 2010 00:55:58 -0800
 
 smlnj (110.69-1) unstable; urgency=low
 
