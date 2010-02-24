@@ -1,0 +1,9 @@
+Document: smlnjcm
+Title: CM - The SML/NJ Compilation and Library Manager
+Author: Matthias Blume
+Abstract: User Manual for the new implementation of the Compilation and
+ Library Manager in SML/NJ 110.40 and later.
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/smlnj-doc/cm_manual.pdf.gz

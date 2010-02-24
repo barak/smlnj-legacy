@@ -1,0 +1,13 @@
+Document: mlrisc
+Title: MLRISC Manual
+Author: Lal George, Allen Leung
+Abstract: Manual for MLRISC, a framework for retargetable and
+ optimizing compiler back ends.
+Section: Programming
+
+Format: HTML
+Index: /usr/share/doc/smlnj-doc/mlrisc/index.html
+Files: /usr/share/doc/smlnj-doc/mlrisc/*.html
+
+Format: PostScript
+Files: /usr/share/doc/smlnj-doc/mlrisc.ps.gz

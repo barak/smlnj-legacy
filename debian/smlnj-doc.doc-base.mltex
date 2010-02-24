@@ -1,0 +1,11 @@
+Document: mltex
+Title: MLTeX - A special package for writing MLRISC documentation
+Author: Allen Leung, Lal George
+Abstract: MLTeX is a special LaTeX package for writing MLRISC
+ documentation. It is similar to the latex2html tool except that MLTeX has
+ special environments for documentating Standard ML code. In addition, there
+ is an accompanying tool called mltex2html for generating HTML pages.
+Section: Programming
+
+Format: PostScript
+Files: /usr/share/doc/smlnj-doc/mltexdoc.ps.gz

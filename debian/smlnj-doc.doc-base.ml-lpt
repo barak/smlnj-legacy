@@ -1,0 +1,14 @@
+Document: ml-lpt
+Title: SML/NJ Language Processing Tools: User Guide
+Author: Aaron Turon
+Abstract: This manual describes two new tools, ml-ulex and ml-antlr, that
+ follow tradition in separating scanning from parsing, but break from
+ tradition in their implementation: ml-ulex is based on regular expression
+ derivatives rather than subset-construction, and ml-antlr is based on LL(k)
+ parsing rather than LALR(1) parsing.
+Section: Programming
+
+Format: PDF
+Index: /usr/share/doc/smlnj-doc/ml-lpt_manual.pdf.gz
+ /usr/share/doc/smlnj-doc/impl-pic.pdj.gz
+ /usr/share/doc/smlnj-doc/design.pdf.gz

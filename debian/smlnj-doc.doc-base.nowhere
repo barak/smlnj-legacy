@@ -1,0 +1,10 @@
+Document: nowhere
+Title: Nowhere - A pattern matching tool for SML/NJ
+Author: Allen Leung
+Abstract: An overview of the use of nowhere to translate SML programs that
+ use conditional pattern matching into normal SML code.
+Section: Programming
+
+Format: PostScript
+Index: /usr/share/doc/smlnj-doc/nowhere.ps.gz
+

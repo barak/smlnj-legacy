@@ -32,6 +32,8 @@ smlnj (110.72-1) unstable; urgency=low
     - Use dh_prep instead of dh_clean -k.
     - Switch to separate unpack-source target and update .PHONY.
   * debian/smlnj.docs: Don't ship latex source in binary.
+  * debian/smlnj-doc.doc-base.*: Register all documentation in smlnj-doc
+    with doc-base.
   * debian/smlnj-doc.prerm: Remove this file; it was needed to fix a bug
     related to upgrades from smlnj-doc_110.67-3. This version predates Lenny
     and was never in a release of Debian stable.
@@ -42,7 +44,7 @@ smlnj (110.72-1) unstable; urgency=low
     Debian. This patch uses the wrapper epsfig.sty. Long term, upstream
     has been encouraged to port SML/NJ to use the graphicx package.
   
- -- Daniel Moerner <dmoerner@gmail.com>  Wed, 24 Feb 2010 01:07:10 -0800
+ -- Daniel Moerner <dmoerner@gmail.com>  Wed, 24 Feb 2010 02:06:34 -0800
 
 smlnj (110.69-1) unstable; urgency=low
 
