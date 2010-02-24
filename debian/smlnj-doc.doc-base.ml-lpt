@@ -9,6 +9,6 @@ Abstract: This manual describes two new tools, ml-ulex and ml-antlr, that
 Section: Programming
 
 Format: PDF
-Index: /usr/share/doc/smlnj-doc/ml-lpt_manual.pdf.gz
- /usr/share/doc/smlnj-doc/impl-pic.pdj.gz
+Files: /usr/share/doc/smlnj-doc/ml-lpt_manual.pdf.gz
+ /usr/share/doc/smlnj-doc/impl-pic.pdf.gz
  /usr/share/doc/smlnj-doc/design.pdf.gz
