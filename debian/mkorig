@@ -14,7 +14,7 @@ fi
 shift
 
 version=$1
-orig=../smlnj_$version.orig
+orig=../smlnj-$version
 
 url=http://smlnj.cs.uchicago.edu/dist/working
 
@@ -40,5 +40,5 @@ for t in $base_tarballs ; do
     wget -O $orig/base/$t.tgz $url/$version/$t.tgz
 done
 
-tar zcf $orig.tar.gz $orig
+tar zcf ../smlnj_$version.orig.tar.gz $orig
 rm -rf $orig
