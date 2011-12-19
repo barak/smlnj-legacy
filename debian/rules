@@ -1,14 +1,6 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
-# $Id: rules,v 1.3 2005/06/14 05:37:51 amread Exp $
-
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
-#
-# Modified to make a template file for a multi-binary package with separated
-# build-arch and build-indep targets  by Bill Allombert 2001
-
 export DH_OPTIONS
 
 SHELL=/bin/sh
@@ -37,8 +29,6 @@ notlibs=smlnj-runtime smlnj-doc
 libpkgs=$(filter-out $(notlibs),$(shell dh_listpackages))
 postinsts=$(addsuffix .postinst,$(addprefix debian/,$(libpkgs)))
 prerms=$(addsuffix .prerm,$(addprefix debian/,$(libpkgs)))
-
-BUILD_DOC=$(shell test -x /usr/bin/latex && echo 1 || echo 0)
 
 vars.sed:
 	echo "s,@SHELL@,$(SHELL),g" > vars.sed
@@ -97,37 +87,31 @@ build-arch: unpack-source build-arch-stamp
 build-arch-stamp:
 	mkdir -p debscripts
 	install -m 555 $(debscripts) debscripts
-
+	
 	cat debian/patches/* | patch -N -p1 1>/dev/null || true
 	cp config/targets config/targets.orig
 	cp debian/targets config/targets
 	$(MAKE) -f debian/rules smlnj
-
+	
 	touch build-arch-stamp
 
 build-indep: build-indep-stamp
-build-indep-stamp:
-ifeq ($(BUILD_DOC),1)
+build-indep-stamp: unpack-source
+ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	cd base/cm/Doc; latex manual.tex && latex manual.tex && dvipdfmx -o cm_manual.pdf manual.dvi
 	cd ml-lpt/doc; latex manual.tex && latex manual.tex && dvipdfmx -o ml-lpt_manual.pdf manual.dvi
 	cd nlffi/lib/Doc/manual; latex nlffi.tex && latex nlffi.tex && dvipdfmx nlffi.dvi
 	cd MLRISC/Doc; make
 	cd MLRISC/Tools/Doc; make
 	cd ml-lex; latex lexgen.tex && latex lexgen.tex && dvipdfmx lexgen.dvi
-else
-	@echo '*********************************************************'
-	@echo Not building documentation since Build-Depends-Indep were
-	@echo not installed.  If you got this message on a buildd, then
-	@echo this is normal since they call the build-indep target
-	@echo without having the dependencies installed.
-	@echo '*********************************************************'
 endif
 	touch build-indep-stamp
+
 clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp
-
+	
 	rm -f vars.sed
 	rm -f $(prerms) $(postinsts)
 	rm -f arch-n-opsys
@@ -135,13 +119,13 @@ clean:
 	cd bootstrap && rm -rf bin ckit config lib src
 	rm -rf $(SRCDIR)/system/foo.* $(SRCDIR)/system/sml.*
 	rm -rf bin lib wrapper debscripts
-
+	
 	cd base && rm -rf $(basedirs)
 	rm -rf $(srcdirs)
 	rm -rf sml.boot.*
-
+	
 	cd bootstrap && rm -rf `ls | grep -v unix.tgz`
-
+	
 	dh_clean
 
 install: install-arch install-indep
@@ -157,7 +141,7 @@ install-arch: instscripts
 	dh_testroot
 	dh_prep
 	dh_installdirs -s
-
+	
 	dh_installchangelogs -psmlnj base/compiler/ChangeLog upstream
 	dh_installchangelogs -plibcml-smlnj cml/CHANGES upstream
 	dh_installchangelogs -plibexene-smlnj eXene/CHANGES upstream
