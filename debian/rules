@@ -3,32 +3,32 @@
 
 export DH_OPTIONS
 
-SHELL=/bin/sh
+SHELL:=/bin/sh
 
-ROOT=$(CURDIR)
+ROOT:=$(CURDIR)
 
-CONFIGDIR=$(ROOT)/config
-SRCDIR=$(ROOT)/src
-BS_SML=$(ROOT)/bootstrap/bin/sml
-BS_LINK=$(ROOT)/bootstrap/bin/.link-sml
+CONFIGDIR:=$(ROOT)/config
+SRCDIR:=$(ROOT)/src
+BS_SML:=$(ROOT)/bootstrap/bin/sml
+BS_LINK:=$(ROOT)/bootstrap/bin/.link-sml
 
-SMLNJ_HOME=/usr/lib/smlnj
-BINDIR=$(SMLNJ_HOME)/bin
-HEAPDIR=$(BINDIR)/heap
-RUNDIR=$(BINDIR)/run
-LIBDIR=$(BINDIR)/lib
+SMLNJ_HOME:=/usr/lib/smlnj
+BINDIR:=$(SMLNJ_HOME)/bin
+HEAPDIR:=$(BINDIR)/heap
+RUNDIR:=$(BINDIR)/run
+LIBDIR:=$(BINDIR)/lib
 
 VERSION=$(shell cat $(CONFIGDIR)/version)
 
-debscripts=$(addprefix debian/,deregister mkorig pkg-deregister pkg-register register)
+debscripts:=$(addprefix debian/,deregister mkorig pkg-deregister pkg-register register)
 
-srcdirs=$(basename $(wildcard *tgz))
-basedirs=$(basename $(notdir $(wildcard base/*tgz)))
+srcdirs:=$(basename $(wildcard *tgz))
+basedirs:=$(basename $(notdir $(wildcard base/*tgz)))
 
-notlibs=smlnj-runtime smlnj-doc
-libpkgs=$(filter-out $(notlibs),$(shell dh_listpackages))
-postinsts=$(addsuffix .postinst,$(addprefix debian/,$(libpkgs)))
-prerms=$(addsuffix .prerm,$(addprefix debian/,$(libpkgs)))
+notlibs:=smlnj-runtime smlnj-doc
+libpkgs:=$(filter-out $(notlibs),$(shell dh_listpackages))
+postinsts:=$(addsuffix .postinst,$(addprefix debian/,$(libpkgs)))
+prerms:=$(addsuffix .prerm,$(addprefix debian/,$(libpkgs)))
 
 vars.sed:
 	echo "s,@SHELL@,$(SHELL),g" > vars.sed
