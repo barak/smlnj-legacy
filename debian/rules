@@ -61,7 +61,7 @@ boot: arch-n-opsys
 
 smlnj: boot
 	config/install.sh
-
+	
 	mkdir -p wrapper
 	for c in `cd bin && ls`; do \
 	  cat debian/wrapper.in | sed -f vars.sed -e "s/@CMD@/$$c/g" > wrapper/$$c; \
@@ -76,15 +76,17 @@ debian/%.prerm: debian/prerm.in vars.sed
 
 instscripts: $(postinsts) $(prerms)
 
-unpack-source:
+unpack-source: unpack-source-stamp
+unpack-source-stamp:
 	cd base && for t in $(basedirs); do tar zxf $$t.tgz; done
 	for t in $(srcdirs); do tar zxf $$t.tgz; done
+	touch $@
 
 # Architecture
 build: build-arch build-indep
 
-build-arch: unpack-source build-arch-stamp
-build-arch-stamp:
+build-arch: build-arch-stamp
+build-arch-stamp: unpack-source-stamp
 	mkdir -p debscripts
 	install -m 555 $(debscripts) debscripts
 	
@@ -93,10 +95,10 @@ build-arch-stamp:
 	cp debian/targets config/targets
 	$(MAKE) -f debian/rules smlnj
 	
-	touch build-arch-stamp
+	touch $@
 
 build-indep: build-indep-stamp
-build-indep-stamp: unpack-source
+build-indep-stamp: unpack-source-stamp
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	cd base/cm/Doc; latex manual.tex && latex manual.tex && dvipdfmx -o cm_manual.pdf manual.dvi
 	cd ml-lpt/doc; latex manual.tex && latex manual.tex && dvipdfmx -o ml-lpt_manual.pdf manual.dvi
@@ -105,12 +107,12 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	cd MLRISC/Tools/Doc; make
 	cd ml-lex; latex lexgen.tex && latex lexgen.tex && dvipdfmx lexgen.dvi
 endif
-	touch build-indep-stamp
+	touch $@
 
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-arch-stamp build-indep-stamp
+	rm -f *-stamp
 	
 	rm -f vars.sed
 	rm -f $(prerms) $(postinsts)
@@ -128,15 +130,15 @@ clean:
 	
 	dh_clean
 
-install: install-arch install-indep
+install: install-arch-stamp install-indep-stamp
 
-install-indep:
+install-indep: build-indep-stamp
 	dh_testdir
 	dh_testroot
 	dh_installdirs -i
 	dh_install -i
 
-install-arch: instscripts
+install-arch: build-arch-stamp instscripts
 	dh_testdir
 	dh_testroot
 	dh_prep
@@ -147,9 +149,9 @@ install-arch: instscripts
 	dh_installchangelogs -plibexene-smlnj eXene/CHANGES upstream
 	dh_installchangelogs -plibsmlnj-smlnj smlnj-lib/CHANGES upstream
 	dh_installchangelogs -plibckit-smlnj ckit/HISTORY upstream
-
+	
 	dh_install -s
-
+	
 # make sure that the build path doesn't sneak in the link and run scripts
 	sed -i 's/BIN_DIR=".*smlnj.*"/BIN_DIR="\/usr\/lib\/smlnj\/bin\/"/' $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/bin/.*-sml
 # install base pathconfig rules to smlnj-runtime package
@@ -158,7 +160,7 @@ install-arch: instscripts
 
 binary-common:
 
-binary-arch: build-arch install-arch
+binary-arch: install-arch
 	dh_testdir -a
 	dh_testroot -a 
 	dh_installchangelogs -a
@@ -174,7 +176,7 @@ binary-arch: build-arch install-arch
 	dh_md5sums -a
 	dh_builddeb -a
 
-binary-indep: build-indep install-indep
+binary-indep: install-indep
 	dh_testdir -i
 	dh_testroot -i 
 	dh_installchangelogs -i
