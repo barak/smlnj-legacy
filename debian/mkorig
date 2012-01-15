@@ -42,3 +42,4 @@ done
 
 tar zcf ../smlnj_$version.orig.tar.gz $orig
 rm -rf $orig
+rm -f index.html
