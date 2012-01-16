@@ -2,6 +2,7 @@ smlnj (110.73-1) UNRELEASED; urgency=low
 
   * New upstream version.
   * Use DEB_BUILD_OPTIONS=nodoc to disable building of documentation.
+  * Declare source format 1.0
 
  -- James McCoy <jamessan@debian.org>  Tue, 13 Dec 2011 22:19:53 -0500
 
