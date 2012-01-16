@@ -137,7 +137,7 @@ Description: Concurrent ML library for the X Window System
 Package: libckit-smlnj
 Architecture: i386 amd64 powerpc sparc
 Depends: ${misc:Depends}, smlnj (= ${binary:Version})
-Description: A library for parsing and type-checking C programs
+Description: SML library for parsing and type-checking C programs
  ckit is a C front end written in SML that translates C source code (after
  preprocessing) into abstract syntax represented as a set of SML datatypes.
  It also provides facilities for extending the C language with additional
