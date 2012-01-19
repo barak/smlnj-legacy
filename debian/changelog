@@ -1,4 +1,4 @@
-smlnj (110.73-1) UNRELEASED; urgency=low
+smlnj (110.73-1) unstable; urgency=low
 
   * New upstream version.
   * Use DEB_BUILD_OPTIONS=nodoc to disable building of documentation.
@@ -8,7 +8,7 @@ smlnj (110.73-1) UNRELEASED; urgency=low
       changelog.
     + Remove leading article from libckit-smlnj's short description.
 
- -- James McCoy <jamessan@debian.org>  Tue, 13 Dec 2011 22:19:53 -0500
+ -- James McCoy <jamessan@debian.org>  Wed, 18 Jan 2012 20:33:37 -0500
 
 smlnj (110.72-1) unstable; urgency=low
 
