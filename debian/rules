@@ -83,7 +83,7 @@ unpack-source-stamp:
 	touch $@
 
 # Architecture
-build: build-arch build-indep
+build: build-arch
 
 build-arch: build-arch-stamp
 build-arch-stamp: unpack-source-stamp

@@ -1,9 +1,9 @@
-smlnj (110.73-2) UNRELEASED; urgency=low
+smlnj (110.73-2) unstable; urgency=low
 
-  * Only set binary-arch as a prerequisite for the binary target.
-    + Fix FTBFS in buildd environment.
+  * Only set {build,binary}-arch as a prerequisite for the {build,binary}
+    targets.
 
- -- James McCoy <jamessan@debian.org>  Fri, 20 Jan 2012 17:58:25 -0500
+ -- James McCoy <jamessan@debian.org>  Fri, 20 Jan 2012 18:00:42 -0500
 
 smlnj (110.73-1) unstable; urgency=low
 
