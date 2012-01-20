@@ -157,9 +157,6 @@ install-arch: build-arch-stamp instscripts
 # install base pathconfig rules to smlnj-runtime package
 	install -m 644 config/extrapathconfig $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/lib/pathconfig
 
-
-binary-common:
-
 binary-arch: install-arch
 	dh_testdir -a
 	dh_testroot -a 
@@ -192,5 +189,5 @@ binary-indep: install-indep
 	dh_md5sums -i
 	dh_builddeb -i
 
-binary: binary-arch binary-indep
+binary: binary-arch
 .PHONY: unpack-source build build-arch build-indep clean binary-arch binary-indep binary install install-arch install-indep
