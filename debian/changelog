@@ -1,10 +1,10 @@
-smlnj (110.74-1) UNRELEASED; urgency=low
+smlnj (110.74-1) unstable; urgency=low
 
   * New upstream release.
     + Fixes building on 3.x kernels.
   * Remove sparc from Architecture list.
 
- -- James McCoy <jamessan@debian.org>  Sat, 18 Feb 2012 22:25:30 -0500
+ -- James McCoy <jamessan@debian.org>  Sat, 18 Feb 2012 22:46:38 -0500
 
 smlnj (110.73-2) unstable; urgency=low
 
