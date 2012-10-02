@@ -20,7 +20,7 @@ LIBDIR:=$(BINDIR)/lib
 
 VERSION=$(shell cat $(CONFIGDIR)/version)
 
-debscripts:=$(addprefix debian/,deregister mkorig pkg-deregister pkg-register register)
+debscripts:=$(addprefix debian/,deregister pkg-deregister pkg-register register)
 
 srcdirs:=$(basename $(wildcard *tgz))
 basedirs:=$(basename $(notdir $(wildcard base/*tgz)))
