@@ -154,8 +154,10 @@ install-arch: build-arch-stamp instscripts
 	
 # make sure that the build path doesn't sneak in the link and run scripts
 	sed -i 's/BIN_DIR=".*smlnj.*"/BIN_DIR="\/usr\/lib\/smlnj\/bin\/"/' $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/bin/.*-sml
-# install base pathconfig rules to smlnj-runtime package
-	install -m 644 config/extrapathconfig $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/lib/pathconfig
+# install extrapathconfig rules to smlnj-runtime package to use as a seed for
+# the trigger-generated pathconfig file
+	install -m 644 config/extrapathconfig $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/lib/
+	echo bindir ../bin >> $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/lib/extrapathconfig
 
 binary-arch: install-arch
 	dh_testdir -a

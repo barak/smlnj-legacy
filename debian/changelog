@@ -2,6 +2,8 @@ smlnj (110.74-2) UNRELEASED; urgency=low
 
   * Stop shipping /usr/lib/smlnj/bin/mkorig.  This is just used for packaging
     purposes.
+  * Install config/extrapathconfig as seed for pathconfig trigger.  (Closes:
+    #689123)
 
  -- James McCoy <jamessan@debian.org>  Tue, 02 Oct 2012 17:47:28 -0400
 
