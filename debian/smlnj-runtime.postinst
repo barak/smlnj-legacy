@@ -1,12 +1,25 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
 SMLNJ_HOME=/usr/lib/smlnj
+PATHCONFIG="$SMLNJ_HOME/lib/pathconfig"
 
-touch $SMLNJ_HOME/lib/pathconfig
-chmod 664 $SMLNJ_HOME/lib/pathconfig
+build_pathconfig() {
+    cp -f "$SMLNJ_HOME/lib/extrapathconfig" "$PATHCONFIG"
+    for f in "$SMLNJ_HOME"/lib/[^.]*; do
+        if [ -d "$f" ]; then
+            g="$(basename $f)"
+            echo "$g $g" >> "$PATHCONFIG"
+        fi
+    done
+    for f in "$SMLNJ_HOME"/bin/[^.]*; do
+        if [ -f "$f" ]; then
+            echo "$(basename $f) ../bin" >> "$PATHCONFIG"
+        fi
+    done
+}
 
-$SMLNJ_HOME/bin/register bindir ../bin
+build_pathconfig
 
 #DEBHELPER#
