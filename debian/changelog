@@ -9,6 +9,7 @@ smlnj (110.74-2) UNRELEASED; urgency=low
   * Remove {pkg-,}{de,}register scripts.  Updating pathconfig is now handled
     by triggers.
   * Remove no longer needed postinst/prerm maintainer scripts.
+  * Add Breaks for packages installing files under /usr/lib/smlnj
 
  -- James McCoy <jamessan@debian.org>  Tue, 02 Oct 2012 17:47:28 -0400
 
