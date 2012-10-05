@@ -20,15 +20,11 @@ LIBDIR:=$(BINDIR)/lib
 
 VERSION=$(shell cat $(CONFIGDIR)/version)
 
-debscripts:=$(addprefix debian/,deregister pkg-deregister pkg-register register)
-
 srcdirs:=$(basename $(wildcard *tgz))
 basedirs:=$(basename $(notdir $(wildcard base/*tgz)))
 
 notlibs:=smlnj-runtime smlnj-doc
 libpkgs:=$(filter-out $(notlibs),$(shell dh_listpackages))
-postinsts:=$(addsuffix .postinst,$(addprefix debian/,$(libpkgs)))
-prerms:=$(addsuffix .prerm,$(addprefix debian/,$(libpkgs)))
 
 vars.sed:
 	echo "s,@SHELL@,$(SHELL),g" > vars.sed
@@ -68,14 +64,6 @@ smlnj: boot
 	  chmod 555 wrapper/$$c; \
 	done
 
-debian/%.postinst: debian/postinst.in vars.sed
-	cat $< | sed -f vars.sed -e "s/@PKG@/$*/" > $@
-
-debian/%.prerm: debian/prerm.in vars.sed
-	cat $< | sed -f vars.sed -e "s/@PKG@/$*/" > $@
-
-instscripts: $(postinsts) $(prerms)
-
 unpack-source: unpack-source-stamp
 unpack-source-stamp:
 	cd base && for t in $(basedirs); do tar zxf $$t.tgz; done
@@ -87,9 +75,6 @@ build: build-arch
 
 build-arch: build-arch-stamp
 build-arch-stamp: unpack-source-stamp
-	mkdir -p debscripts
-	install -m 555 $(debscripts) debscripts
-	
 	cat debian/patches/* | patch -N -p1 1>/dev/null || true
 	cp config/targets config/targets.orig
 	cp debian/targets config/targets
@@ -115,12 +100,11 @@ clean:
 	rm -f *-stamp
 	
 	rm -f vars.sed
-	rm -f $(prerms) $(postinsts)
 	rm -f arch-n-opsys
 	rm -f boot*tgz
 	cd bootstrap && rm -rf bin ckit config lib src
 	rm -rf $(SRCDIR)/system/foo.* $(SRCDIR)/system/sml.*
-	rm -rf bin lib wrapper debscripts
+	rm -rf bin lib wrapper
 	
 	cd base && rm -rf $(basedirs)
 	rm -rf $(srcdirs)
@@ -138,7 +122,7 @@ install-indep: build-indep-stamp
 	dh_installdirs -i
 	dh_install -i
 
-install-arch: build-arch-stamp instscripts
+install-arch: build-arch-stamp
 	dh_testdir
 	dh_testroot
 	dh_prep

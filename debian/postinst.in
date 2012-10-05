@@ -1,7 +1,0 @@
-#!/bin/sh
-
-set -e
-
-@SMLNJ_HOME@/bin/pkg-register @PKG@
-
-#DEBHELPER#

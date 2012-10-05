@@ -6,6 +6,9 @@ smlnj (110.74-2) UNRELEASED; urgency=low
     #689123)
   * Add /usr/lib/smlnj trigger to smlnj-runtime to allow updating pathconfig
     automatically.
+  * Remove {pkg-,}{de,}register scripts.  Updating pathconfig is now handled
+    by triggers.
+  * Remove no longer needed postinst/prerm maintainer scripts.
 
  -- James McCoy <jamessan@debian.org>  Tue, 02 Oct 2012 17:47:28 -0400
 
