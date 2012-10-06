@@ -1,4 +1,4 @@
-smlnj (110.74-2) UNRELEASED; urgency=low
+smlnj (110.74-2) unstable; urgency=low
 
   * Stop shipping /usr/lib/smlnj/bin/mkorig.  This is just used for packaging
     purposes.
@@ -11,7 +11,7 @@ smlnj (110.74-2) UNRELEASED; urgency=low
   * Remove no longer needed postinst/prerm maintainer scripts.
   * Add Breaks for packages installing files under /usr/lib/smlnj
 
- -- James McCoy <jamessan@debian.org>  Tue, 02 Oct 2012 17:47:28 -0400
+ -- James McCoy <jamessan@debian.org>  Fri, 05 Oct 2012 20:46:53 -0400
 
 smlnj (110.74-1) unstable; urgency=low
 
