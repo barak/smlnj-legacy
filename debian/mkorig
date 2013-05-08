@@ -6,7 +6,7 @@
 # Updated by Daniel Moerner in October 2009 to accept --upstream-version
 # argument so this script can be called by uscan.
 
-if [ "$1" -ne "--upstream-version" ] ; then
+if [ "$1" != "--upstream-version" ] ; then
     echo "Usage: mkorig --upstream-version version"
     exit 1
 fi
