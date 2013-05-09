@@ -1,9 +1,9 @@
-smlnj (110.75-1) UNRELEASED; urgency=low
+smlnj (110.75-1) unstable; urgency=low
 
   * New upstream version.
   * Use interest-noawait for smlnj-runtime.
 
- -- James McCoy <jamessan@debian.org>  Tue, 07 May 2013 21:29:13 -0400
+ -- James McCoy <jamessan@debian.org>  Wed, 08 May 2013 20:08:08 -0400
 
 smlnj (110.74-2) unstable; urgency=low
 
