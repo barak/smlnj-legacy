@@ -1,9 +1,9 @@
-smlnj (110.76-1) UNRELEASED; urgency=low
+smlnj (110.76-1) unstable; urgency=low
 
   * New upstream version.
     + Fix comparisons of Int64 on amd64.  (Closes: #709459)
 
- -- James McCoy <jamessan@debian.org>  Mon, 16 Sep 2013 21:07:49 -0400
+ -- James McCoy <jamessan@debian.org>  Mon, 16 Sep 2013 21:48:08 -0400
 
 smlnj (110.75-1) unstable; urgency=low
 
