@@ -71,7 +71,7 @@ unpack-source-stamp:
 	touch $@
 
 # Architecture
-build: build-arch
+build: build-arch-stamp build-indep-stamp
 
 build-arch: build-arch-stamp
 build-arch-stamp: unpack-source-stamp
@@ -175,5 +175,5 @@ binary-indep: install-indep
 	dh_md5sums -i
 	dh_builddeb -i
 
-binary: binary-arch
+binary: binary-arch binary-indep
 .PHONY: unpack-source build build-arch build-indep clean binary-arch binary-indep binary install install-arch install-indep
