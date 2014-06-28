@@ -3,6 +3,12 @@ smlnj (110.76-2) UNRELEASED; urgency=medium
   * debian/control: Add Vcs-* fields
   * debian/rules: Actually build Arch: all packages when build/binary targets
     are used.
+  * Include documentation for ml-burg, ml-lex, and ml-yacc
+    + control: Add texlive-generic-recommended and transfig to
+      Build-Depends-Indep
+    + rules: Convert tree.fig to tree.ps to build ml-burg documentation
+    + smlnj-doc: Install ml-burg, ml-lex, and ml-yacc manuals
+    + Add doc-base registration for ml-burg, ml-lex, and ml-yacc
 
  -- James McCoy <jamessan@debian.org>  Tue, 24 Jun 2014 21:10:17 -0400
 

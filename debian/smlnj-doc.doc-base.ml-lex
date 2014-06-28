@@ -1,0 +1,8 @@
+Document: ml-lex
+Title: A lexical analyzer generator for Standard ML
+Author: Andrew W. Appel, James S. Mattson, and David R. Tarditi
+Abstract: An overview describing the use of ml-lex as a lexer generator
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/smlnj-doc/lexgen.pdf.gz

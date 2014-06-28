@@ -2,4 +2,7 @@ MLRISC/Doc/latex/*.ps
 MLRISC/Tools/Doc/nowhere.ps
 base/cm/Doc/*.pdf
 ml-lpt/doc/*.pdf
+ml-burg/doc/*.pdf
+ml-lex/*.pdf
+ml-yacc/doc/*.pdf
 nlffi/lib/Doc/manual/*.pdf

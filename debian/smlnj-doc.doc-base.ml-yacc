@@ -1,0 +1,8 @@
+Document: ml-yacc
+Title: ML-Yacc User's Manual
+Author: David R. Tarditi and Andrew W. Appel
+Abstract: An overview describing the use of ml-yacc as a parser generator
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/smlnj-doc/mlyacc.pdf.gz

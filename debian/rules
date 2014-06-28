@@ -87,10 +87,12 @@ build-indep-stamp: unpack-source-stamp
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	cd base/cm/Doc; latex manual.tex && latex manual.tex && dvipdfmx -o cm_manual.pdf manual.dvi
 	cd ml-lpt/doc; latex manual.tex && latex manual.tex && dvipdfmx -o ml-lpt_manual.pdf manual.dvi
+	cd ml-burg/doc; transfig -L ps tree.fig && make && latex doc.tex && latex doc.tex && dvipdfmx -o ml-burg_manual.pdf doc.dvi
 	cd nlffi/lib/Doc/manual; latex nlffi.tex && latex nlffi.tex && dvipdfmx nlffi.dvi
 	cd MLRISC/Doc; make
 	cd MLRISC/Tools/Doc; make
 	cd ml-lex; latex lexgen.tex && latex lexgen.tex && dvipdfmx lexgen.dvi
+	cd ml-yacc/doc; latex mlyacc.tex && latex mlyacc.tex && dvipdfmx mlyacc.dvi
 endif
 	touch $@
 
