@@ -10,6 +10,7 @@ smlnj (110.76-2) UNRELEASED; urgency=medium
     + smlnj-doc: Install ml-burg, ml-lex, and ml-yacc manuals
     + Add doc-base registration for ml-burg, ml-lex, and ml-yacc
   * Update man pages to refer to installed documentation  (Closes: #752914)
+  * Bump Standards-Version to 3.9.5, no changes required
 
  -- James McCoy <jamessan@debian.org>  Tue, 24 Jun 2014 21:10:17 -0400
 
