@@ -20,7 +20,7 @@ url=http://smlnj.cs.uchicago.edu/dist/working
 
 root_tarballs="ckit config pgraph smlnj-lib MLRISC cml eXene heap2asm \
 	       ml-burg ml-lex ml-yacc smlnj-c nlffi ml-lpt \
-	       trace-debug-profile"
+	       trace-debug-profile doc"
 base_tarballs="cm compiler runtime system"
 archs="x86 ppc sparc"
 
