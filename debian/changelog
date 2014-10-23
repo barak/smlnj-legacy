@@ -1,8 +1,9 @@
-smlnj (110.76-3) UNRELEASED; urgency=medium
+smlnj (110.77-1) UNRELEASED; urgency=medium
 
+  * New upstream release
   * debian/mkorig: Handle the new doc tarball.
 
- -- James McCoy <jamessan@debian.org>  Wed, 22 Oct 2014 22:59:18 -0400
+ -- James McCoy <jamessan@debian.org>  Wed, 22 Oct 2014 23:03:54 -0400
 
 smlnj (110.76-2) unstable; urgency=medium
 
