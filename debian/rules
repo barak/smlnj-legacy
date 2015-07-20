@@ -69,7 +69,6 @@ build: build-arch-stamp build-indep-stamp
 
 build-arch: build-arch-stamp
 build-arch-stamp:
-	cat debian/patches/* | patch -N -p1 1>/dev/null || true
 	cp config/targets config/targets.orig
 	cp debian/targets config/targets
 	$(MAKE) -f debian/rules smlnj
