@@ -1,2 +1,2 @@
-debian/ml-ulex.1
-debian/ml-antlr.1
+doc/man/man1/ml-ulex.1
+doc/man/man1/ml-antlr.1

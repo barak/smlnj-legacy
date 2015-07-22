@@ -1,3 +1,4 @@
-debian/sml.1
-debian/ml-build.1
-debian/ml-makedepend.1
+doc/man/man7/smlnj.7
+doc/man/man1/sml.1
+doc/man/man1/ml-build.1
+doc/man/man1/ml-makedepend.1
