@@ -1,5 +1,25 @@
-bin/.heap/sml.*linux usr/lib/smlnj/bin/.heap
-bin/sml bin/ml-build bin/ml-makedepend usr/lib/smlnj/bin
-lib/SMLNJ-MLRISC lib/SMLNJ-BASIS lib/burg-ext.cm lib/dir-tool.cm lib/grm-ext.cm lib/lex-ext.cm lib/make-tool.cm lib/mlburg-tool.cm lib/mllex-tool.cm lib/mlyacc-tool.cm lib/noweb-tool.cm lib/nw-ext.cm lib/pgraph.cm lib/pickle-lib.cm lib/shell-tool.cm lib/smlnj lib/smlnj-tdp usr/lib/smlnj/lib
-wrapper/ml-build wrapper/ml-makedepend wrapper/sml usr/bin
-MLRISC/demo/* usr/share/doc/smlnj/MLRISC-demo/
+build-dir/bin/.heap/sml.*linux usr/lib/smlnj/bin/.heap
+build-dir/bin/sml usr/lib/smlnj/bin
+build-dir/bin/ml-build usr/lib/smlnj/bin
+build-dir/bin/ml-makedepend usr/lib/smlnj/bin
+build-dir/lib/SMLNJ-MLRISC usr/lib/smlnj/lib
+build-dir/lib/SMLNJ-BASIS usr/lib/smlnj/lib
+build-dir/lib/burg-ext.cm usr/lib/smlnj/lib
+build-dir/lib/dir-tool.cm usr/lib/smlnj/lib
+build-dir/lib/grm-ext.cm usr/lib/smlnj/lib
+build-dir/lib/lex-ext.cm usr/lib/smlnj/lib
+build-dir/lib/make-tool.cm usr/lib/smlnj/lib
+build-dir/lib/mlburg-tool.cm usr/lib/smlnj/lib
+build-dir/lib/mllex-tool.cm usr/lib/smlnj/lib
+build-dir/lib/mlyacc-tool.cm usr/lib/smlnj/lib
+build-dir/lib/noweb-tool.cm usr/lib/smlnj/lib
+build-dir/lib/nw-ext.cm usr/lib/smlnj/lib
+build-dir/lib/pgraph.cm usr/lib/smlnj/lib
+build-dir/lib/pickle-lib.cm usr/lib/smlnj/lib
+build-dir/lib/shell-tool.cm usr/lib/smlnj/lib
+build-dir/lib/smlnj usr/lib/smlnj/lib
+build-dir/lib/smlnj-tdp usr/lib/smlnj/lib
+build-dir/wrapper/ml-build usr/bin
+build-dir/wrapper/ml-makedepend usr/bin
+build-dir/wrapper/sml usr/bin
+build-dir/MLRISC/demo/* usr/share/doc/smlnj/MLRISC-demo/

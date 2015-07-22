@@ -1,1 +1,1 @@
-lib/pgraph-util.cm usr/lib/smlnj/lib
+build-dir/lib/pgraph-util.cm usr/lib/smlnj/lib

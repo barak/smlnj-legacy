@@ -1,3 +1,3 @@
-MLRISC/Doc/html/*.html	/usr/share/doc/smlnj-doc/mlrisc/
-MLRISC/Doc/graphics/	/usr/share/doc/smlnj-doc/mlrisc/
-MLRISC/Doc/pictures/	/usr/share/doc/smlnj-doc/mlrisc/
+build-dir/MLRISC/Doc/html/*.html	/usr/share/doc/smlnj-doc/mlrisc/
+build-dir/MLRISC/Doc/graphics/	/usr/share/doc/smlnj-doc/mlrisc/
+build-dir/MLRISC/Doc/pictures/	/usr/share/doc/smlnj-doc/mlrisc/

@@ -1,1 +1,1 @@
-lib/cml usr/lib/smlnj/lib
+build-dir/lib/cml usr/lib/smlnj/lib

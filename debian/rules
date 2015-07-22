@@ -5,7 +5,7 @@ export DH_OPTIONS
 
 SHELL:=/bin/sh
 
-ROOT:=$(CURDIR)
+ROOT:=$(CURDIR)/build-dir
 
 CONFIGDIR:=$(ROOT)/config
 SRCDIR:=$(ROOT)/src
@@ -37,40 +37,43 @@ arch-n-opsys: $(CONFIGDIR)/_arch-n-opsys vars.sed
 	chmod 777 $@
 
 $(BS_SML):
-	for f in $(srcdirs); do cp -a $$f bootstrap; done
-	mkdir -p bootstrap/base
-	for f in $(basedirs); do cp -a base/$$f bootstrap/base; done
-	cd bootstrap && URLGETTER=/bin/false ./config/install.sh
+	for f in $(srcdirs); do cp -a $$f $(ROOT)/bootstrap; done
+	mkdir -p $(ROOT)/bootstrap/base
+	for f in $(basedirs); do cp -a base/$$f $(ROOT)/bootstrap/base; done
+	cd $(ROOT)/bootstrap && URLGETTER=/bin/false ./config/install.sh
 
 boot.%.tgz: $(BS_SML)
-	cd base/system && echo "CMB.make();" | $< "\$$smlnj/cmb.cm";
-	cd base/system/sml.boot.$* \
+	cd $(ROOT)/base/system && echo "CMB.make();" | $< "\$$smlnj/cmb.cm";
+	cd $(ROOT)/base/system/sml.boot.$* \
 	   && $(BS_LINK) @SMLboot=BOOTLIST @SMLheap=sml @SMLalloc=1M \
 	                 @SMLrebuild="foo"
-	rm -r base/system/sml.boot.$*
-	rm -r base/system/*.bin.$*
-	mv base/system/foo.boot.$* base/system/sml.boot.$*
-	cd base/system && tar zcf $(ROOT)/$@ sml.boot.$*;
+	rm -r $(ROOT)/base/system/sml.boot.$*
+	rm -r $(ROOT)/base/system/*.bin.$*
+	mv $(ROOT)/base/system/foo.boot.$* $(ROOT)/base/system/sml.boot.$*
+	cd $(ROOT)/base/system && tar zcf $(ROOT)/$@ sml.boot.$*;
 
 boot: arch-n-opsys
 	eval `./arch-n-opsys` && $(MAKE) -f debian/rules boot.$$ARCH-unix.tgz;
 
 smlnj: boot
-	config/install.sh
+	cd $(ROOT) && ./config/install.sh
 	
-	mkdir -p wrapper
-	for c in `cd bin && ls`; do \
-	  cat debian/wrapper.in | sed -f vars.sed -e "s/@CMD@/$$c/g" > wrapper/$$c; \
-	  chmod 555 wrapper/$$c; \
+	mkdir -p $(ROOT)/wrapper
+	for c in `cd $(ROOT)/bin && ls`; do \
+	  cat debian/wrapper.in | sed -f vars.sed -e "s/@CMD@/$$c/g" > $(ROOT)/wrapper/$$c; \
+	  chmod 555 $(ROOT)/wrapper/$$c; \
 	done
+
+$(ROOT):
+	mkdir -p $(ROOT)
+	for d in $$(ls -A | grep -v debian); do cp -a $$d $(ROOT); done
 
 # Architecture
 build: build-arch-stamp build-indep-stamp
 
 build-arch: build-arch-stamp
-build-arch-stamp:
-	cp config/targets config/targets.orig
-	cp debian/targets config/targets
+build-arch-stamp: $(ROOT)
+	cp debian/targets build-dir/config/targets
 	$(MAKE) -f debian/rules smlnj
 	
 	touch $@
@@ -78,14 +81,14 @@ build-arch-stamp:
 build-indep: build-indep-stamp
 build-indep-stamp:
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-	cd base/cm/Doc; latex manual.tex && latex manual.tex && dvipdfmx -o cm_manual.pdf manual.dvi
-	cd ml-lpt/doc; latex manual.tex && latex manual.tex && dvipdfmx -o ml-lpt_manual.pdf manual.dvi
-	cd ml-burg/doc; transfig -L ps tree.fig && make && latex doc.tex && latex doc.tex && dvipdfmx -o ml-burg_manual.pdf doc.dvi
-	cd nlffi/lib/Doc/manual; latex nlffi.tex && latex nlffi.tex && dvipdfmx nlffi.dvi
-	cd MLRISC/Doc; make
-	cd MLRISC/Tools/Doc; make
-	cd ml-lex; latex lexgen.tex && latex lexgen.tex && dvipdfmx lexgen.dvi
-	cd ml-yacc/doc; latex mlyacc.tex && latex mlyacc.tex && dvipdfmx mlyacc.dvi
+	cd $(ROOT)/base/cm/Doc; latex manual.tex && latex manual.tex && dvipdfmx -o cm_manual.pdf manual.dvi
+	cd $(ROOT)/ml-lpt/doc; latex manual.tex && latex manual.tex && dvipdfmx -o ml-lpt_manual.pdf manual.dvi
+	cd $(ROOT)/ml-burg/doc; transfig -L ps tree.fig && make && latex doc.tex && latex doc.tex && dvipdfmx -o ml-burg_manual.pdf doc.dvi
+	cd $(ROOT)/nlffi/lib/Doc/manual; latex nlffi.tex && latex nlffi.tex && dvipdfmx nlffi.dvi
+	cd $(ROOT)/MLRISC/Doc; make
+	cd $(ROOT)/MLRISC/Tools/Doc; make
+	cd $(ROOT)/ml-lex; latex lexgen.tex && latex lexgen.tex && dvipdfmx lexgen.dvi
+	cd $(ROOT)/ml-yacc/doc; latex mlyacc.tex && latex mlyacc.tex && dvipdfmx mlyacc.dvi
 endif
 	touch $@
 
@@ -94,18 +97,13 @@ clean:
 	dh_testroot
 	rm -f *-stamp
 	
+	rm -rf $(ROOT)
 	rm -f vars.sed
 	rm -f arch-n-opsys
 	rm -f boot*tgz
-	cd bootstrap && rm -rf bin ckit config lib src
 	rm -rf $(SRCDIR)/system/foo.* $(SRCDIR)/system/sml.*
-	rm -rf bin lib wrapper
-	find -type d -name .cm -exec rm -r '{}' +
-	[ ! -f config/targets.orig ] || mv config/targets.orig config/targets
 	
 	rm -rf sml.boot.*
-	
-	cd bootstrap && rm -rf `ls -A | grep -v unix.tgz`
 	
 	dh_clean
 

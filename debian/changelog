@@ -5,6 +5,7 @@ smlnj (110.78-1) UNRELEASED; urgency=medium
   * Switch to 3.0 (quilt) source format
   * Fix i386 build on Linux 4.x kernels.  (Closes: #790283)
   * Replace Debian man pages with new upstream man pages.
+  * Perform build in a build directory for easy cleanup.
 
  -- James McCoy <jamessan@debian.org>  Sun, 19 Jul 2015 23:07:30 -0400
 

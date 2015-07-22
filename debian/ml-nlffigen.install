@@ -1,3 +1,3 @@
-bin/.heap/ml-nlffigen.*linux usr/lib/smlnj/bin/.heap
-bin/ml-nlffigen usr/lib/smlnj/bin
-wrapper/ml-nlffigen usr/bin
+build-dir/bin/.heap/ml-nlffigen.*linux usr/lib/smlnj/bin/.heap
+build-dir/bin/ml-nlffigen usr/lib/smlnj/bin
+build-dir/wrapper/ml-nlffigen usr/bin

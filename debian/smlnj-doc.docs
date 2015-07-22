@@ -1,8 +1,8 @@
-MLRISC/Doc/latex/*.ps
-MLRISC/Tools/Doc/nowhere.ps
-base/cm/Doc/*.pdf
-ml-lpt/doc/*.pdf
-ml-burg/doc/*.pdf
-ml-lex/*.pdf
-ml-yacc/doc/*.pdf
-nlffi/lib/Doc/manual/*.pdf
+build-dir/MLRISC/Doc/latex/*.ps
+build-dir/MLRISC/Tools/Doc/nowhere.ps
+build-dir/base/cm/Doc/*.pdf
+build-dir/ml-lpt/doc/*.pdf
+build-dir/ml-burg/doc/*.pdf
+build-dir/ml-lex/*.pdf
+build-dir/ml-yacc/doc/*.pdf
+build-dir/nlffi/lib/Doc/manual/*.pdf
