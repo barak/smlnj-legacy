@@ -79,7 +79,7 @@ build-arch-stamp: $(ROOT)
 	touch $@
 
 build-indep: build-indep-stamp
-build-indep-stamp:
+build-indep-stamp: $(ROOT)
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	cd $(ROOT)/base/cm/Doc; latex manual.tex && latex manual.tex && dvipdfmx -o cm_manual.pdf manual.dvi
 	cd $(ROOT)/ml-lpt/doc; latex manual.tex && latex manual.tex && dvipdfmx -o ml-lpt_manual.pdf manual.dvi
