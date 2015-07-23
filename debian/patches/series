@@ -1,2 +1,3 @@
 use-psfig-not-epsfig.diff
 recognize-linux-4.x.diff
+ppc-build-fixes.diff
