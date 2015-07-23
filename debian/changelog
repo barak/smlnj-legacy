@@ -1,9 +1,9 @@
-smlnj (110.78-2) UNRELEASED; urgency=medium
+smlnj (110.78-2) unstable; urgency=medium
 
   * Ensure build-dir is created before build-indep tries to use it.
   * Fix FTBFS on powerpc.
 
- -- James McCoy <jamessan@debian.org>  Wed, 22 Jul 2015 00:16:49 -0400
+ -- James McCoy <jamessan@debian.org>  Wed, 22 Jul 2015 23:19:56 -0400
 
 smlnj (110.78-1) unstable; urgency=medium
 
