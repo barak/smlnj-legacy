@@ -66,7 +66,7 @@ smlnj: boot
 
 $(ROOT):
 	mkdir -p $(ROOT)
-	for d in $$(ls -A | grep -v debian); do cp -a $$d $(ROOT); done
+	for d in $$(ls -A | grep -v -e debian -e build-dir); do cp -a $$d $(ROOT); done
 
 # Architecture
 build: build-arch-stamp build-indep-stamp
