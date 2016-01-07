@@ -27,17 +27,20 @@ archs="x86 ppc sparc"
 mkdir -p $orig
 for t in $root_tarballs ; do
     wget -O $orig/$t.tgz $url/$version/$t.tgz
+    tar ax -C $orig -f $orig/$t.tgz && rm -f $orig/$t.tgz
 done
 
 mkdir -p $orig/bootstrap
 for t in $archs ; do
     img=boot.$t-unix.tgz
     wget -O $orig/bootstrap/$img $url/$version/$img
+    tar ax -C $orig/bootstrap -f $orig/bootstrap/$img && rm -f $orig/bootstrap/$img
 done
 
 mkdir -p $orig/base
 for t in $base_tarballs ; do
     wget -O $orig/base/$t.tgz $url/$version/$t.tgz
+    tar ax -C $orig/base -f $orig/base/$t.tgz && rm -f $orig/base/$t.tgz
 done
 
 tar zcf ../smlnj_$version.orig.tar.gz $orig
