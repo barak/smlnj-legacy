@@ -2,6 +2,7 @@ smlnj (110.79-1) UNRELEASED; urgency=medium
 
   * New upstream release.
     + Remove all patches, merged upstream.
+  * Add latexmk Build-Depends-Indep for new documentation build process.
 
  -- James McCoy <jamessan@debian.org>  Wed, 03 Aug 2016 23:07:17 -0400
 
