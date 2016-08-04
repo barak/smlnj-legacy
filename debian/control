@@ -14,7 +14,7 @@ Build-Depends-Indep: ghostscript,
                      texlive-math-extra,
                      texlive-pictures,
                      transfig
-Standards-Version: 3.9.5
+Standards-Version: 3.9.8
 Homepage: http://www.smlnj.org/
 Vcs-Git: https://anonscm.debian.org/git/collab-maint/smlnj.git
 Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/smlnj.git
