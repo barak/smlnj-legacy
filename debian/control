@@ -2,7 +2,7 @@ Source: smlnj
 Section: devel
 Priority: optional
 Maintainer: James McCoy <jamessan@debian.org>
-Build-Depends: debhelper (>= 7), gcc-multilib [amd64]
+Build-Depends: debhelper (>= 9), gcc-multilib [amd64]
 Build-Depends-Indep: ghostscript,
                      latexmk,
                      texlive-binaries,
