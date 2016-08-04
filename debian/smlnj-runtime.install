@@ -1,4 +1,4 @@
 build-dir/bin/.arch-n-opsys usr/lib/smlnj/bin
 build-dir/bin/.link-sml usr/lib/smlnj/bin
-build-dir/bin/.run-sml usr/lib/smlnj/bin
 build-dir/bin/.run usr/lib/smlnj/bin
+build-dir/bin/.run-sml usr/lib/smlnj/bin

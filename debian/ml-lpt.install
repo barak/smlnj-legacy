@@ -2,8 +2,8 @@ build-dir/bin/.heap/ml-antlr.*linux	usr/lib/smlnj/bin/.heap
 build-dir/bin/.heap/ml-ulex.*linux	usr/lib/smlnj/bin/.heap
 build-dir/bin/ml-antlr			usr/lib/smlnj/bin
 build-dir/bin/ml-ulex			usr/lib/smlnj/bin
-build-dir/wrapper/ml-ulex			usr/bin
-build-dir/wrapper/ml-antlr		usr/bin
 build-dir/lib/ml-antlr-tool.cm		usr/lib/smlnj/lib
-build-dir/lib/ml-ulex-tool.cm		usr/lib/smlnj/lib
 build-dir/lib/ml-lpt-lib.cm		usr/lib/smlnj/lib
+build-dir/lib/ml-ulex-tool.cm		usr/lib/smlnj/lib
+build-dir/wrapper/ml-antlr		usr/bin
+build-dir/wrapper/ml-ulex			usr/bin
