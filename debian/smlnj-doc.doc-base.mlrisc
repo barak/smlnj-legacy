@@ -9,5 +9,5 @@ Format: HTML
 Index: /usr/share/doc/smlnj-doc/mlrisc/index.html
 Files: /usr/share/doc/smlnj-doc/mlrisc/*.html
 
-Format: PostScript
-Files: /usr/share/doc/smlnj-doc/mlrisc.ps.gz
+Format: PDF
+Files: /usr/share/doc/smlnj-doc/mlrisc.pdf.gz

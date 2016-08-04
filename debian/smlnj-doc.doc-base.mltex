@@ -7,5 +7,5 @@ Abstract: MLTeX is a special LaTeX package for writing MLRISC
  is an accompanying tool called mltex2html for generating HTML pages.
 Section: Programming
 
-Format: PostScript
-Files: /usr/share/doc/smlnj-doc/mltexdoc.ps.gz
+Format: PDF
+Files: /usr/share/doc/smlnj-doc/mltexdoc.pdf.gz

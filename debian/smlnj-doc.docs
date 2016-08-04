@@ -1,4 +1,4 @@
-build-dir/MLRISC/Doc/latex/*.ps
+build-dir/MLRISC/Doc/latex/*.pdf
 build-dir/MLRISC/Tools/Doc/nowhere.ps
 build-dir/base/cm/Doc/*.pdf
 build-dir/ml-burg/doc/*.pdf
