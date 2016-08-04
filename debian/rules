@@ -143,7 +143,7 @@ binary-arch: install-arch
 	dh_installdocs --exclude=".cvsignore" -a
 	dh_installexamples --exclude=".cvsignore" -a
 	dh_installman -a
-	dh_strip -a
+	dh_strip -a --no-automatic-dbgsym
 	dh_compress -a
 	dh_fixperms -a
 	dh_installdeb -a
@@ -159,7 +159,6 @@ binary-indep: install-indep
 	dh_installdocs --exclude=".cvsignore" -i
 	dh_installexamples --exclude=".cvsignore" -i
 	dh_installman -i
-	dh_strip -i
 	dh_compress -i
 	dh_fixperms -i
 	dh_installdeb -i
