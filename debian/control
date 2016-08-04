@@ -16,8 +16,8 @@ Build-Depends-Indep: ghostscript,
                      transfig
 Standards-Version: 3.9.5
 Homepage: http://www.smlnj.org/
-Vcs-Git: git://anonscm.debian.org/collab-maint/smlnj.git
-Vcs-Browser: https://anonscm.debian.org/gitweb/?p=collab-maint/smlnj.git
+Vcs-Git: https://anonscm.debian.org/git/collab-maint/smlnj.git
+Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/smlnj.git
 
 Package: smlnj
 Architecture: amd64 i386 powerpc
