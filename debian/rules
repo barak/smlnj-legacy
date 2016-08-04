@@ -21,7 +21,7 @@ LIBDIR:=$(BINDIR)/lib
 VERSION=$(shell cat $(CONFIGDIR)/version)
 
 srcdirs:=ckit cml config doc eXene heap2asm ml-burg ml-lex ml-lpt MLRISC ml-yacc nlffi pgraph smlnj-c smlnj-lib trace-debug-profile
-basedirs:=cm compiler runtime system
+basedirs:=cm compiler old-basis runtime system
 
 notlibs:=smlnj-runtime smlnj-doc
 libpkgs:=$(filter-out $(notlibs),$(shell dh_listpackages))

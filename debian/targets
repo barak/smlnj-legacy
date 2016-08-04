@@ -2,6 +2,7 @@
 # See the upstream file for more details about this file
 
 request src-smlnj
+request old-basis
 request ml-ulex
 # WARNING: This is incompatible with ml-ulex-lex-ext!!
 #request ml-ulex-lex-ext
