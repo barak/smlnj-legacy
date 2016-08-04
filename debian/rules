@@ -119,7 +119,7 @@ install-arch: build-arch-stamp
 	dh_testdir
 	dh_testroot
 	dh_prep
-	dh_installdirs -s
+	dh_installdirs -a
 	
 	dh_installchangelogs -psmlnj base/compiler/ChangeLog upstream
 	dh_installchangelogs -plibcml-smlnj cml/CHANGES upstream
@@ -127,7 +127,7 @@ install-arch: build-arch-stamp
 	dh_installchangelogs -plibsmlnj-smlnj smlnj-lib/CHANGES upstream
 	dh_installchangelogs -plibckit-smlnj ckit/HISTORY upstream
 	
-	dh_install -s --list-missing
+	dh_install -a --list-missing
 	
 # make sure that the build path doesn't sneak in the link and run scripts
 	sed -i 's/BIN_DIR=".*smlnj.*"/BIN_DIR="\/usr\/lib\/smlnj\/bin\/"/' $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/bin/.*-sml
