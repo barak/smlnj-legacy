@@ -52,21 +52,6 @@ Description: Documentation for Standard ML of New Jersey
 Package: smlnj-runtime
 Architecture: amd64 i386 powerpc
 Depends: ${misc:Depends}, ${shlibs:Depends}
-Breaks: libckit-smlnj (<< 110.74-2~),
-        libcml-smlnj (<< 110.74-2~),
-        libcmlutil-smlnj (<< 110.74-2~),
-        libexene-smlnj (<< 110.74-2~),
-        libmlnlffi-smlnj (<< 110.74-2~),
-        libmlrisctools-smlnj (<< 110.74-2~),
-        libpgraphutil-smlnj (<< 110.74-2~),
-        libsmlnj-smlnj (<< 110.74-2~),
-        ml-burg (<< 110.74-2~),
-        ml-lex (<< 110.74-2~),
-        ml-lpt (<< 110.74-2~),
-        ml-nlffigen (<< 110.74-2~),
-        ml-yacc (<< 110.74-2~),
-        nowhere (<< 110.74-2~),
-        smlnj (<< 110.74-2~)
 Description: Standard ML of New Jersey runtime system
  SML/NJ is an implementation of the Standard ML programming language.
  This package includes the runtime system only -- it provides garbage
