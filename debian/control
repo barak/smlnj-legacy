@@ -11,7 +11,7 @@ Build-Depends-Indep: ghostscript,
                      texlive-latex-base,
                      texlive-latex-extra,
                      texlive-latex-recommended,
-                     texlive-math-extra,
+                     texlive-science,
                      texlive-pictures,
                      transfig
 Standards-Version: 3.9.8
@@ -98,7 +98,7 @@ Description: Parser generator for Standard ML
 Package: ml-burg
 Architecture: amd64 i386 powerpc
 Depends: ml-lex (= ${binary:Version}), ${misc:Depends}
-Description: Code generator generator for Standard ML
+Description: Code generator for Standard ML
  ml-burg generates a Standard ML program to perform bottom-up
  rewriting of an input tree.  Cost information associated with each
  rewrite rule is used to derive the minimum rewrite cost for the

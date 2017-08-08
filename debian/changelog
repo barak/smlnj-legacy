@@ -1,3 +1,22 @@
+smlnj (110.79-4) unstable; urgency=medium
+
+  * QA upload.
+  * Fix "FTBFS: Unescaped left brace in regex is illegal here in regex":
+    extend debian/patches/mltex2html-perl-fixes to escape literal opening
+    braces in mltex2html script.
+    (Closes: #871335)
+
+ -- gregor herrmann <gregoa@debian.org>  Tue, 08 Aug 2017 11:46:37 -0400
+
+smlnj (110.79-3) unstable; urgency=medium
+
+  * QA upload.
+  * Update the build dependency from texlive-math-extra
+    to texlive-science.
+  * Fix a spelling error in the ml-burg package description.
+
+ -- Adrian Bunk <bunk@debian.org>  Mon, 03 Jul 2017 23:15:53 +0300
+
 smlnj (110.79-2) unstable; urgency=medium
 
   * Add mltex2html-perl-fixes patch.  Fixes FTBFS when '.' is not part of @INC
