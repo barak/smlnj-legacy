@@ -6,8 +6,7 @@ Build-Depends: debhelper (>= 9), gcc-multilib [amd64]
 Build-Depends-Indep: ghostscript,
                      latexmk,
                      texlive-binaries,
-                     texlive-generic-extra,
-                     texlive-generic-recommended,
+                     texlive-plain-generic,
                      texlive-latex-base,
                      texlive-latex-extra,
                      texlive-latex-recommended,
@@ -16,8 +15,6 @@ Build-Depends-Indep: ghostscript,
                      transfig
 Standards-Version: 3.9.8
 Homepage: http://www.smlnj.org/
-Vcs-Git: https://anonscm.debian.org/git/collab-maint/smlnj.git
-Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/smlnj.git
 
 Package: smlnj
 Architecture: amd64 i386 powerpc

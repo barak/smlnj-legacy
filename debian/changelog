@@ -1,3 +1,12 @@
+smlnj (110.79-5) unstable; urgency=medium
+
+  * QA upload.
+  * Build-depend on texlive-plain-generic instead of obsolete texlive-
+    generic-extra and texlive-generic-recommended. Closes: #933588.
+  * Drop references to obsolete anonscm.debian.org.
+
+ -- Steve Langasek <vorlon@debian.org>  Sat, 28 Sep 2019 22:12:41 -0700
+
 smlnj (110.79-4) unstable; urgency=medium
 
   * QA upload.
