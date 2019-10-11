@@ -5,12 +5,8 @@ smlnj (110.79-6) unstable; urgency=medium
     + Recover git packaging repo and use the one under Salsa Debian
       group.
     + Bump Standards-Version to 4.4.1.
-    + Mark package smlnj-doc as Multi-Arch: foreign.
-  * debian/rules:
-    + Do not compress .fig files and .pdf files to allow correct
-      documentation reading.
 
- -- Boyuan Yang <byang@debian.org>  Fri, 11 Oct 2019 11:26:41 -0400
+ -- Boyuan Yang <byang@debian.org>  Fri, 11 Oct 2019 11:23:31 -0400
 
 smlnj (110.79-5) unstable; urgency=medium
 
