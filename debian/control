@@ -39,6 +39,7 @@ Description: Standard ML of New Jersey interactive compiler
 
 Package: smlnj-doc
 Architecture: all
+Multi-Arch: foreign
 Section: doc
 Depends: ${misc:Depends}
 Suggests: smlnj
