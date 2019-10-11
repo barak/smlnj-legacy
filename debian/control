@@ -13,8 +13,10 @@ Build-Depends-Indep: ghostscript,
                      texlive-science,
                      texlive-pictures,
                      transfig
-Standards-Version: 3.9.8
+Standards-Version: 4.4.1
 Homepage: http://www.smlnj.org/
+Vcs-Git: https://salsa.debian.org/debian/smlnj.git
+Vcs-Browser: https://salsa.debian.org/debian/smlnj
 
 Package: smlnj
 Architecture: amd64 i386 powerpc
