@@ -8,6 +8,6 @@
 #
 
 version=3
-http://www.smlnj.org/ \
+https://www.smlnj.org/ \
 		      dist/working/(.*)/index.html \
                 debian debian/mkorig
