@@ -138,7 +138,7 @@ install-arch: build-arch-stamp
 
 binary-arch: install-arch
 	dh_testdir -a
-	dh_testroot -a 
+	dh_testroot -a
 	dh_installchangelogs -a
 	dh_installdocs --exclude=".cvsignore" -a
 	dh_installexamples --exclude=".cvsignore" -a
@@ -154,7 +154,7 @@ binary-arch: install-arch
 
 binary-indep: install-indep
 	dh_testdir -i
-	dh_testroot -i 
+	dh_testroot -i
 	dh_installchangelogs -i
 	dh_installdocs --exclude=".cvsignore" -i
 	dh_installexamples --exclude=".cvsignore" -i
