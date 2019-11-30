@@ -113,7 +113,7 @@ install-indep: build-indep-stamp
 	dh_testdir
 	dh_testroot
 	dh_installdirs -i
-	dh_install -i --list-missing
+	dh_install -i
 
 install-arch: build-arch-stamp
 	dh_testdir
@@ -127,7 +127,7 @@ install-arch: build-arch-stamp
 	dh_installchangelogs -plibsmlnj-smlnj smlnj-lib/CHANGES upstream
 	dh_installchangelogs -plibckit-smlnj ckit/HISTORY upstream
 	
-	dh_install -a --list-missing
+	dh_install -a
 	
 # make sure that the build path doesn't sneak in the link and run scripts
 	sed -i 's/BIN_DIR=".*smlnj.*"/BIN_DIR="\/usr\/lib\/smlnj\/bin\/"/' $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/bin/.*-sml
@@ -138,7 +138,7 @@ install-arch: build-arch-stamp
 
 binary-arch: install-arch
 	dh_testdir -a
-	dh_testroot -a 
+	dh_testroot -a
 	dh_installchangelogs -a
 	dh_installdocs --exclude=".cvsignore" -a
 	dh_installexamples --exclude=".cvsignore" -a
@@ -154,7 +154,7 @@ binary-arch: install-arch
 
 binary-indep: install-indep
 	dh_testdir -i
-	dh_testroot -i 
+	dh_testroot -i
 	dh_installchangelogs -i
 	dh_installdocs --exclude=".cvsignore" -i
 	dh_installexamples --exclude=".cvsignore" -i
