@@ -1,4 +1,4 @@
-smlnj (110.79-7) UNRELEASED; urgency=medium
+smlnj (110.79-7) unstable; urgency=medium
 
   * QA upload.
 
@@ -8,7 +8,7 @@ smlnj (110.79-7) UNRELEASED; urgency=medium
   * Use secure URI in Homepage field.
   * Bump debhelper from old 9 to 12.
 
- -- Jelmer Vernooĳ <jelmer@debian.org>  Fri, 20 Aug 2021 13:52:11 +0100
+ -- Jelmer Vernooĳ <jelmer@debian.org>  Fri, 20 Aug 2021 13:52:12 +0100
 
 smlnj (110.79-6) unstable; urgency=medium
 
