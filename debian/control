@@ -2,7 +2,7 @@ Source: smlnj
 Section: devel
 Priority: optional
 Maintainer: Debian QA Group <packages@qa.debian.org>
-Build-Depends: debhelper-compat (= 12), gcc-multilib [amd64]
+Build-Depends: debhelper-compat (= 13), gcc-multilib [amd64]
 Build-Depends-Indep: ghostscript,
                      latexmk,
                      texlive-binaries,
