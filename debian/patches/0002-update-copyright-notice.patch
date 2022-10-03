@@ -1,0 +1,89 @@
+From: "Barak A. Pearlmutter" <bap@debian.org>
+Date: Mon, 3 Oct 2022 09:15:00 +0100
+Subject: update copyright notice
+
+This addresses the "may not sell ... with a commercial product or
+service" copyright notice in the files
+- libraries/ckit/src/parser/util/error-sig.sml
+- libraries/ckit/src/parser/util/error.sml
+which upstream fixed immediately upon being informed of the issue.
+
+The upstream development commit cherry picked here is:
+ https://github.com/smlnj/smlnj/commit/4f48994d0f7b434ef258c64cf6aa59b752a13bbe
+For discussion, see
+ https://github.com/smlnj/smlnj/issues/258
+---
+ ckit/src/parser/util/error-sig.sml | 25 ++-----------------------
+ ckit/src/parser/util/error.sml     | 25 ++-----------------------
+ 2 files changed, 4 insertions(+), 46 deletions(-)
+
+diff --git a/ckit/src/parser/util/error-sig.sml b/ckit/src/parser/util/error-sig.sml
+index 6e3c74a..51647de 100644
+--- a/ckit/src/parser/util/error-sig.sml
++++ b/ckit/src/parser/util/error-sig.sml
+@@ -1,28 +1,7 @@
+-(*
+- * Copyright (c) 1996 by Satish Chandra, Brad Richards, Mark D. Hill, 
+- * James R. Larus, and David A. Wood.
+- *
+- * Teapot is distributed under the following conditions:
+- * 
+- *     You may make copies of Teapot for your own use and modify those copies.
+- * 
+- *     All copies of Teapot must retain our names and copyright notice.
+- * 
+- *     You may not sell Teapot or distributed Teapot in conjunction with a
+- *     commercial product or service without the expressed written consent of
+- *     the copyright holders.
+- * 
+- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+- * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- * 
+- *)
+-
+ (* error-sig.sml
+  *
+- * CS703 --- Project --- Spring '94
+- *
+- * COPYRIGHT (c) 1992 AT&T Bell Laboratories
++ * COPYRIGHT (c) 2022 The Fellowship of SML/NJ (http://www.smlnj.org)
++ * All rights reserved.
+  *)
+ 
+ signature ERROR =
+diff --git a/ckit/src/parser/util/error.sml b/ckit/src/parser/util/error.sml
+index 89cb733..86824a1 100644
+--- a/ckit/src/parser/util/error.sml
++++ b/ckit/src/parser/util/error.sml
+@@ -1,28 +1,7 @@
+-(*
+- * Copyright (c) 1996 by Satish Chandra, Brad Richards, Mark D. Hill, 
+- * James R. Larus, and David A. Wood.
+- *
+- * Teapot is distributed under the following conditions:
+- * 
+- *     You may make copies of Teapot for your own use and modify those copies.
+- * 
+- *     All copies of Teapot must retain our names and copyright notice.
+- * 
+- *     You may not sell Teapot or distributed Teapot in conjunction with a
+- *     commercial product or service without the expressed written consent of
+- *     the copyright holders.
+- * 
+- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+- * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- * 
+- *)
+-
+ (* error.sml
+  *
+- * CS703 --- Project --- Spring '94
+- *
+- * COPYRIGHT (c) 1992 AT&T Bell Laboratories
++ * COPYRIGHT (c) 2022 The Fellowship of SML/NJ (http://www.smlnj.org)
++ * All rights reserved.
+  *)
+ 
+ structure Error : ERROR =
