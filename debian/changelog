@@ -1,20 +1,18 @@
-smlnj (110.79-7) UNRELEASED; urgency=medium
-
-  [ Jelmer Vernooĳ ]
-  * QA upload.
+smlnj (110.79-7) unstable; urgency=medium
 
   [ Debian Janitor ]
   * Trim trailing whitespace.
   * Use secure URI in debian/watch.
   * Use secure URI in Homepage field.
-  * Bump debhelper from old 9 to 12.
 
   [ Barak A. Pearlmutter ]
   * Cherry-pick upstream copyright fix as patch (closes: #998154)
-  * Bump debhelper from old 12 to 13.
+  * Bump debhelper from old 9 to 13.
   * Update standards version to 4.6.1, no changes needed.
+  * Rules do not require root.
+  * Adopt package (closes: #837735)
 
- -- Barak A. Pearlmutter <bap@debian.org>  Mon, 03 Oct 2022 09:17:03 +0100
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 03 Oct 2022 09:27:56 +0100
 
 smlnj (110.79-6) unstable; urgency=medium
 
