@@ -86,7 +86,7 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	cd $(ROOT)/nlffi/lib/Doc/manual; latex nlffi.tex && latex nlffi.tex && dvipdfmx nlffi.dvi
 	cd $(ROOT)/MLRISC/Doc; make
 	cd $(ROOT)/MLRISC/Tools/Doc; make
-	cd $(ROOT)/ml-lex; latex lexgen.tex && latex lexgen.tex && dvipdfmx lexgen.dvi
+	cd $(ROOT)/ml-lex/doc; pdflatex ml-lex.tex
 	cd $(ROOT)/ml-yacc/doc; latex mlyacc.tex && latex mlyacc.tex && dvipdfmx mlyacc.dvi
 endif
 	touch $@

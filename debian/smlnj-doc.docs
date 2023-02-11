@@ -2,7 +2,7 @@ build-dir/MLRISC/Doc/latex/*.pdf
 build-dir/MLRISC/Tools/Doc/nowhere.ps
 build-dir/base/cm/Doc/*.pdf
 build-dir/ml-burg/doc/*.pdf
-build-dir/ml-lex/*.pdf
+build-dir/ml-lex/doc/*.pdf
 build-dir/ml-lpt/doc/*.pdf
 build-dir/ml-yacc/doc/*.pdf
 build-dir/nlffi/lib/Doc/manual/*.pdf
