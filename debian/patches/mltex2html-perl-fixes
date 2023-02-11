@@ -1,6 +1,24 @@
+From: James McCoy <jamessan@debian.org>
+Date: Tue, 13 Sep 2016 21:39:39 -0400
+Subject: mltex2html-perl-fixes
+
+Fix FTBFS when '.' is not part of @INC and escape literal '{' in regex
+
+Expanded by gregor herrmann <gregoa@debian.org> on Tue, 8 Aug 2017 11:46:37 -0400
+
+Fix "FTBFS: Unescaped left brace in regex is illegal here in regex":
+extend debian/patches/mltex2html-perl-fixes to escape literal opening
+braces in mltex2html script.
+See https://bugs.debian.org/871335
+---
+ MLRISC/Doc/html/mltex2html | 81 +++++++++++++++++++++++-----------------------
+ 1 file changed, 41 insertions(+), 40 deletions(-)
+
+diff --git a/MLRISC/Doc/html/mltex2html b/MLRISC/Doc/html/mltex2html
+index 24d393f..ff8b48a 100755
 --- a/MLRISC/Doc/html/mltex2html
 +++ b/MLRISC/Doc/html/mltex2html
-@@ -844,10 +844,10 @@
+@@ -844,10 +844,10 @@ sub math
     # subscript/superscripts
     $math =~ s|_([^{])|<sub>\1</sub>|g;
     $math =~ s|\^([^{])|<sup>\1</sup>|g;
@@ -15,7 +33,7 @@
  
     # other stuff 
     $math =~ s|\\edge\{($PARAM)\}|&rarr<sub>\1</sub>|g;
-@@ -1000,6 +1000,7 @@
+@@ -1000,6 +1000,7 @@ newcommand("tableofcontents", 0, \&tableofcontents);
  # Import style file
  #
  ############################################################################
@@ -23,7 +41,7 @@
  require "mltex.thm";
  
  ############################################################################
-@@ -1266,7 +1267,7 @@
+@@ -1266,7 +1267,7 @@ sub processSection
  
       # Verbatim mode handling
       if ($MODE eq "verbatim")
@@ -32,7 +50,7 @@
          else 
          { s/</&lt;/g;
            s/>/&gt;/g;
-@@ -1276,7 +1277,7 @@
+@@ -1276,7 +1277,7 @@ sub processSection
       }
  
       if ($MODE eq "alltt")
@@ -41,7 +59,7 @@
          push @TEXT, $_;
          next;
       }
-@@ -1296,16 +1297,16 @@
+@@ -1296,16 +1297,16 @@ sub processSection
       }
   
       # special formatting environments 
@@ -66,7 +84,7 @@
       s|\&|</tt><dd>|g if $MODE eq "methods";
       s|\\\\|<dt><tt>|g if $MODE eq "methods";
  
-@@ -1314,19 +1315,19 @@
+@@ -1314,19 +1315,19 @@ sub processSection
       s|\\item|<li>|;
    
       # Tables
@@ -92,7 +110,7 @@
       if ($MODE eq "sml") { $_ = smldisplay($_); }
    
       # Math mode handling
-@@ -1342,27 +1343,27 @@
+@@ -1342,27 +1343,27 @@ sub processSection
  
       if (s|\\\[\s*$|<dl><dt><dd>|) { enterMode("displaymath"); }
       if (s|\\\]|</dl>|) { leaveMode("displaymath"); }
@@ -133,7 +151,7 @@
  
       # Indentation
       s|\\noindent ||g;
-@@ -1407,16 +1408,16 @@
+@@ -1407,16 +1408,16 @@ sub processDocument
        s|\\\\|&newline()|oge if $MODE eq "latex";
  
        # How to handle environment
