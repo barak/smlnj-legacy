@@ -1,11 +1,14 @@
-(*
+(* cm-boot.sml
+ *
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
  * This is the module that actually puts together the contents of the
  * structure CM people find in $smlnj/cm/full.cm.
  *
- *   Copyright (c) 1999, 2000 by Lucent Bell Laboratories
- *
  * author: Matthias Blume (blume@cs.princeton.edu)
  *)
+
 functor LinkCM (structure HostBackend : BACKEND) = struct
 
   datatype envrequest = AUTOLOAD | BARE
@@ -186,9 +189,7 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 
 	  fun initPaths () = let
 	      val lpcth = #get StdConfig.local_pathconfig ()
-	      val p = case lpcth () of
-		  NONE => []
-		| SOME f => [f]
+	      val p = (case lpcth () of NONE => [] | SOME f => [f])
 	      val p = #get StdConfig.pathcfgspec () () :: p
 	      fun processOne f = let
 		  val work =  SrcPath.processSpecFile
@@ -679,12 +680,14 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 	fun procCmdLine () = let
 	    val autoload = errorwrap (ignore o autoload)
 	    val make = errorwrap (ignore o make)
-	    fun p (f, mk, ("sml" | "sig" | "fun")) = useFile f
-	      | p (f, mk, "cm") = mk f
-	      | p (f, mk, e) = Say.say ["!* unable to process `", f,
-					"' (unknown extension `", e, "')\n"]
+            fun processFile (file, mk, ext) = (case ext
+		  of ("sml" | "sig" | "fun") => useFile file
+		   | "cm" => mk file
+		   | _ => Say.say [
+			"!* unable to process '", file, "' (unknown extension '", ext, "')\n"
+		      ]
+		  (* end case *))
 	    fun inc n = n + 1
-
 	    fun show_controls (getarg, getval, padval) level = let
 		fun walk indent (ControlRegistry.RTree rt) = let
 		    open FormatComb
@@ -724,26 +727,24 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 			    (BasicControl.topregistry, Option.map inc level))
 	    end
 
-	    fun help level =
-	       (Say.say
-		    ["sml [rtsargs] [options] [files]\n\
+	  (* !!Important!!
+           * This message should be kept in sync with the manpage (doc/src/man/sml.1.txt)
+           *)
+	    fun help level = (Say.say [
+		     "\
+		     \sml [rtsargs] [options] [files]\n\
 		     \\n\
 		     \  rtsargs:\n\
-		     \    @SMLload=<h>     (start specified heap image)\n\
-		     \    @SMLalloc=<s>    (specify size of allocation area)\n\
+		     \    @SMLversion      (echo the version of SML/NJ then exit)\n\
+		     \    @SMLload=<h>     (load specified heap image)\n\
 		     \    @SMLcmdname=<n>  (set command name)\n\
+		     \    @SMLsuffix       (echo heap suffix for the system then exit)\n\
+		     \    @SMLalloc=<s>    (specify size of allocation area)\n\
+                     \    @SMLrun=<rt>     (specify runtime system)\n\
 		     \    @SMLquiet        (load heap image silently)\n\
 		     \    @SMLverbose      (show heap image load progress)\n\
 		     \    @SMLobjects      (show list of executable objects)\n\
 		     \    @SMLdebug=<f>    (write debugging info to file)\n\
-		     \\n\
-		     \  files:\n\
-		     \    <file>.cm        (CM.make or CM.autoload)\n\
-		     \    -m               (switch to CM.make)\n\
-		     \    -a               (switch to CM.autoload; default)\n\
-		     \    <file>.sig       (use)\n\
-		     \    <file>.sml       (use)\n\
-		     \    <file>.fun       (use)\n\
 		     \\n\
 		     \  options:\n\
 		     \    -D<name>=<v>     (set CM variable to given value)\n\
@@ -756,7 +757,17 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 		     \    -S               (list all current settings)\n\
 		     \    -s<level>        (limited list of settings)\n\
 		     \    -E               (list all environment variables)\n\
-		     \    -e<level>        (limited list of environment variables)\n\n"];
+		     \    -e<level>        (list limited list of environment variables)\n\n\
+		     \\n\
+		     \  files:\n\
+		     \    <file>.cm        (CM.make or CM.autoload)\n\
+		     \    -m               (switch to CM.make)\n\
+		     \    -a               (switch to CM.autoload; default)\n\
+		     \    <file>.sig       (use)\n\
+		     \    <file>.sml       (use)\n\
+		     \    <file>.fun       (use)\n\
+		     \"
+		  ];
 		show_controls (Controls.name o #ctl,
 			       fn ci =>
 				  concat ["(", #help (Controls.info (#ctl ci)),
@@ -840,7 +851,7 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 		     | level => show_envvars (Int.fromString level);
 		   quit_if last)
 	      | carg (_, f, mk, _) =
-		  p (f, mk, String.map Char.toLower
+		  processFile (f, mk, String.map Char.toLower
 				       (getOpt (OS.Path.ext f, "<none>")))
 
 	    fun args ([], _) = ()

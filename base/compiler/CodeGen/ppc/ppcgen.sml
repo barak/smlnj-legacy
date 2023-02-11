@@ -1,11 +1,13 @@
 (* ppcgen.sml
  *
- * COPYRIGHT (c) 1999 Bell Laboratories.
+ * COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
+ * Machine-code generation for the PowerPC architecture (32-bt mode).
  *)
 
-structure PPCMC = 
-  FLINTComp(
-    structure Gen=PPCCG
-    fun collect epthunk = (PPCCG.finish ();
-			   CodeString.getCodeString (epthunk ())))
+structure PPCMC = CPSCompFn (
+    structure Gen = PPCCG
+    fun collect getEP = (
+	  PPCCG.finish ();
+	  CodeString.getCodeString (getEP ())))

@@ -1,6 +1,5 @@
 (* list-set-fn.sml
  *
- * COPYRIGHT (c) 1996 by AT&T Research.  See COPYRIGHT file for details.
  * COPYRIGHT (c) 2012 The Fellowship of SML/NJ (http://www.smlnj.org)
  * All rights reserved.
  *
@@ -136,6 +135,11 @@ functor ListSetFn (K : ORD_KEY) :> ORD_SET where type Key.ord_key = K.ord_key =
     fun isEmpty [] = true
       | isEmpty _ = false
 
+    fun minItem [] = raise Empty
+      | minItem (x::_) = x
+
+    fun maxItem xs = List.last xs
+
     fun equal (s1, s2) = let
 	  fun f ([], []) = true
 	    | f (x::r1, y::r2) = (Key.compare(x, y) = EQUAL) andalso f (r1, r2)
@@ -165,14 +169,27 @@ functor ListSetFn (K : ORD_KEY) :> ORD_SET where type Key.ord_key = K.ord_key =
 	    f (s1, s2)
 	  end
 
+    fun disjoint ([], _) = true
+      | disjoint (_, []) = true
+      | disjoint (x::r1, y::r2) = (case Key.compare(x, y)
+	   of LESS => disjoint (r1, y::r2)
+	    | EQUAL => false
+	    | GREATER => disjoint (x::r1, r2)
+	  (* end case *))
+
   (* Return the number of items in the set *)
     fun numItems l = List.length l
 
   (* Return a list of the items in the set *)
-    fun listItems l = l
+    fun toList l = l
 
     val app = List.app
     fun map f s1 = List.foldl (fn (x, s) => add(s, f x)) [] s1
+    fun mapPartial f s = let
+	  fun f' (x, acc) = (case f x of SOME x' => add(acc, x') | NONE => acc)
+	  in
+	    List.foldl f' [] s
+	  end
     val foldr = List.foldr
     val foldl = List.foldl
     val filter = List.filter
@@ -180,6 +197,9 @@ functor ListSetFn (K : ORD_KEY) :> ORD_SET where type Key.ord_key = K.ord_key =
     val exists = List.exists
     val all = List.all
     val find = List.find
+
+  (* deprecated *)
+    val listItems = toList
 
   end (* IntListMap *)
 

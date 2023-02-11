@@ -1,13 +1,14 @@
-(* Copyright 1996 by AT&T Bell Laboratories *)
-(* assembly.sig *)
-
-(* 
- * This file provides the interface to the structures provied by the runtime 
+(* assembly.sig
+ *
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
+ * This file provides the interface to the structures provied by the runtime
  * system. The BOXED version is supposed to correspond to the assembly and
- * the C code that implement the functions using the boxed calling 
+ * the C code that implement the functions using the boxed calling
  * conventions. Right now, we tried hard to eliminate the polymorphic type
- * in the BOXED version because they are interpreted differently across 
- * different versions of the compilers. In "core.sml", we use the magic 
+ * in the BOXED version because they are interpreted differently across
+ * different versions of the compilers. In "core.sml", we use the magic
  * (and "dirty") cast to force them into the right ML types. (ZHONG)
  *)
 
@@ -16,10 +17,10 @@ signature ASSEMBLY =
     type object
     datatype 'a option = NONE | SOME of 'a
 
-    structure A : 
+    structure A :
       sig
         type c_function
-        eqtype word8array
+        type word8array = PrimTypes.word8array
         eqtype real64array
         type spin_lock
 
@@ -31,11 +32,11 @@ signature ASSEMBLY =
         val create_s : int -> string
         val create_v : int * 'a list -> 'a vector
         val floor : real -> int
-        val logb : real -> int
+        val logb : real -> int			(* DEPRECATED *)
         val scalb : real * int -> real
         val try_lock : spin_lock -> bool
         val unlock : spin_lock -> unit
-      end 
+      end
 
     exception Div
     exception Overflow
@@ -56,10 +57,10 @@ signature ASSEMBLYBOXED =
   sig
     type object
     datatype 'a option = NONE | SOME of 'a
-    structure A : 
+    structure A :
       sig
         type c_function
-        eqtype word8array
+        type word8array = PrimTypes.word8array
         eqtype real64array
         type spin_lock
 
@@ -69,13 +70,13 @@ signature ASSEMBLYBOXED =
         val create_b : object -> word8array
         val create_r : object -> real64array
         val create_s : object -> string
-        val create_v : object -> object 
+        val create_v : object -> object
         val floor : object -> object
-        val logb : object -> object
+        val logb : object -> object			(* DEPRECATED *)
         val scalb : object -> object
         val try_lock : spin_lock -> object
         val unlock : spin_lock -> object
-      end 
+      end
 
     exception Div
     exception Overflow

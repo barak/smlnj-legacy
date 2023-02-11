@@ -1,8 +1,7 @@
 #!/bin/sh
 #
-# gen-posix-names.sh
-#
-# COPYRIGHT (c) 1996 AT&T Research.
+# COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+# All rights reserved.
 #
 # Generate string-to-int tables for run-time POSIX values
 # queried using sysconf and (f)pathconf.
@@ -44,15 +43,53 @@ case "$VERSION" in
   # newer versions of the Mac OS X developer tools keep the include files inside the Xcode
   # application bundle, so we add that as a possible path.
   *x86-darwin*)
-    case `uname -r` in
-      13.*) SDK=MacOSX10.9.sdk ;;
-      *) SDK=none ;;
-    esac
-    if test x$SDK != xnone ; then
-      # note: at some point, we might use "xcrun --show-sdk-path", but that only works
-      # with Xcode 5.x+
-      XCODE_DEV_PATH=`xcode-select --print-path`
-      INCLFILE=$XCODE_DEV_PATH/Platforms/MacOSX.platform/Developer/SDKs/$SDK/usr/include/unistd.h
+    if test -r /usr/include/unistd.h ; then
+      INCLFILE=/usr/include/unistd.h
+    else
+    # some versions of the Mac OS X developer tools keep the include files inside the Xcode
+    # application bundle, so we add that as a possible path.
+      case `uname -r` in
+	13.*) SDK=MacOSX10.9.sdk ;;
+	14.*) SDK=MacOSX10.10.sdk ;;
+	15.*) SDK=MacOSX10.11.sdk ;;
+	16.*) SDK=MacOSX10.12.sdk ;;
+	17.*) SDK=MacOSX10.13.sdk ;;
+	# Note that for Mojave (macOS 10.14; Darwin 18.x), we use the High Sierra SDK, since
+	# building 32-bit apps is no longer supported.
+	18.*) SDK=MacOSX10.13.sdk ;;
+	19.*)
+	  echo "macOS 10.15 Catalina does not support 32-bit executables"
+	  exit 1
+	  ;;
+	*) SDK=none ;;
+      esac
+      if test x$SDK != xnone ; then
+	# note: at some point, we might use "xcrun --show-sdk-path", but that only works
+	# with Xcode 5.x+
+	XCODE_DEV_PATH=`xcode-select --print-path`
+	if [ x"$XCODE_DEV_PATH" = x/Library/Developer/CommandLineTools ] ; then
+	  XCODE_SDK_PATH="$XCODE_DEV_PATH"/SDKs
+	else
+	  XCODE_SDK_PATH=`xcode-select -p`/Platforms/MacOSX.platform/Developer/SDKs
+	fi
+	INCLFILE=$XCODE_SDK_PATH/$SDK/usr/include/unistd.h
+        # verify that unistd.h exists at the expected place
+        #
+        if test ! -r $INCLFILE ; then
+	  echo "gen-posix-names.sh: unable to find <unistd.h>"
+	  exit 1
+	fi
+      fi
+    fi
+    ;;
+  *amd64-darwin)
+    XCODE_SDK_PATH=`xcrun --show-sdk-path`
+    INCLFILE=$XCODE_SDK_PATH/usr/include/unistd.h
+    # verify that unistd.h exists at the expected place
+    #
+    if test ! -r $INCLFILE ; then
+      echo "gen-posix-names.sh: unable to find <unistd.h>"
+      exit 1
     fi
     ;;
   *) ;;

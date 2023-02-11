@@ -1,10 +1,12 @@
-(* memDisambig.sml --- generate a table of regions *)
+(* memDisambig.sml
+ *
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *)
 
 signature MEM_DISAMBIGUATION = sig
   val build : CPS.function list -> (int -> CPSRegions.region)
 end
-
-
 
 functor MemDisambiguate(structure Cells: CELLS) : MEM_DISAMBIGUATION = struct
   structure C = CPS
@@ -25,7 +27,7 @@ functor MemDisambiguate(structure Cells: CELLS) : MEM_DISAMBIGUATION = struct
     fun peekRegion v = SOME(Intmap.map regionTbl v) handle _ => NONE
     fun addRegion(arg as (x,v)) = (Intmap.rmv regionTbl x; enterRegion arg)
 
-    (* compute the size of a CPS assuming that the allocation 
+    (* compute the size of a CPS assuming that the allocation
      * pointer has been appropriately aligned.
      *)
     fun sizeOf(cexp, hp) = let
@@ -34,24 +36,23 @@ functor MemDisambiguate(structure Cells: CELLS) : MEM_DISAMBIGUATION = struct
 	val hp = if Word.andb(Word.fromInt hp, 0w4) <> 0w0 then hp+4 else hp
       in hp + 8*len + 4
       end
-      fun record len = 4 + 4*len 
+      fun record len = 4 + 4*len
     in
-      case cexp 
-      of C.RECORD(C.RK_FBLOCK, vl, _, e) => sizeOf(e, frecord(length vl))
+      case cexp
+      of C.RECORD(C.RK_RAW64BLOCK, vl, _, e) => sizeOf(e, frecord(length vl))
        | C.RECORD(C.RK_FCONT, vl, _, e)  => sizeOf(e, frecord(length vl))
        | C.RECORD(C.RK_VECTOR, vl, _, e) => sizeOf(e, hp+record(length vl + 3))
        | C.RECORD(_, vl, _, e) => sizeOf(e, hp + record(length vl))
        | C.SELECT(_, _, _, _, e) => sizeOf(e, hp)
        | C.OFFSET(_,_,_,e) => sizeOf(e, hp)
-       | C.SWITCH(_,_,el) => 
+       | C.SWITCH(_,_,el) =>
 	  List.foldl Int.max 0 (map (fn e => sizeOf(e, hp)) el)
        | C.SETTER(P.update,_,e) => sizeOf(e, hp+storeListSz)
-       | C.SETTER(P.boxedupdate,_,e) => sizeOf(e, hp+storeListSz)
        | C.SETTER(_, _, e) => sizeOf(e, hp)
        | C.PURE(P.fwrap, _, _, _, e) => sizeOf(e, hp+frecord(1))
        | C.PURE(P.mkspecial, _, _, _, e) => sizeOf(e, hp+8)
        | C.PURE(P.makeref, _, _, _, e) => sizeOf(e, hp+8)
-       | C.PURE(P.i32wrap, _, _, _, e) => sizeOf(e, hp+record(2))
+       | C.PURE(P.i32wrap, _, _, _, e) => sizeOf(e, hp+record(2))	(* 64BIT: FIXME *)
        | C.PURE(P.newarray0, _, _, _, e) => sizeOf(e, hp+(4*5))
        | C.PURE(_, _, _, _, e) => sizeOf(e, hp)
        | C.ARITH(_, _, _, _, e) => sizeOf(e, hp)
@@ -64,7 +65,7 @@ functor MemDisambiguate(structure Cells: CELLS) : MEM_DISAMBIGUATION = struct
     val offp0 = C.OFFp 0
 
     fun funBody(_, _, _, _, cexp) = let
-      val regionIdTbl = 
+      val regionIdTbl =
 	Array.tabulate(Int.quot(sizeOf(cexp, 0), 4), fn _ => newRegion())
 
       fun regionId hp = R.RVAR(Array.sub(regionIdTbl, Int.quot(hp, 4)))
@@ -79,7 +80,7 @@ functor MemDisambiguate(structure Cells: CELLS) : MEM_DISAMBIGUATION = struct
 
         fun record(vl, x, e) = let
 	  fun fields ([], _) = []
-	    | fields ((v, ap)::vl, hp) = 
+	    | fields ((v, ap)::vl, hp) =
 	       (regionId(hp), traceRoot v, ap)::fields(vl, hp+4)
         in
 	  enterRegion(x, R.RECORD(desc(hp)::fields(vl, hp+4)));
@@ -97,25 +98,25 @@ functor MemDisambiguate(structure Cells: CELLS) : MEM_DISAMBIGUATION = struct
 	  iter (e, hp + 4 + 8*length vl)
         end
 
-	fun recordSlots((d, R.RECORD vl, _)::rest) = 
+	fun recordSlots((d, R.RECORD vl, _)::rest) =
 	     R.REGIONS(d, recordSlots (vl@rest))
 	  | recordSlots((d, R.OFFSET(_, vl), _)::rest) =
 	     R.REGIONS(d, recordSlots (vl@rest))
 	  | recordSlots [(d, _, _)] = d
 	  | recordSlots((d, _, _)::rest) = R.REGIONS(d, recordSlots rest)
 
-	fun update(C.VAR a, C.VAR v, e) = 
+	fun update(C.VAR a, C.VAR v, e) =
 	     (case (peekRegion a, peekRegion v)
 	      of (NONE, NONE) => enterRegion(a, R.MUTABLE(R.RW_MEM, R.RO_MEM))
-	       | (NONE, SOME(R.RECORD rl)) => 
+	       | (NONE, SOME(R.RECORD rl)) =>
 		   enterRegion(a, R.MUTABLE(R.RW_MEM, recordSlots rl))
 	       | (SOME _, NONE) => ()
-	       | (SOME(R.MUTABLE(def,use)), SOME(R.RECORD rl)) => 
+	       | (SOME(R.MUTABLE(def,use)), SOME(R.RECORD rl)) =>
 		   addRegion(a, R.MUTABLE(def, R.REGIONS(use, recordSlots rl)))
               (*esac*);
 	      iter(e, hp))
 	  | update(_, _, e) = iter(e, hp)
-	    
+
 	fun select(C.VAR v, i, x, e) =
 	    (case peekRegion v
 	     of SOME(R.RECORD vl) => let
@@ -161,20 +162,18 @@ functor MemDisambiguate(structure Cells: CELLS) : MEM_DISAMBIGUATION = struct
 	 | C.SWITCH(_, _, el) => List.app (fn e => iter(e, hp)) el
 	 | C.BRANCH(_, _, _, e1, e2) => (iter(e1, hp); iter(e2, hp))
 	 | C.SETTER(P.update, [a,_,v], e) => update(a, v, e)
-	 | C.SETTER(P.boxedupdate, [a,_,v], e) => update(a, v, e)
-	 | C.SETTER(P.numupdate{kind=P.FLOAT 64}, [a,i,v], e) => 
-	     update(a, v, e)
+	 | C.SETTER(P.numupdate{kind=P.FLOAT 64}, [a,i,v], e) => update(a, v, e)
 	 | C.SETTER(_, _, e) => iter(e, hp)
 	 | C.LOOKER(_, _, _, _, e) => iter(e, hp)
 	 | C.ARITH(_, _, _, _, e) => iter(e, hp)
 	 | C.PURE(P.mkspecial, [i,v], x, _, e) => record([(v, offp0)], x, e)
 	 | C.PURE(P.fwrap, [u], x, _, e) => frecord([(u, offp0)], x, e)
-	 | C.PURE(P.i32wrap, [u], x, _, e) =>
+	 | C.PURE(P.i32wrap, [u], x, _, e) =>		(* 64BIT: FIXME *)
 	     record([(u, offp0),(C.INT 0, offp0)], x, e)
 	 | C.PURE(P.makeref, [v], x, _, e) => let
-	     val uses = 
+	     val uses =
 	       case v
-	       of C.VAR lvar => 
+	       of C.VAR lvar =>
 		    (case peekRegion lvar
 	             of NONE => R.RO_MEM
 	              | SOME(R.RECORD vl) => recordSlots vl
@@ -183,8 +182,8 @@ functor MemDisambiguate(structure Cells: CELLS) : MEM_DISAMBIGUATION = struct
 		      | SOME r => r
 		     (*esac*))
 	        | _ => R.RO_MEM
-	     val defs = 
-	       R.REGIONS(R.RW_MEM, 
+	     val defs =
+	       R.REGIONS(R.RW_MEM,
 			 R.REGIONS(regionId(hp), regionId(hp+4)))
 	   in
 	     enterRegion(x, R.MUTABLE(defs, uses));

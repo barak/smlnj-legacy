@@ -1,7 +1,10 @@
-(* Copyright (c) 1997 YALE FLINT PROJECT *)
-(* ltybasic.sml *)
+(* ltybasic.sml
+ *
+ * COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *)
 
-structure LtyBasic : LTYBASIC = 
+structure LtyBasic : LTYBASIC =
 struct
 
 local structure PT = PrimTyc
@@ -17,10 +20,10 @@ local structure PT = PrimTyc
       val tk_out = LK.tk_out
 
       val tc_inj = LK.tc_inj
-      val tc_out = LK.tc_out 
- 
+      val tc_out = LK.tc_out
+
       val lt_inj = LK.lt_inj
-      val lt_out = LK.lt_out 
+      val lt_out = LK.lt_out
 
       val tcc_env = LK.tcc_env
       val ltc_env = LK.ltc_env
@@ -30,17 +33,17 @@ local structure PT = PrimTyc
       val itos = Int.toString
 
       fun plist(p, []) = ""
-        | plist(p, x::xs) = 
+        | plist(p, x::xs) =
             (p x) ^ (String.concat (map (fn z => ("," ^ (p z))) xs))
 
-      fun pfflag (LT.FF_VAR b) = 
+      fun pfflag (LT.FF_VAR b) =
             let fun pff (true, true) = "rr"  | pff (true, false) = "rc"
                   | pff (false, true) = "cr" | pff (false, false) = "cc"
              in pff b
             end
         | pfflag (LT.FF_FIXED) = "f"
 
-      fun parw(p, (ff, t1, t2)) = 
+      fun parw(p, (ff, t1, t2)) =
             "<" ^ (p t1) ^ "> -" ^ pfflag ff ^ "-> <" ^ (p t2) ^ ">"
 
 in
@@ -51,7 +54,7 @@ open Lty LtyDef
 val mkTvar : unit -> tvar = LT.mkTvar
 
 (** utility functions for constructing tkinds *)
-fun tkc_arg n = 
+fun tkc_arg n =
   let fun h (n, r) = if n < 1 then r else h(n-1, tkc_mono::r)
    in h(n, [])
   end
@@ -78,14 +81,14 @@ fun ffd_fspec (LT.FF_FIXED) = (true,true)
   | ffd_fspec (LT.FF_VAR x) = x
 
 (** utility functions for constructing tycs *)
-val tcc_int    = tcc_prim PT.ptc_int31
-val tcc_int32  = tcc_prim PT.ptc_int32
-val tcc_real   = tcc_prim PT.ptc_real
+val tcc_int    = tcc_prim PT.ptc_int
+val tcc_num    = tcc_prim o PT.ptc_num
+val tcc_real   = tcc_prim PT.ptc_real	(* REAL32: FIXME *)
 val tcc_string = tcc_prim PT.ptc_string
 val tcc_exn    = tcc_prim PT.ptc_exn
 val tcc_void   = tcc_prim PT.ptc_void
 val tcc_unit   = tcc_tuple []
-val tcc_bool   = 
+val tcc_bool   =
   let val tbool = tcc_sum [tcc_unit, tcc_unit]
       val tsig_bool = tcc_fn ([tkc_mono], tbool)
    in tcc_fix((1, #["bool"], tsig_bool, []), 0)
@@ -111,7 +114,7 @@ fun tcc_etag x   = tcc_app(tcc_prim PT.ptc_etag, [x])
 
 (** primitive lambda ltys *)
 val ltc_int    = ltc_tyc tcc_int
-val ltc_int32  = ltc_tyc tcc_int32
+val ltc_num    = ltc_tyc o tcc_num
 val ltc_real   = ltc_tyc tcc_real
 val ltc_string = ltc_tyc tcc_string
 val ltc_exn    = ltc_tyc tcc_exn
@@ -145,7 +148,7 @@ val rf_eqv    : rflag * rflag -> bool = LK.rf_eqv
 
 (** (pretty?) printing of tkinds, tycs, and ltys -- see pplty.sml for real
  ** pretty printing **)
-fun tk_print (x : tkind) = 
+fun tk_print (x : tkind) =
   (case tk_out x
     of LT.TK_MONO => "K0"
      | LT.TK_BOX => "KB0"
@@ -156,7 +159,7 @@ fun tk_print (x : tkind) =
 fun tc_print (x : tyc) =
   (case (tc_out x)
     of LT.TC_VAR(i,j) => "TV(" ^ (DI.di_print i) ^ "," ^ (itos j) ^ ")"
-     | LT.TC_NVAR v => "NTV(v" ^ (itos v) ^ ")"
+     | LT.TC_NVAR v => "NTV(v" ^ LambdaVar.prLvar v ^ ")"
      | LT.TC_PRIM pt => PT.pt_print pt
      | LT.TC_FN(ks, t) =>
          "(\\[" ^ plist(tk_print, ks) ^ "]." ^ (tc_print t) ^ ")"
@@ -169,12 +172,12 @@ fun tc_print (x : tyc) =
      | LT.TC_SUM tcs =>
          "TSUM(" ^ (plist(tc_print, tcs)) ^ ")"
      | LT.TC_FIX {family={gen=tc,params=ts,...}, index=i} =>
-         if tc_eqv(x,tcc_bool) then "B" 
-         else if tc_eqv(x,tcc_list) then "LST" 
+         if tc_eqv(x,tcc_bool) then "B"
+         else if tc_eqv(x,tcc_list) then "LST"
          else (let (* val ntc = case ts of [] => tc
                                                  | _ => tcc_app(tc, ts) *)
                    val _ = 1
-               in ("DT{" ^ "DATA"  ^ (* "[" ^ (tc_print tc)  
+               in ("DT{" ^ "DATA"  ^ (* "[" ^ (tc_print tc)
                    ^ "] &&" ^ (plist(tc_print, ts))
                    ^ "&&" ^*)  "===" ^ (itos i) ^ "}")
                end)
@@ -185,7 +188,7 @@ fun tc_print (x : tyc) =
          parw(fn u => plist(tc_print,u),(ff,z1,z2))
      | LT.TC_PARROW _ => bug "unexpected TC_PARROW in tc_print"
      | LT.TC_TOKEN (k, t) =>
-         if LT.token_isvalid k then 
+         if LT.token_isvalid k then
              (LT.token_abbrev k) ^ "(" ^ (tc_print t) ^ ")"
          else bug "unexpected TC_TOKEN tyc in tc_print"
      | LT.TC_CONT ts => "Cnt(" ^ (plist(tc_print,ts)) ^ ")"
@@ -196,7 +199,7 @@ fun lt_print (x : lty) =
   (case lt_out x
     of LT.LT_TYC t => tc_print t
      | LT.LT_STR zs => "S{" ^ (plist(lt_print, zs)) ^ "}"
-     | LT.LT_FCT (ts1,ts2) => 
+     | LT.LT_FCT (ts1,ts2) =>
          "(" ^ (plist(lt_print, ts1)) ^ ") ==> ("
          ^ (plist(lt_print, ts2)) ^ ")"
      | LT.LT_POLY(ks, ts) =>
@@ -211,13 +214,13 @@ val tc_depth : tyc * depth -> depth = LK.tc_depth
 val tcs_depth: tyc list * depth -> depth = LK.tcs_depth
 
 (** adjusting an lty or tyc from one depth to another *)
-fun lt_adj (lt, d, nd) = 
-  if d = nd then lt 
+fun lt_adj (lt, d, nd) =
+  if d = nd then lt
   else ltc_env(lt, 0, nd - d, LT.teEmpty)
 
-fun tc_adj (tc, d, nd) = 
-  if d = nd then tc 
-  else tcc_env(tc, 0, nd - d, LT.teEmpty) 
+fun tc_adj (tc, d, nd) =
+  if d = nd then tc
+  else tcc_env(tc, 0, nd - d, LT.teEmpty)
        (* handle LK.TCENV => bug "tc_adj" *)
 
 (** The following functions are similiar to lt_adj and tc_adj;
@@ -226,18 +229,18 @@ fun tc_adj (tc, d, nd) =
     is really lt_adj_k with k set to 0. Both functions are currently
     called only in lcontract.sml. *)
 local
-fun mkTycEnv (i, k, dd, te) = 
-  if i >= k then te 
+fun mkTycEnv (i, k, dd, te) =
+  if i >= k then te
   else mkTycEnv(i+1, k, dd, LT.teCons(LT.Lamb(dd+i,[]),te))
   (* dbm: no ks available *)
 
-in 
-fun lt_adj_k (lt, d, nd, k) = 
-  if d = nd then lt 
+in
+fun lt_adj_k (lt, d, nd, k) =
+  if d = nd then lt
   else ltc_env(lt, k, nd-d+k, mkTycEnv(0, k, nd-d, LT.teEmpty))
 
-fun tc_adj_k (tc, d, nd, k) = 
-  if d = nd then tc 
+fun tc_adj_k (tc, d, nd, k) =
+  if d = nd then tc
   else tcc_env(tc, k, nd-d+k, mkTycEnv(0, k, nd-d, LT.teEmpty))
        handle LK.TCENV => bug "tc_adj_k"
 
@@ -258,7 +261,7 @@ exception tkUnbound = LT.tkUnbound
 val initTkEnv = LT.initTkEnv
 val tkLookup = LT.tkLookup
 val tkInsert = LT.tkInsert
-  
+
 (***************************************************************************
  *            UTILITY FUNCTIONS ON TYC ENVIRONMENT                         *
  ***************************************************************************)
@@ -273,24 +276,24 @@ val teCons = LT.teCons
  ***************************************************************************)
 
 (** utility values and functions on ltyEnv *)
-type ltyEnv = (lty * DebIndex.depth) IntRedBlackMap.map
+type ltyEnv = (lty * DebIndex.depth) LambdaVar.Map.map
 
 exception ltUnbound
-val initLtyEnv : ltyEnv = IntRedBlackMap.empty
+val initLtyEnv : ltyEnv = LambdaVar.Map.empty
 
-fun ltLookup (venv, lv, nd) = 
-  (case IntRedBlackMap.find(venv, lv)
-     of NONE  => 
+fun ltLookup (venv, lv, nd) =
+  (case LambdaVar.Map.find(venv, lv)
+     of NONE  =>
 	  (say "**** hmmm, I didn't find the variable ";
-	   say (Int.toString lv); say "\n";
+	   say (LambdaVar.prLvar lv); say "\n";
 	   raise ltUnbound)
-      | SOME (lt, d) => 
+      | SOME (lt, d) =>
 	  if d=nd then lt
 	  else if d > nd then bug "unexpected depth info in ltLookup"
 	       else ltc_env(lt, 0, nd - d, LT.teEmpty)
   (*easc*))
 
-fun ltInsert (venv, lv, lt, d) = IntRedBlackMap.insert(venv, lv, (lt, d))
+fun ltInsert (venv, lv, lt, d) = LambdaVar.Map.insert(venv, lv, (lt, d))
 
 end (* top-level local *)
 end (* structure LtyBasic *)

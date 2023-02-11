@@ -1,7 +1,9 @@
 (* modules.sml
  *
- * (C) 2001 Lucent Technologies, Bell Labs
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *)
+
 structure Modules : MODULES =
 struct
 
@@ -48,14 +50,7 @@ and tycSpecInfo
   = RegTycSpec of {spec : T.tycon, repl: bool, scope: int} (* normal signature *)
   | InfTycSpec of {name: S.symbol, arity: int} (* inferred signature *)
 
-(*
- * and specEnv
- *  = NILsenv 
- *  | BINDsenv of spec E.env * specEnv
- *  | INCLsenv of int * spec E.env * specEnv
- *)
-
-and fctSig 
+and fctSig
   = FSIG of {kind     : S.symbol option,
 	     paramsig : Signature,
 	     paramvar : EP.entVar,
@@ -92,7 +87,7 @@ and entity (* elements of a entityEnv *)
   | STRent of strEntity
   | FCTent of fctEntity
   | ERRORent
-       (* no entities for val, con, exn, but this may change *)
+       (* no entities for val, con, exn, but this may change [? DBM] *)
 
 and fctClosure (* realization for functors *)
   = CLOSURE of {param : EP.entVar, body : strExp, env : entityEnv}
@@ -111,7 +106,7 @@ and strExp
   = VARstr of EP.entPath       (* selection from current entityEnv *)
   | CONSTstr of strEntity
   | STRUCTURE of {stamp : stampExp, entDec : entityDec}
-  | APPLY of fctExp * strExp  
+  | APPLY of fctExp * strExp
       (* the arg strExp contains coercions to match the fct param sig *)
   | LETstr of entityDec * strExp
   | ABSstr of Signature * strExp    (* shortcut for abstraction matching *)
@@ -129,14 +124,14 @@ and fctExp
   | LAMBDA_TP of {param : EP.entVar, body : strExp, sign : fctSig}
   | LETfct of entityDec * fctExp
 
-and entityExp 
+and entityExp
   = TYCexp of tycExp
   | STRexp of strExp
   | FCTexp of fctExp
   | DUMMYexp
   | ERRORexp
 
-and entityDec 
+and entityDec
   = TYCdec of EP.entVar * tycExp
   | STRdec of EP.entVar * strExp * S.symbol
   | FCTdec of EP.entVar * fctExp
@@ -145,7 +140,7 @@ and entityDec
   | ERRORdec
   | EMPTYdec
 
-and entityEnv 
+and entityEnv
   = MARKeenv of envrec
   | BINDeenv of entity EP.EvDict.map * entityEnv
   | NILeenv
@@ -172,7 +167,7 @@ and sigrec =
      closed     : bool,
      fctflag    : bool,
      elements   : elements,
-     properties : PropList.holder, (* boundeps, lambdaty *)
+     properties : PropList.holder, (* FLINT/trans *)
      typsharing : sharespec list,
      strsharing : sharespec list,
      stub       : stubinfo option}
@@ -185,7 +180,7 @@ and envrec =
 and strEntity =
     {stamp    : ST.stamp,
      entities : entityEnv,
-     properties: PropList.holder, (* lambdaty *)
+     properties: PropList.holder, (* FLINT/trans *)
      rpath    : IP.path,
      stub     : stubinfo option}
 
@@ -193,29 +188,24 @@ and strrec =
     {sign   : Signature,
      rlzn   : strEntity,
      access : A.access,
-     prim   : PrimOpId.strPrimInfo}
+     prim   : PrimopId.str_prim_info}
 
 and fctEntity =
     {stamp    : ST.stamp,
      closure  : fctClosure,
-     properties: PropList.holder, (* lambdaty *)
+     properties: PropList.holder, (* FLINT/trans *)
      tycpath  : T.tycpath option,
      rpath    : IP.path,
      stub     : stubinfo option}
 
 and fctrec =
     {sign   : fctSig,
-     rlzn   : fctEntity, 
+     rlzn   : fctEntity,
      access : A.access,
-     prim   : PrimOpId.strPrimInfo}
+     prim   : PrimopId.str_prim_info}
 
-(* the stamp and arith inside T.tycon are critical *)  
+(* the stamp and arith inside T.tycon are critical *)
 and tycEntity = T.tycon
-
-(*
-and constraint  
-  = {my_path : SP.path, its_ancestor : instrep, its_path : SP.path}
-*)
 
 val bogusStrStamp = ST.special "bogusStr"
 val bogusFctStamp = ST.special "bogusFct"
@@ -223,18 +213,17 @@ val bogusSigStamp = ST.special "bogusSig"
 val bogusRpath = IP.IPATH[S.strSymbol "Bogus"]
 
 val bogusStrEntity : strEntity =
-    { stamp = bogusStrStamp, 
+    { stamp = bogusStrStamp,
       entities = ERReenv,
-      properties = PropList.newHolder (), (* lambdaty = ref NONE *)
+      properties = PropList.newHolder (),
       rpath = bogusRpath,
       stub = NONE}
 
-val bogusSig : Signature = 
+val bogusSig : Signature =
     SIG {stamp = bogusSigStamp,
 	 name=NONE, closed=true, fctflag=false,
 	 elements=[],
 	 properties = PropList.newHolder (),
-	 (* boundeps=ref NONE, lambdaty=ref NONE *)
 	 typsharing=[], strsharing=[],
 	 stub = NONE}
 
@@ -244,7 +233,7 @@ val bogusFctEntity : fctEntity =
 		       body= CONSTstr bogusStrEntity,
 		       env=NILeenv},
      tycpath=NONE,
-     properties = PropList.newHolder (), (* lambdaty = ref NONE *)
+     properties = PropList.newHolder (),
      rpath = bogusRpath,
      stub = NONE}
 

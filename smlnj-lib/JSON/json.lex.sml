@@ -2,6 +2,8 @@ structure JSONLexer  = struct
 
     datatype yystart_state = 
 S | INITIAL
+    local
+
     structure UserDeclarations = 
       struct
 
@@ -23,10 +25,8 @@ S | INITIAL
 	end
   fun finishString () = (T.STRING(String.concat(List.rev(!sbuf))) before sbuf := [])
 
-
       end
 
-    local
     datatype yymatch 
       = yyNO_MATCH
       | yyMATCH of ULexBuffer.stream * action * yymatch
@@ -70,7 +70,7 @@ Vector.fromList []
         (* start position of token -- can be updated via skip() *)
 	  val yystartPos = ref (yygetPos())
 	(* get one char of input *)
-	  fun yygetc strm = (case UTF8.getu ULexBuffer.getc strm
+	  fun yygetc strm = (case ULexBuffer.getu strm
                 of (SOME (0w10, s')) => 
 		     (AntlrStreamPos.markNewLine yysm (ULexBuffer.getpos strm);
 		      SOME (0w10, s'))
@@ -104,7 +104,7 @@ Vector.fromList []
 		(fn (~1, _, oldMatches) => yystuck oldMatches
 		  | (curState, strm, oldMatches) => let
 		      val (transitions, finals') = Vector.sub (yytable, curState)
-		      val finals = map (fn i => Vector.sub (actTable, i)) finals'
+		      val finals = List.map (fn i => Vector.sub (actTable, i)) finals'
 		      fun tryfinal() = 
 		            yystuck (yyactsToMatches (strm, finals, oldMatches))
 		      fun find (c, []) = NONE
@@ -185,7 +185,12 @@ fun yyAction24 (strm, lastMatch : yymatch) = let
 fun yyAction25 (strm, lastMatch : yymatch) = (yystrm := strm;
         YYBEGIN INITIAL; finishString() )
 fun yyAction26 (strm, lastMatch : yymatch) = (yystrm := strm;   skip() )
-fun yyAction27 (strm, lastMatch : yymatch) = (yystrm := strm;   skip() )
+fun yyAction27 (strm, lastMatch : yymatch) = let
+      val yytext = yymktext(strm)
+      in
+        yystrm := strm;
+          T.ERROR["bad character '", String.toString yytext, "'"]
+      end
 fun yyQ33 (strm, lastMatch : yymatch) = (case (yygetc(strm))
        of NONE => yyAction2(strm, yyNO_MATCH)
         | SOME(inp, strm') => yyAction2(strm, yyNO_MATCH)

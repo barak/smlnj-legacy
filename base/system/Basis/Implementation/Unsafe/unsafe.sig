@@ -1,6 +1,7 @@
 (* unsafe.sig
  *
- * Copyright (c) 1997 Bell Labs, Lucent Technologies.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Unsafe operations on ML values.
  *)
@@ -10,6 +11,7 @@ signature UNSAFE =
 
     structure CInterface : CINTERFACE
     structure Object : UNSAFE_OBJECT
+    structure Pointer : UNSAFE_POINTER
     structure Poll : POLL
 
     structure Vector : UNSAFE_VECTOR
@@ -43,15 +45,27 @@ signature UNSAFE =
     structure PackWord16Little : PACK_WORD
     structure PackWord32Big : PACK_WORD
     structure PackWord32Little : PACK_WORD
+(* TODO: add 64-bit structures *)
+
+  (* access to internal representation of the IntInf.int type *)
+    structure IntInf : sig
+        datatype rep = BI of { negative : bool, digits : word list }
+	val concrete : IntInf.int -> rep
+	val abstract : rep -> IntInf.int
+      (* number of bits per digit *)
+	val baseBits : int
+      end
+
+  (* convert real to bits (experimental) *)
+    val realToBits : real -> Word64.word
+  (* assembly-code function for scaling reals *)
+    val scalb : real * int -> real
 
     val getHdlr : unit -> 'a Cont.cont
     val setHdlr : 'a Cont.cont -> unit
 
     val getVar : unit -> 'a
     val setVar : 'a -> unit
-
-    val getPseudo : int -> 'a
-    val setPseudo : ('a * int) -> unit
 
     val blastRead : Word8Vector.vector -> 'a
     val blastWrite : 'a -> Word8Vector.vector
@@ -71,5 +85,3 @@ signature UNSAFE =
     val sigHandler : ((int * int * unit Cont.cont) -> unit Cont.cont) ref
 
   end;
-
-

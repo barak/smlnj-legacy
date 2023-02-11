@@ -1,11 +1,11 @@
 (* mono-priorityq-sig.sml
  *
- * COPYRIGHT (c) 2002 Bell Labs, Lucent Technologies
+ * COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * This signature describes the interface to monomorphic functional
  * priority queues.
  *)
-
 
 signature MONO_PRIORITYQ =
   sig
@@ -34,6 +34,12 @@ signature MONO_PRIORITYQ =
 	 * if the queue is empty.
 	 *)
 
+    val findAndRemove : queue * (item -> bool) -> (item * queue) option
+	(* find the item with the highest priority that satisfies the predicate *)
+
+    val delete : queue * (item -> bool) -> queue
+	(* delete all elements satisfying the given predicate *)
+
     val merge : (queue * queue) -> queue
 	(* Merge two queues. *)
 
@@ -44,4 +50,3 @@ signature MONO_PRIORITYQ =
 	(* return true, if the queue is empty *)
 
   end;
-

@@ -5,7 +5,7 @@
  * in 2004).  It is included in the base/system/Basis/basis.cm file, but is
  * also used to implement the libraries in the old-basis package (base/old-basis).
  *
- * Copyright (c) 2015 by The Fellowship of SML/NJ
+ * Copyright (c) 2020 by The Fellowship of SML/NJ
  *)
 
 (primitive)
@@ -61,17 +61,24 @@ Library
 	signature EITHER	(* proposal 2015-002 *)
 	signature FN		(* proposal 2015-005 *)
 	signature REF		(* proposal 2015-007 *)
+	signature MONO_BUFFER	(* proposal 2018-001 *)
+	signature UNIVERSAL	(* proposal 2020-001 *)
 
       (* backward compatible signatures *)
 	signature ARRAY_2004
+	signature ARRAY_SLICE_2004
 	signature LIST_2004
 	signature LIST_PAIR_2004
 	signature MONO_ARRAY_2004
+	signature MONO_ARRAY_SLICE_2004
 	signature MONO_VECTOR_2004
+	signature MONO_VECTOR_SLICE_2004
 	signature OPTION_2004
 	signature STRING_2004
 	signature TEXT_2004
-	signature VECTOR_2004 
+	signature VECTOR_2004
+	signature VECTOR_SLICE_2004
+	signature WORD_2004
 
 	signature SML90
 
@@ -115,7 +122,6 @@ Library
 	structure General
 	structure IEEEReal
 	structure Int
-	structure Int31
 	structure Int32
 	structure Int64
 	structure IntInf
@@ -134,6 +140,8 @@ Library
 	structure PackWord16Little
 	structure PackWord32Big
 	structure PackWord32Little
+	structure PackWord64Big
+	structure PackWord64Little
 	structure Position
 	structure Real
 	structure Real64
@@ -157,7 +165,6 @@ Library
 	structure Vector
 	structure VectorSlice
 	structure Word
-	structure Word31
 	structure Word32
 	structure Word64
 	structure Word8
@@ -166,9 +173,21 @@ Library
 	structure Word8Vector
 	structure Word8VectorSlice
 
+(* target-size dependent modules *)
+#if defined(SIZE_32)
+	structure Int31
+	structure Word31
+#else (* 64-bits *)
+	structure Int63
+	structure Word63
+#endif
+
 	structure Either	(* proposal 2015-002 *)
 	structure Fn		(* proposal 2015-005 *)
 	structure Ref		(* proposal 2015-007 *)
+	structure CharBuffer	(* proposal 2018-001 *)
+	structure Word8Buffer	(* proposal 2018-001 *)
+	structure Universal	(* proposal 2020-001 *)
 
 	structure SML90
 
@@ -247,40 +266,13 @@ Library
 is
 	Implementation/sources.cm
 
-	Exports/string.sml
-	Exports/char.sml
-	Exports/substring.sml
-	Exports/char-array.sml
-	Exports/char-vector.sml
+	Exports/bind-common.sml
+#if defined (SIZE_32)
 
-	Exports/int.sml
-	Exports/int31.sml
-	Exports/int32.sml
-	Exports/int-inf.sml
-	Exports/largeint.sml
-	Exports/fixedint.sml
-	Exports/largereal.sml
-	Exports/largeword.sml
-	Exports/position.sml
-	Exports/real.sml
-	Exports/real64.sml
-	Exports/sysword.sml
-	Exports/word.sml
-	Exports/word8.sml
-	Exports/word31.sml
-	Exports/word32.sml
-	Exports/time.sml
-	Exports/general.sml
+	Exports/bind-target-32-bit.sml
 
-	Exports/os.sml
+#else (* 64-bits *)
 
-	Exports/real-array.sml
-	Exports/real-array-slice.sml
-	Exports/real-vector.sml
-	Exports/real-vector-slice.sml
+	Exports/bind-target-64-bit.sml
 
-	Exports/smlnj.sml
-
-#if defined(OPSYS_UNIX) orelse defined(OPSYS_WIN32)
-	Exports/socket.sml
 #endif

@@ -1,7 +1,7 @@
-/* globals.c
+/*! \file globals.c
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.
- *
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  */
 
 #include "ml-base.h"
@@ -20,9 +20,9 @@ void PatchAddrs ();
 #ifndef SIZES_C64_ML32
 
 typedef struct {
-	ml_val_t	desc;
-	char		*s;
-	ml_val_t	len;
+    ml_val_t	desc;
+    char	*s;
+    ml_val_t	len;
 } ml_string_t;
 
 #define ML_STRING(id, s)				\
@@ -53,9 +53,9 @@ typedef struct {
  */
 
 typedef struct {
-	ml_val_t	desc;
-	ml_val_t	s;
-	ml_val_t	len;
+    ml_val_t	desc;
+    ml_val_t	s;
+    ml_val_t	len;
 } ml_string_t;
 
 #define ML_STRING(id,s)					\
@@ -97,10 +97,6 @@ typedef struct {
     ASM_CLOSURE(name);							\
     ml_val_t *CONCAT(name,_c) = (ml_val_t *)(CONCAT(name,_v)+1)
 #endif
-
-/* machine identification strings */
-ML_STRING(machine_id, MACHINE_ID);
-
 
 ASM_CLOSURE(array);
 ASM_CLOSURE(bind_cfun);
@@ -206,7 +202,7 @@ void AllocGlobals (ml_state_t *msp)
 #define CSTRUCT_SZ	12
     ML_AllocWrite(msp,  0, MAKE_DESC(CSTRUCT_SZ, DTAG_record));
     ML_AllocWrite(msp,  1, RunVec);
-    ML_AllocWrite(msp,  2, DivId);
+    ML_AllocWrite(msp,  2, DivId); /* FIXME: we no longer need this field! */
     ML_AllocWrite(msp,  3, OverflowId);
     ML_AllocWrite(msp,  4, SysErrId);
     ML_AllocWrite(msp,  5, ProfCurrent);
@@ -246,6 +242,7 @@ void AllocGlobals (ml_state_t *msp)
 void RecordGlobals ()
 {
   /* Misc. */
+    RecordCSymbol ("nullptr",		PTR_CtoML(0));
     RecordCSymbol ("handle",		PTR_CtoML(handle_v+1));
     RecordCSymbol ("return",		PTR_CtoML(return_c));
 #if (CALLEESAVE == 0)
@@ -267,10 +264,9 @@ void RecordGlobals ()
     RecordCSymbol ("RunVec.unlock",	PTR_CtoML(unlock_v+1));
 
   /* CStruct */
-    RecordCSymbol ("CStruct.DivId",		DivId);
+    RecordCSymbol ("CStruct.DivId",		DivId); /* FIXME: we can remove this */
     RecordCSymbol ("CStruct.OverflowId",	OverflowId);
     RecordCSymbol ("CStruct.SysErrId",		SysErrId);
-    RecordCSymbol ("CStruct.machine_id",	PTR_CtoML(machine_id.s));
     RecordCSymbol ("CStruct.PervStruct",	PervStruct);
     RecordCSymbol ("CStruct.MLSignalHandler",	MLSignalHandler);
     RecordCSymbol ("CStruct.vector0",		ML_vector0);
@@ -306,8 +302,6 @@ void RecordGlobals ()
  */
 void PatchAddrs ()
 {
-    PATCH_ML_STRING(machine_id);
-
     PATCH_ML_EXNID(_Div);
     PATCH_ML_EXNID(_Overflow);
     PATCH_ML_EXNID(SysErr);

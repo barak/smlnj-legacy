@@ -4,24 +4,27 @@
 signature MACHINE_INT =
 sig
 
-   type machine_int = IntInf.int 
+   type machine_int = IntInf.int
    type sz = int (* width in bits *)
 
    datatype div_rounding_mode = DIV_TO_ZERO | DIV_TO_NEGINF
 
-   val hash : machine_int -> word 
+   val hash : machine_int -> word
 
    (* machine_int <-> other types *)
    val fromInt     : sz * int -> machine_int
    val fromInt32   : sz * Int32.int -> machine_int
+   val fromInt64   : sz * Int64.int -> machine_int
    val fromWord    : sz * word -> machine_int
    val fromWord32  : sz * Word32.word -> machine_int
+   val fromWord64  : sz * Word64.word -> machine_int
 
    val toInt       : sz * machine_int -> int
-   val toWord      : sz * machine_int -> word
-   val toWord32    : sz * machine_int -> Word32.word
    val toInt32     : sz * machine_int -> Int32.int
    val toInt64     : sz * machine_int -> Int64.int
+   val toWord      : sz * machine_int -> word
+   val toWord32    : sz * machine_int -> Word32.word
+   val toWord64    : sz * machine_int -> Word64.word
 
    val fromString  : sz * string -> machine_int option
    val toString    : sz * machine_int -> string
@@ -94,7 +97,7 @@ sig
    val byteOf    : sz * machine_int * int -> word        (* 8 bits *)
    val halfOf    : sz * machine_int * int -> word        (* 16 bits *)
    val wordOf    : sz * machine_int * int -> Word32.word (* 32 bits *)
-  
+
    (* type promotion *)
    val SX    : sz (* to *) * sz (* from *) * machine_int -> machine_int
    val ZX    : sz (* to *) * sz (* from *) * machine_int -> machine_int

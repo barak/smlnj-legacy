@@ -36,7 +36,7 @@ $(SML_LIB)/mllpt-lib/mllpt-lib.mlb
 \begin{lstlisting}
 structure AntlrStreamPos : sig
 
-  type pos = Position.int
+  type pos = int
   type span = pos * pos
   type sourceloc = { fileName : string option, lineNo : int, colNo : int }
   type sourcemap
@@ -78,13 +78,13 @@ structure AntlrRepair : sig
 	new : 'tok list
       }
     | FailureAt of 'tok
-  
+
   type 'a repair = AntlrStreamPos.pos * 'tok repair_action
-  
+
   val actionToString :  ('tok -> string)
 	-> 'tok repair_action
 	-> string
-    
+
   val repairToString : ('tok -> string)
 	-> AntlrStreamPos.sourcemap
 	-> 'tok repair -> string

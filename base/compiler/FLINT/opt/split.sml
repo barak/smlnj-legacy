@@ -1,4 +1,9 @@
-(* copyright 1999 YALE FLINT project *)
+(* split.sml
+ *
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *)
+
 (* monnier@cs.yale.edu *)
 
 signature FSPLIT =
@@ -6,19 +11,19 @@ sig
     type flint = FLINT.prog
     val split: flint * int option -> flint * flint option
 end
-    
+
 structure FSplit :> FSPLIT =
 struct
 
 local
     structure F  = FLINT
-    structure S  = IntRedBlackSet
-    structure M  = FLINTIntMap
+    structure S  = LambdaVar.Set
+    structure M  = LambdaVar.Map
     structure O  = Option
     structure OU = OptUtils
     structure FU = FlintUtil
     structure LT = LtyExtern
-    structure PO = PrimOp
+    structure PO = Primop
     structure PP = PPFlint
     structure CTRL = FLINT_Control
 in
@@ -28,27 +33,27 @@ fun bug msg = ErrorMsg.impossible ("FSplit: "^msg)
 fun buglexp (msg,le) = (say "\n"; PP.printLexp le; say " "; bug msg)
 fun bugval (msg,v) = (say "\n"; PP.printSval v; say " "; bug msg)
 fun assert p = if p then () else bug ("assertion failed")
-				 
+
 type flint = F.prog
 val mklv = LambdaVar.mkLvar
 val cplv = LambdaVar.dupLvar
-	   
+
 fun S_rmv(x, s) = S.delete(s, x) handle NotFound => s
-						    
+
 fun addv (s,F.VAR lv) = S.add(s, lv)
   | addv (s,_) = s
 fun addvs (s,vs) = foldl (fn (v,s) => addv(s, v)) s vs
 fun rmvs (s,lvs) = foldl (fn (l,s) => S_rmv(l, s)) s lvs
-		   
+
 exception Unknown
-	  
+
 fun split (fdec, NONE) = (fdec, NONE)
   | split (fdec as (fk,f,args,body), SOME aggressiveness) = let
     val {getLty,addLty,...} = Recover.recover (fdec, false)
 
-    val m = IntHashTable.mkTable(64, Unknown)
-    fun addpurefun f = IntHashTable.insert m (f, false)
-    fun funeffect f = (IntHashTable.lookup m f) handle Uknown => true
+    val m = LambdaVar.Tbl.mkTable(64, Unknown)
+    fun addpurefun f = LambdaVar.Tbl.insert m (f, false)
+    fun funeffect f = (LambdaVar.Tbl.lookup m f) handle Uknown => true
 
 (* sexp: env -> lexp -> (leE, leI, fvI, leRet)
  * - env: IntSetF.set	current environment
@@ -67,7 +72,7 @@ fun split (fdec, NONE) = (fdec, NONE)
  *   mistakenly adding anything to leI.
  *)
 fun sexp env lexp =			(* fixindent *)
-    let 
+    let
 	(* non-side effecting binds are copied to leI if exported *)
 	fun let1 (le,lewrap,lv,vs,effect) =
 	    let val (leE,leI,fvI,leRet) = sexp (S.add(env, lv)) le
@@ -100,7 +105,7 @@ fun sexp env lexp =			(* fixindent *)
 	 | F.SELECT (v,i,lv,le) =>
 	   let1(le, fn e => F.SELECT(v, i, lv, e), lv, [v], false)
 	 | F.PRIMOP (po,vs,lv,le) =>
-	   let1(le, fn e => F.PRIMOP(po, vs, lv, e), lv, vs, PO.effect(#2 po))
+	   let1(le, fn e => F.PRIMOP(po, vs, lv, e), lv, vs, PrimopUtil.effect(#2 po))
 
 	 (* IMPROVEME: lvs should not be restricted to [lv] *)
 	 | F.LET(lvs as [lv],body as F.TAPP (v,tycs),le) =>
@@ -181,13 +186,13 @@ and sfdec env (leE,leI,fvI,leRet) (fk,f,args,body) =
 		(map (fn lv => (lv, getLty(F.VAR lv))) fvbIs) @ args
 	       (* val argI = mklv()
 	       val argsI = (argI, LT.ltc_str(map (getLty o F.VAR) fvbIs))::args
-			    
+
 	       val (_,bodyI) = foldl (fn (lv,(n,le)) =>
 				      (n+1, F.SELECT(F.VAR argI, n, lv, le)))
 				     (0, bodyI) fvbIs *)
 	       val fdecI as (_,fI,_,_) = FU.copyfdec(fkI,f,argsI,bodyI)
 	       val _ = addpurefun fI
-						    
+
 	       (* nfdec *)
 	       val nargs = map (fn (v,t) => (cplv v, t)) args
 	       val argsv = map (fn (v,t) => F.VAR v) nargs
@@ -201,11 +206,11 @@ and sfdec env (leE,leI,fvI,leRet) (fk,f,args,body) =
 			    F.APP(F.VAR fI, (F.VAR lv)::argsv))
 		   end *)
 	       val nfdec = (nfk, f, nargs, nbody)
-			       
+
 	       (* and now, for the whole F.FIX *)
 	       fun nleE e =
 		   F.FIX([fdecE], F.FIX([fdecI], F.FIX([nfdec], leE e)))
-			
+
 	   in if not(S.member(fvI, f)) then (nleE, leI, fvI, leRet)
 	      else (nleE,
 		    F.FIX([fdecI], F.FIX([nfdec], leI)),

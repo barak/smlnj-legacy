@@ -1,7 +1,8 @@
 #
 # init.cmi
 #
-#  (C) 2000 Lucent Technologies, Bell Laboratories
+# COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+# All rights reserved.
 #
 # Author: Matthias Blume (blume@kurims.kyoto-u.ac.jp)
 #
@@ -95,10 +96,12 @@
 #
 #  Example:
 #   ...
-#   ifdef  ARCH_ALPHA                  bind foo = foo-alpha32.sml (bar, baz)
+#   ifdef  ARCH_SPARC                  bind foo = foo-sparc.sml (bar, baz)
 #   ifdef  ARCH_X86                    bind foo = foo-x86.sml (bar, baz)
-#   ifndef ARCH_ALPHA ifndef ARCH_X86  bind foo = foo-default.sml (bar, baz)
+#   ifndef ARCH_SPARC ifndef ARCH_X86  bind foo = foo-default.sml (bar, baz)
 #   ...
+#
+# See base/cm/bootstrap/build-initdg.sml for the code that processes this file.
 #
 
 #### END OF EXPLANATION, SPEC STARTS HERE...
@@ -120,19 +123,27 @@ split
 bind order = order.sml (primitive)
 
 # Minimal support for arbitrary-precision integers.
-bind coreintinf = core-intinf.sml (rts, order, primitive)
+ifdef SIZE_32 \
+	bind coreintinf = target32-core-intinf.sml (rts, order, primitive)
+ifdef SIZE_64 \
+	bind coreintinf = target64-core-intinf.sml (rts, order, primitive)
 
-# Minimal support for (simulated) 64-bit words.
-bind coreword64 = core-word64.sml (rts, primitive, coreintinf)
+# Minimal support for (simulated) 64-bit words on 32-bit target
+ifdef SIZE_32 \
+	bind coreword64 = core-word64.sml (rts, primitive, coreintinf)
 
-# Minimal support for (simulated) 64-bit ints.
-bind coreint64 = core-int64.sml (rts, primitive, coreintinf)
+# Minimal support for (simulated) 64-bit ints on 32-bit target
+ifdef SIZE_32 \
+	bind coreint64 = core-int64.sml (rts, primitive, coreintinf)
 
 # This defines the core environment to be used everywhere else...
 # (This binds the structure symbol "Core", which is not yet the one that
 # is used implicitly by the compiler.  Of course, "core.sml" itself cannot
 # yet have access to _Core.)
-bind core = core.sml (rts, asig, coreintinf, primitive)
+ifdef SIZE_32 \
+	bind core = target32-core.sml (rts, asig, coreintinf, coreword64, coreint64, primitive)
+ifdef SIZE_64 \
+	bind core = target64-core.sml (rts, asig, coreintinf, primitive)
 
 # Now we make the binding for structure _Core for use by the remaining
 # members of the init library. (Everybody else in the world gets access to
@@ -145,44 +156,61 @@ bind-core (xCore) xcore = xcore.sml (core)
 
 # The rest of the DAG...
 # (Everybody implicitly depends on xcore to have access to _Core.)
-bind built-in = built-in.sml (core, primitive, xcore)
-ifdef ARCH_ALPHA \
-	bind math-inlT = math-built-in-none.sml (core, primitive, xcore)
+ifdef SIZE_32 \
+	bind inline = target32-inline.sml (core, primitive, xcore)
+ifdef SIZE_64 \
+	bind inline = target64-inline.sml (core, primitive, xcore)
+# The PPC does not have hardware support for sqrt
 ifdef ARCH_PPC \
 	bind math-inlT = math-built-in-none.sml (core, primitive, xcore)
-ifdef ARCH_X86 \
-	bind math-inlT = math-built-in-x86.sml (core, primitive, xcore)
-ifndef ARCH_ALPHA ifndef ARCH_X86 ifndef ARCH_PPC\
+ifndef ARCH_PPC \
 	bind math-inlT = math-built-in.sml (core, primitive, xcore)
 
-ifdef ARCH_X86 \
+# raw memory support for FFI (but not when cross compiling)
+ifndef CMB_CROSS ifdef ARCH_X86 \
 	bind rawmem = rawmem.sml (core, primitive, xcore)
-ifdef ARCH_SPARC \
+ifdef CMB_CROSS ifdef ARCH_X86 \
+	bind rawmem = rawmem-dummy.sml (core, primitive, xcore)
+ifndef CMB_CROSS ifdef ARCH_SPARC \
 	bind rawmem = rawmem.sml (core, primitive, xcore)
-ifdef ARCH_PPC \
+ifdef CMB_CROSS ifdef ARCH_SPARC \
+	bind rawmem = rawmem-dummy.sml (core, primitive, xcore)
+ifndef CMB_CROSS ifdef ARCH_PPC \
 	bind rawmem = rawmem.sml (core, primitive, xcore)
+ifdef CMB_CROSS ifdef ARCH_PPC \
+	bind rawmem = rawmem-dummy.sml (core, primitive, xcore)
 ifndef ARCH_X86 ifndef ARCH_SPARC ifndef ARCH_PPC \
 	bind rawmem = rawmem-dummy.sml (core, primitive, xcore)
 
-bind pp = pre-perv.sml (built-in, order, xcore)
-bind ps = pre-string.sml (core, built-in, pp, xcore)
-bind ss-sig = substring.sig (pp, built-in, xcore)
-bind ss = substring.sml (ss-sig, pp, ps, core, built-in, xcore)
-bind print-hook = print-hook.sml (built-in, xcore)
-bind use-hook = use-hook.sml (built-in, xcore)
-bind exn-info-hook = exn-info-hook.sml (built-in, xcore, ps)
+bind pp = pre-perv.sml (inline, order, xcore)
+bind ps = pre-string.sml (core, inline, pp, xcore)
+bind ss-sig = substring.sig (pp, inline, xcore)
+bind ss = substring.sml (ss-sig, pp, ps, core, inline, xcore)
+bind print-hook = print-hook.sml (inline, xcore)
+bind use-hook = use-hook.sml (inline, xcore)
+bind exn-info-hook = exn-info-hook.sml (inline, xcore, ps)
 bind init-utils = init-utils.sml (ps ss-sig ss, xcore)
 
 # Building the "pervasive" environment.  This file should be
 # kept as small as possible and only bind non-modular things
 # (i.e., top-level types and values).
 # Make sure everybody else in the world gets access to structure _Core...
-bind-core (xCore) pervasive = pervasive.sml (core, ps, ss, pp, print-hook, \
-					     use-hook, exn-info-hook, \
-					     coreintinf, \
-					     coreword64, coreint64, \
-					     math-inlT, built-in, xcore)
+ifdef SIZE_32 \
+	bind-core (xCore) pervasive = pervasive.sml (core, ps, ss, pp, print-hook, \
+						     use-hook, exn-info-hook, \
+						     coreintinf, \
+						     coreword64, coreint64, \
+						     math-inlT, inline, xcore)
+ifdef SIZE_64 \
+	bind-core (xCore) pervasive = pervasive.sml (core, ps, ss, pp, print-hook, \
+						     use-hook, exn-info-hook, \
+						     coreintinf, \
+						     math-inlT, inline, xcore)
 
 # Report the results to the world...
-return (pervasive) built-in math-inlT print-hook use-hook exn-info-hook core \
-		   init-utils rawmem coreintinf coreword64 coreint64
+ifdef SIZE_32 \
+	return (pervasive) inline math-inlT print-hook use-hook exn-info-hook core \
+			   init-utils rawmem coreintinf coreword64 coreint64
+ifdef SIZE_64 \
+	return (pervasive) inline math-inlT print-hook use-hook exn-info-hook core \
+			   init-utils rawmem coreintinf

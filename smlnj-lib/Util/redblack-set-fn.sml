@@ -3,8 +3,6 @@
  * COPYRIGHT (c) 2014 The Fellowship of SML/NJ (http://www.smlnj.org)
  * All rights reserved.
  *
- * COPYRIGHT (c) 1999 Bell Labs, Lucent Technologies.
- *
  * This code is based on Chris Okasaki's implementation of
  * red-black trees.  The linear-time tree construction code is
  * based on the paper "Constructing red-black trees" by Hinze,
@@ -23,7 +21,7 @@
  * will be black and its child will be a red leaf.
  *)
 
-functor RedBlackSetFn (K : ORD_KEY) :> ORD_SET where Key = K =
+functor RedBlackSetFn (K : ORD_KEY) :> ORD_SET where type Key.ord_key = K.ord_key =
   struct
 
     structure Key = K
@@ -42,6 +40,22 @@ functor RedBlackSetFn (K : ORD_KEY) :> ORD_SET where Key = K =
       | isEmpty _ = false
 
     val empty = SET(0, E)
+
+    fun minItem (SET(_, tr)) = let
+	  fun min E = raise Empty
+	    | min (T(_, E, item, _)) = item
+	    | min (T(_, tr, _, _)) = min tr
+	  in
+	    min tr
+	  end
+
+    fun maxItem (SET(_, tr)) = let
+	  fun max E = raise Empty
+	    | max (T(_, _, item, E)) = item
+	    | max (T(_, _, _, tr)) = max tr
+	  in
+	    max tr
+	  end
 
     fun singleton x = SET(1, T(B, E, x, E))
 
@@ -96,7 +110,7 @@ functor RedBlackSetFn (K : ORD_KEY) :> ORD_SET where Key = K =
 	| RIGHT of (color * tree * item * zipper)
     in
     fun delete (SET(nItems, t), k) = let
-	(* zip the zipper *) 
+	(* zip the zipper *)
 	  fun zip (TOP, t) = t
 	    | zip (LEFT(color, x, b, p), a) = zip(p, T(color, a, x, b))
 	    | zip (RIGHT(color, a, x, p), b) = zip(p, T(color, a, x, b))
@@ -183,7 +197,7 @@ functor RedBlackSetFn (K : ORD_KEY) :> ORD_SET where Key = K =
 			   * left child recolored to black.
 			   *)
 			    zip(p, T(B, a', y', b'))
-			| (_, E, T(_, a', y', b')) => 
+			| (_, E, T(_, a', y', b')) =>
 			  (* node is black and right child is red; we replace the node with its
 			   * right child recolored to black.
 			   *)
@@ -238,7 +252,7 @@ functor RedBlackSetFn (K : ORD_KEY) :> ORD_SET where Key = K =
 	  end
 
   (* return an ordered list of the items in the set. *)
-    fun listItems s = foldr (fn (x, l) => x::l) [] s
+    fun toList s = foldr (fn (x, l) => x::l) [] s
 
   (* functions for walking the tree while keeping a stack of parents
    * to be visited.
@@ -296,6 +310,22 @@ functor RedBlackSetFn (K : ORD_KEY) :> ORD_SET where Key = K =
 		(* end case *))
 	  in
 	    cmp (start s1, start s2)
+	  end
+
+  (* Return true if the two sets are disjoint *)
+    fun disjoint (SET(0, _), _) = true
+      | disjoint (_, SET(0, _)) = true
+      | disjoint (SET(_, s1), SET(_, s2)) = let
+	  fun walk ((E, _), _) = true
+	    | walk (_, (E, _)) = true
+	    | walk (t1 as (T(_, _, x, _), r1), t2 as (T(_, _, y, _), r2)) = (
+		case Key.compare(x, y)
+		 of LESS => walk (next r1, t2)
+		  | EQUAL => false
+		  | GREATER => walk (t1, next r2)
+		(* end case *))
+	  in
+	    walk (next (start s1), next (start s2))
 	  end
 
   (* support for constructing red-black trees in linear time from increasing
@@ -420,6 +450,12 @@ functor RedBlackSetFn (K : ORD_KEY) :> ORD_SET where Key = K =
 	    foldl addf empty
 	  end
 
+    fun mapPartial f = let
+	  fun f' (x, acc) = (case f x of SOME x' => add(acc, x') | NONE => acc)
+	  in
+	    foldl f' empty
+	  end
+
   (* Filter out those elements of the set that do not satisfy the
    * predicate.  The filtering is done in increasing map order.
    *)
@@ -474,5 +510,8 @@ functor RedBlackSetFn (K : ORD_KEY) :> ORD_SET where Key = K =
 	  in
 	    fn (SET(_, t)) => test t
 	  end
+
+  (* DEPRECATED FUNCTIONS *)
+    val listItems = toList
 
   end;

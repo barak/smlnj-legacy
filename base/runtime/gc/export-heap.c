@@ -1,6 +1,7 @@
-/* export-heap.c
+/*! \file export-heap.c
  *
- * COPYRIGHT (c) 1992 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Routines to export an ML heap image.  The basic layout of the heap image is:
  *
@@ -215,8 +216,8 @@ PVT status_t WriteHeap (writer_t *wr, heap_t *heap)
 {
     heap_arena_hdr_t	*p, *arenaHdrs;
     bigobj_desc_t	*bdp;
+    Addr_t		offset;
     int			arenaHdrsSize, pagesize;
-    long		offset;
     int			i, j;
 
     pagesize = GETPAGESIZE();
@@ -263,7 +264,7 @@ PrintRegionMap(rp);
 	    p->info.o.baseAddr	    = (Addr_t)(ap->tospBase);
 	    p->info.o.sizeB	    = (Addr_t)(ap->nextw) - p->info.o.baseAddr;
 	    p->info.o.roundedSzB    = ROUNDUP(p->info.o.sizeB, pagesize);
-	    p->offset		    = (Unsigned32_t)offset;
+	    p->offset		    = offset;
 	    offset		    += p->info.o.roundedSzB;
 	}
 	for (j = 0;  j < NUM_BIGOBJ_KINDS;  j++, p++) {
@@ -277,7 +278,7 @@ PrintRegionMap(rp);
 	    p->objKind		    = j;
 	    p->info.bo.numBigObjs   = nObjs;
 	    p->info.bo.numBOPages   = nBOPages;
-	    p->offset		    = (Unsigned32_t)offset;
+	    p->offset		    = offset;
 	    offset		    += ((nObjs * sizeof(bigobj_hdr_t))
 					+ (nBOPages << BIGOBJ_PAGE_SHIFT));
 	}
@@ -324,10 +325,10 @@ PrintRegionMap(rp);
 	      /* initialize the big-object headers */
 		q = hdr;
 		for (bdp = heap->gen[i]->bigObjs[j];  bdp != NIL(bigobj_desc_t *);  bdp = bdp->next) {
-		    q->gen		= bdp->gen;
-		    q->objKind		= j;
+		    q->gen	= bdp->gen;
+		    q->objKind	= j;
 		    q->baseAddr	= (Addr_t)(bdp->obj);
-		    q->sizeB		= bdp->sizeB;
+		    q->sizeB	= bdp->sizeB;
 		    q++;
 		}
 	      /* write the big-object headers */

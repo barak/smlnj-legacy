@@ -1,20 +1,55 @@
 #!/bin/sh
 #
 # Copyright (c) 1994 AT&T Bell Laboratories.
-# Copyright (c) 2014 The Fellowship of SML/NJ
+# Copyright (c) 2014-2020 The Fellowship of SML/NJ
 #
 # Installation script for SML/NJ and related tools.
 #
 # Significant changes to take advantage of a new portable installer
 # script for everything after booting the interactive system.
 #
-# Author: Matthias Blume (blume@tti-c.org)
+# Author: Matthias Blume and John Reppy
 #
 
-if [ x$1 = xnolib ] ; then
-    nolib=true
-else
-    nolib=false
+complain() {
+    echo "$@"
+    exit 1
+}
+
+this=$0
+
+# set the default size for the install.  Currently, the default is 64 for
+# systems that report "x86_64" for `uname -m`.  These include macOS and
+# Linux systems.  We set the default size to 32 for all other systems.
+#
+DEFAULT_SIZE=32
+case `uname -m` in
+  x86_64) DEFAULT_SIZE=64 ;;
+esac
+
+# process options
+SIZE_OPT=
+nolib=false
+while [ "$#" != "0" ] ; do
+    arg=$1; shift
+    case $arg in
+      -32) SIZE_OPT=$arg ;;
+      -64) SIZE_OPT=$arg ;;
+      -default)
+	case x"$1" in
+	  x32) DEFAULT_SIZE="32"; shift ;;
+	  x64) DEFAULT_SIZE="64"; shift ;;
+	  x) complain "missing size argument for '-default'" ;;
+	  *) complain "invalid size argument for '-default'; should be 32 or 64" ;;
+	esac ;;
+      -nolib) nolib=true ;;
+      *) complain "usage: $this [-32 | -64] [-default <sz>] [-nolib]"
+      ;;
+    esac
+done
+
+if [ x"$SIZE_OPT" = x ] ; then
+    SIZE_OPT="-"$DEFAULT_SIZE
 fi
 
 if [ x${INSTALL_QUIETLY} = xtrue ] ; then
@@ -31,13 +66,6 @@ vsay() {
 	echo "$@"
     fi
 }
-
-complain() {
-    echo "$@"
-    exit 1
-}
-
-this=$0
 
 
 #
@@ -215,6 +243,7 @@ done
 #   BINDIR, and VERSION variables to use.
 #
 installdriver() {
+    echo "$this: installing $BINDIR/$2"
     dsrc=$1
     ddst=$2
 # We install the driver unconditionally. (It would be better to test
@@ -230,6 +259,7 @@ installdriver() {
 	    -e "s,@LIBDIR@,$LIBDIR," \
 	    -e "s,@VERSION@,$VERSION," \
 	    -e "s,@CMDIRARC@,${CM_DIR_ARC:-dummy}," \
+	    -e "s,@SIZE@,$DEFAULT_SIZE," \
 	    > "$BINDIR"/"$ddst"
 	chmod 555 "$BINDIR"/"$ddst"
 	if [ ! -x "$BINDIR"/"$ddst" ]; then
@@ -247,10 +277,10 @@ installdriver _arch-n-opsys .arch-n-opsys
 # run it to figure out what architecture and os we are using, define
 # corresponding variables...
 #
-ARCH_N_OPSYS=`"$BINDIR"/.arch-n-opsys`
+ARCH_N_OPSYS=`"$BINDIR"/.arch-n-opsys $SIZE_OPT`
 if [ "$?" != "0" ]; then
     echo "$this: !!! Script $BINDIR/.arch-n-opsys fails on this machine."
-    echo "$this: !!! You must patch this by hand and repeat the installation."
+    echo "$this: !!! You must patch $BINDIR/.arch-n-opsys by hand and repeat the installation."
     exit 2
 else
     vsay $this: Script $BINDIR/.arch-n-opsys reports $ARCH_N_OPSYS.
@@ -265,62 +295,109 @@ installdriver _run-sml .run-sml
 installdriver _link-sml .link-sml
 installdriver _ml-makedepend ml-makedepend
 
+#
+# we optimistically install heap2exec, but will remove it if heap2asm
+# is not installed
+#
 installdriver _heap2exec heap2exec
 
 #
-# set some architecture dependent run-time system flags
+# set allocation size; for the x86, this gets reset in .run-sml
 #
-case $ARCH in
-    mips*)
-	ALLOC=1M
-	;;
-    x86)
-	# The following is the _wrong_ value for some x86 chips
-	# (i.e., Celerons).  We use 512k here and re-set it to the proper
-	# value in .run-sml.
-	ALLOC=512k
-	;;
-    alpha32)
-	ALLOC=512k
-	;;
-    *)
-	ALLOC=512k
-	;;
-esac
+ALLOC=512k
 
+# OS-specific things for building the runtime system
+#
+RT_MAKEFILE=mk.$ARCH-$OPSYS
 case $OPSYS in
-    solaris)
-	MAKE=/usr/ccs/bin/make
-	;;
-    linux)
-	EXTRA_DEFS=`"$CONFIGDIR/chk-global-names.sh"`
-	if [ "$?" != "0" ]; then
-	    complain "$this: !!! Problems checking for underscores in asm names."
-	fi
-	EXTRA_DEFS="XDEFS=$EXTRA_DEFS"
-	;;
-esac
-
-#
-# on 64-bit linux systems, we need to check to see if the 32-bit emulation
-# support is installed
-#
-if [ x"$ARCH" = "xx86" -a x"$OPSYS" = "xlinux" ] ; then
-  case `uname -m` in
-    x86_64)
-      tmpFile=smlnj-test$$
-      echo "int main () { return 0; }" >> /tmp/$tmpFile.c
-      gcc -m32 -o /tmp/$tmpFile /tmp/$tmpFile.c 2> /dev/null 1>> /dev/null
-      if [ "$?" != "0" ] ; then
-	rm -f /tmp/$tmpFile /tmp/$tmpFile.c
-	complain "$this: !!! SML/NJ requires support for 32-bit executables. On Debian Linux, you may need to apt-get install gcc-multilib g++-multilib ia32-libs.  On RH Fedora, try: yum install glibc-devel.i686 libgcc.i686"
+  darwin)
+    SDK=none
+    if [ "$ARCH" = "x86" ] ; then
+      # the /usr/bin/as command does _not_ accept the -mmacosx-version-min
+      # command-line option prior to MacOS X 10.10 (Yosemite)
+      case `sw_vers -productVersion` in
+	10.6*) AS_ACCEPTS_SDK=no ;;
+	10.7*) AS_ACCEPTS_SDK=no ;;
+	10.8*) AS_ACCEPTS_SDK=no ;;
+	10.9*) AS_ACCEPTS_SDK=no ;;
+	10.14*)
+	  AS_ACCEPTS_SDK=yes
+	  # Mojave needs a special makefile for the x86, but we need to be careful
+	  # about when we are running the postinstall script, so we check
+	  # for the nolib argument
+	  if [ x"$nolib" = xfalse ] ; then
+	    RT_MAKEFILE=mk.x86-darwin18
+	    # location of Xcode SDKs
+	    if [ ! -x /usr/bin/xcode-select ] ; then
+	      echo "$this: !!! /usr/bin/xcode-select is missing; please install Xcode"
+	      exit 1
+	    fi
+	    XCODE_DEV_PATH=`xcode-select -p`
+	    if [ x"$XCODE_DEV_PATH" = x/Library/Developer/CommandLineTools ] ; then
+	      XCODE_SDK_PATH="$XCODE_DEV_PATH/SDKs"
+	    else
+	      XCODE_SDK_PATH="$XCODE_DEV_PATH/Platforms/MacOSX.platform/Developer/SDKs"
+	    fi
+	    # look for an SDK that supports 32-bit builds (starting with 10.13 High Sierra
+	    # and going back to 10.10 Yosemite)
+	    #
+	    for SDK_VERS in 13 12 11 10 ; do
+	      if [ -d "$XCODE_SDK_PATH/MacOSX10.$SDK_VERS.sdk" ] ; then
+		SDK="$XCODE_SDK_PATH/MacOSX10.$SDK_VERS.sdk"
+		break
+	      fi
+	    done
+	    if [ x"$SDK" = xnone ] ; then
+	      echo "$this: !!! SML/NJ requires support for 32-bit executables."
+	      echo "  Please see http://www.smlnj.org/dist/working/$VERSION/MACOSXINSTALL for more details."
+	      exit 1
+	    fi
+	  fi
+	  ;;
+	*) AS_ACCEPTS_SDK=yes ;;
+      esac
+      if [ x"$SDK" = xnone ] ; then
+	EXTRA_DEFS="AS_ACCEPTS_SDK=$AS_ACCEPTS_SDK"
       else
-	rm -f /tmp/$tmpFile /tmp/$tmpFile.c
+	EXTRA_DEFS="AS_ACCEPTS_SDK=$AS_ACCEPTS_SDK SDK=$SDK"
       fi
+    elif [ "$ARCH" = AMD64 ] ; then
+      EXTRA_DEFS="AS_ACCEPTS_SDK=yes"
+    fi
     ;;
-    *) ;;
-  esac
-fi
+  linux)
+    EXTRA_DEFS=`"$CONFIGDIR/chk-global-names.sh"`
+    if [ "$?" != "0" ]; then
+	complain "$this: !!! Problems checking for underscores in asm names."
+    fi
+    EXTRA_DEFS="XDEFS=$EXTRA_DEFS"
+    if [ "$ARCH" = "x86" ] ; then
+      #
+      # on 64-bit linux systems, we need to check to see if the 32-bit emulation
+      # support is installed
+      #
+      case `uname -m` in
+	x86_64)
+	  tmpFile=smlnj-test$$
+	  echo "int main () { return 0; }" >> /tmp/$tmpFile.c
+	  gcc -m32 -o /tmp/$tmpFile /tmp/$tmpFile.c 2> /dev/null 1>> /dev/null
+	  if [ "$?" != "0" ] ; then
+	    rm -f /tmp/$tmpFile /tmp/$tmpFile.c
+	    echo "$this: !!! SML/NJ requires support for 32-bit executables."
+	    echo "$this: !!! Please see http://www.smlnj.org/dist/working/$VERSION/install.html for more details."
+	    exit 1
+	  else
+	    rm -f /tmp/$tmpFile /tmp/$tmpFile.c
+	  fi
+	;;
+	*) ;;
+      esac
+    fi
+    ;;
+  solaris)
+    MAKE=/usr/ccs/bin/make
+    ;;
+esac
 
 #
 # the name of the bin files directory
@@ -337,7 +414,7 @@ else
     "$CONFIGDIR"/unpack "$ROOT" runtime
     cd "$BASEDIR"/runtime/objs
     echo $this: Compiling the run-time system.
-    $MAKE -f mk.$ARCH-$OPSYS $EXTRA_DEFS
+    $MAKE -f $RT_MAKEFILE $EXTRA_DEFS
     if [ -x run.$ARCH-$OPSYS ]; then
 	mv run.$ARCH-$OPSYS "$RUNDIR"
 	if [ -f runx.$ARCH-$OPSYS ]; then
@@ -367,7 +444,7 @@ if [ -r "$HEAPDIR"/sml.$HEAP_SUFFIX ]; then
     CM_DIR_ARC=$ORIG_CM_DIR_ARC
     # now re-dump the heap image:
     vsay "$this: Re-creating a (customized) heap image..."
-    "$BINDIR"/sml @CMredump "$ROOT"/sml
+    "$BINDIR"/sml $SIZE_OPT @CMredump "$ROOT"/sml
     cd "$ROOT"
     if [ -r sml.$HEAP_SUFFIX ]; then
 	mv sml.$HEAP_SUFFIX "$HEAPDIR"
@@ -396,7 +473,7 @@ else
     cd "$ROOT"/"$BOOT_FILES"
 
     # now link (boot) the system and let it initialize itself...
-    if "$BINDIR"/.link-sml @SMLheap="$ROOT"/sml @SMLboot=BOOTLIST @SMLalloc=$ALLOC
+    if "$BINDIR"/.link-sml $SIZE_OPT @SMLheap="$ROOT"/sml @SMLboot=BOOTLIST @SMLalloc=$ALLOC
     then
 	cd "$ROOT"
 	if [ -r sml.$HEAP_SUFFIX ]; then
@@ -442,8 +519,14 @@ if [ $nolib = false ] ; then
     export ROOT INSTALLDIR CONFIGDIR BINDIR
     CM_TOLERATE_TOOL_FAILURES=true
     export CM_TOLERATE_TOOL_FAILURES
-    if "$BINDIR"/sml -m \$smlnj/installer.cm
+    if "$BINDIR"/sml $SIZE_OPT -m \$smlnj/installer.cm
     then
+	# because we create heap2exec without knowing if heap2asm is going
+	# to be installed, we need this hack to remove heap2exec when heap2asm
+	# is not available
+	if [ ! -x "$BINDIR"/heap2asm ] ; then
+	    rm -f "$BINDIR"/heap2exec
+	fi
 	vsay $this: Installation complete.
     else
 	complain "$this: !!! Installation of libraries and programs failed."

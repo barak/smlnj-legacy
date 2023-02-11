@@ -1,5 +1,8 @@
 (* amd64-opcodes.sml
  *
+ * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
  * This functor converts from types of instructions, e.g. addition, and  their
  * bit widths to AMD64 instructions.
  *)
@@ -7,17 +10,16 @@
 functor AMD64Opcodes (structure I : AMD64INSTR) =
   struct
 
-    type opcodes = {INC : I.unaryOp, DEC : I.unaryOp, NOT : I.unaryOp, 
+    type opcodes = {INC : I.unaryOp, DEC : I.unaryOp, NOT : I.unaryOp,
                     NEG : I.unaryOp,
-                    ADD : I.binaryOp, SUB : I.binaryOp, MUL : I.binaryOp,
-                    IMUL : I.binaryOp,
+                    ADD : I.binaryOp, SUB : I.binaryOp, IMUL : I.binaryOp,
                     SHL : I.binaryOp, SHR : I.binaryOp, SAR : I.binaryOp,
                     OR : I.binaryOp, AND : I.binaryOp, XOR : I.binaryOp,
                     CMP : {lsrc:I.operand, rsrc:I.operand} -> I.instr,
                     MOV : I.move}
     val opcodes8 = {INC=I.INCB,DEC=I.DECB,
                     NOT=I.NOTB,NEG=I.NEGB,
-                    ADD=I.ADDB,SUB=I.SUBB,MUL=I.MULB,IMUL=I.IMULB,
+                    ADD=I.ADDB,SUB=I.SUBB,IMUL=I.IMULB,
                     SHR=I.SHRB,SAR=I.SARB,SHL=I.SHLB,
                     OR=I.ORB,AND=I.ANDB,XOR=I.XORB,
 	 	    CMP=I.CMPB,MOV=I.MOVB}
@@ -25,19 +27,19 @@ functor AMD64Opcodes (structure I : AMD64INSTR) =
                      NOT=I.NOTW,NEG=I.NEGW,
                      SHL=I.SHLW,SHR=I.SHRW,SAR=I.SARW,
                      OR=I.ORW,AND=I.ANDW,XOR=I.XORW,
-	  	     MUL=I.MULW,IMUL=I.IMULW,
+	  	     IMUL=I.IMULW,
 		     CMP=I.CMPW,MOV=I.MOVW}
     val opcodes32 = {INC=I.INCL,DEC=I.DECL,ADD=I.ADDL,SUB=I.SUBL,
                      NOT=I.NOTL,NEG=I.NEGL,
                      SHL=I.SHLL,SHR=I.SHRL,SAR=I.SARL,
                      OR=I.ORL,AND=I.ANDL,XOR=I.XORL,
-		     MUL=I.MULL,IMUL=I.IMULL,
+		     IMUL=I.IMULL,
 		     CMP=I.CMPL, MOV=I.MOVL}
     val opcodes64 = {INC=I.INCQ,DEC=I.DECQ,ADD=I.ADDQ,SUB=I.SUBQ,
                      NOT=I.NOTQ,NEG=I.NEGQ,
                      SHL=I.SHLQ,SHR=I.SHRQ,SAR=I.SARQ,
                      OR=I.ORQ,AND=I.ANDQ,XOR=I.XORQ,
-		     MUL=I.MULQ,IMUL=I.IMULQ,
+		     IMUL=I.IMULQ,
 		     CMP=I.CMPQ, MOV=I.MOVQ}
 
     fun opcodes ty = (case ty
@@ -55,7 +57,7 @@ functor AMD64Opcodes (structure I : AMD64INSTR) =
     val negOp = opC #NEG val shlOp = opC #SHL val shrOp = opC #SHR
     val sarOp = opC #SAR val orOp  = opC #OR  val andOp = opC #AND
     val xorOp = opC #XOR val movOp = opC #MOV val cmpOp = opC #CMP
-    val mulOp = opC #MUL val imulOp = opC #IMUL
+    val imulOp = opC #IMUL
     fun div1Op 32 = I.DIVL1
       | div1Op 64 = I.DIVQ1
     fun idiv1Op 32 = I.IDIVL1
@@ -82,19 +84,19 @@ functor AMD64Opcodes (structure I : AMD64INSTR) =
       | loadSXOp (32, 64) = I.MOVSLQ
       | loadSXOp (fTy, tTy) = raise Fail ("incompatible "^Int.toString fTy^" "^Int.toString tTy)
 
-    val fopcodes32 = {MOV=I.MOVSS, ADD=I.ADDSS, SUB=I.SUBSS, 
+    val fopcodes32 = {MOV=I.MOVSS, ADD=I.ADDSS, SUB=I.SUBSS,
 		      MUL=I.MULSS, DIV=I.DIVSS, UCOM=I.UCOMISS}
-    val fopcodes64 = {MOV=I.MOVSD, ADD=I.ADDSD, SUB=I.SUBSD, 
+    val fopcodes64 = {MOV=I.MOVSD, ADD=I.ADDSD, SUB=I.SUBSD,
                       MUL=I.MULSD, DIV=I.DIVSD, UCOM=I.UCOMISD}
 
-    fun fopC opc ty = let 
+    fun fopC opc ty = let
 	val opcodes = (case ty
 	    of 32 => fopcodes32
 	     | 64 => fopcodes64
 	     | _  => fopcodes64
 	    (* end case *))
-      in 
-	opc opcodes 
+      in
+	opc opcodes
       end (* fopC *)
 
     val fmovOp = fopC #MOV val faddOp = fopC #ADD val fsubOp = fopC #SUB

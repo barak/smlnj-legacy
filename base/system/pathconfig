@@ -4,7 +4,7 @@ root.cm			../system
 
 smlnj			../system/smlnj
 SMLNJ-MLRISC		../../MLRISC/cm
-pickle-lib.cm		../compiler/MiscUtil/library
+pickle-lib.cm		../compiler/Library/pickle
 
 pgraph.cm		../../pgraph
 cm			../cm
@@ -13,6 +13,7 @@ compiler		../compiler
 SMLNJ-BASIS		../system/Basis
 SMLNJ-LIB		../../smlnj-lib
 SMLNJ-ML-YACC-LIB	../../ml-yacc/lib
+SMLNJ-ASDL-LIB		../../asdl/src/lib/sml
 smlnj-tdp		../../trace-debug-profile
 
 mlyacc-tool.cm		../../ml-yacc/tool

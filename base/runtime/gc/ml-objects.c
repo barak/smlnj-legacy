@@ -1,6 +1,9 @@
-/* ml-objects.c
+/*! \file ml-objects.c
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.
+ * \author John Reppy
+ *
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Code to allocate and manipulate ML objects.
  *
@@ -53,7 +56,7 @@ ml_val_t ML_CString (ml_state_t *msp, const char *v)
 	int		n = BYTES_TO_WORDS(len+1);  /* count "\0" too */
 	ml_val_t	res;
 
-	res = ML_AllocRaw32 (msp, n);
+	res = ML_AllocRaw (msp, n);
       /* zero the last word to allow fast (word) string comparisons, and to
        * guarantee 0 termination.
        */
@@ -102,7 +105,7 @@ ml_val_t ML_AllocString (ml_state_t *msp, int len)
 
     ASSERT(len > 0);
 
-    res = ML_AllocRaw32 (msp, nwords);
+    res = ML_AllocRaw (msp, nwords);
 
   /* zero the last word to allow fast (word) string comparisons, and to
    * guarantee 0 termination.
@@ -115,13 +118,13 @@ ml_val_t ML_AllocString (ml_state_t *msp, int len)
 
 } /* end of ML_AllocString. */
 
-/* ML_AllocRaw32:
+/* ML_AllocRaw:
  *
- * Allocate an uninitialized chunk of raw32 data.
+ * Allocate an uninitialized chunk of raw data.
  */
-ml_val_t ML_AllocRaw32 (ml_state_t *msp, int nwords)
+ml_val_t ML_AllocRaw (ml_state_t *msp, int nwords)
 {
-    ml_val_t	desc = MAKE_DESC(nwords, DTAG_raw32);
+    ml_val_t	desc = MAKE_DESC(nwords, DTAG_raw);
     ml_val_t	res;
     Word_t	szb;
 
@@ -153,14 +156,14 @@ ml_val_t ML_AllocRaw32 (ml_state_t *msp, int nwords)
 
     return res;
 
-} /* end of ML_AllocRaw32. */
+} /* end of ML_AllocRaw. */
 
-/* ML_ShrinkRaw32:
+/* ML_ShrinkRaw:
  *
- * Shrink a freshly allocated Raw32 vector.  This is used by the input routines
+ * Shrink a freshly allocated raw-data vector.  This is used by the input routines
  * that must allocate space for input that may be excessive.
  */
-void ML_ShrinkRaw32 (ml_state_t *msp, ml_val_t v, int nWords)
+void ML_ShrinkRaw (ml_state_t *msp, ml_val_t v, int nWords)
 {
     int		oldNWords = OBJ_LEN(v);
 
@@ -171,21 +174,21 @@ void ML_ShrinkRaw32 (ml_state_t *msp, ml_val_t v, int nWords)
 
     if (oldNWords > SMALL_OBJ_SZW) {
 	arena_t	*ap = msp->ml_heap->gen[0]->arena[STRING_INDX];
-	ASSERT(ap->nextw - oldNWords == PTR_MLtoC(ml_val_t, v)); 
+	ASSERT(ap->nextw - oldNWords == PTR_MLtoC(ml_val_t, v));
 	ap->nextw -= (oldNWords - nWords);
     }
     else {
-	ASSERT(msp->ml_allocPtr - oldNWords == PTR_MLtoC(ml_val_t, v)); 
+	ASSERT(msp->ml_allocPtr - oldNWords == PTR_MLtoC(ml_val_t, v));
 	msp->ml_allocPtr -= (oldNWords - nWords);
     }
 
-    PTR_MLtoC(ml_val_t, v)[-1] = MAKE_DESC(nWords, DTAG_raw32);
+    PTR_MLtoC(ml_val_t, v)[-1] = MAKE_DESC(nWords, DTAG_raw);
 
-} /* end of ML_ShrinkRaw32 */
+} /* end of ML_ShrinkRaw */
 
 /* ML_AllocRaw64:
  *
- * Allocate an uninitialized chunk of raw64 data.
+ * Allocate an uninitialized chunk of 64-bit aligned raw data.
  */
 ml_val_t ML_AllocRaw64 (ml_state_t *msp, int nelems)
 {
@@ -196,9 +199,11 @@ ml_val_t ML_AllocRaw64 (ml_state_t *msp, int nelems)
 
     if (nwords > SMALL_OBJ_SZW) {
 	arena_t	*ap = msp->ml_heap->gen[0]->arena[STRING_INDX];
-	szb = WORD_SZB*(nwords + 2);
+	szb = WORD_SZB*(nwords + 1);
+#ifdef ALIGN_REALDS
+	szb += WORD_SZB;  /* alignment padding */
+#endif
 	BEGIN_CRITICAL_SECT(MP_GCGenLock)
-	  /* NOTE: we use nwords+2 to allow for the alignment padding */
 	    IFGC (ap, szb+msp->ml_heap->allocSzB) {
 	      /* we need to do a GC */
 		ap->reqSizeB += szb;
@@ -222,7 +227,7 @@ ml_val_t ML_AllocRaw64 (ml_state_t *msp, int nelems)
 	    res = PTR_CtoML(ap->nextw);
 	    ap->nextw += nwords;
 	END_CRITICAL_SECT(MP_GCGenLock)
-	COUNT_ALLOC(msp, szb-WORD_SZB);
+	COUNT_ALLOC(msp, szb);
     }
     else {
 #ifdef ALIGN_REALDS
@@ -272,7 +277,7 @@ ml_val_t ML_AllocBytearray (ml_state_t *msp, int len)
     int		nwords = BYTES_TO_WORDS(len);
     ml_val_t	res;
 
-    res = ML_AllocRaw32 (msp, nwords);
+    res = ML_AllocRaw (msp, nwords);
 
   /* zero the last word to allow fast (word) string comparisons, and to
    * guarantee 0 termination.
@@ -301,12 +306,12 @@ ml_val_t ML_AllocRealdarray (ml_state_t *msp, int len)
 
 } /* end of ML_AllocRealdarray. */
 
-/* ML_AllocArray:
+/* ML_AllocArrayData:
  *
- * Allocate an ML array using initVal as an initial value.  Assume
+ * Allocate a mutable data array using initVal as an initial value.  Assume
  * that len > 0.
  */
-ml_val_t ML_AllocArray (ml_state_t *msp, int len, ml_val_t initVal)
+ml_val_t ML_AllocArrayData (ml_state_t *msp, int len, ml_val_t initVal)
 {
     ml_val_t	res, *p;
     ml_val_t	desc = MAKE_DESC(len, DTAG_arr_data);
@@ -353,8 +358,24 @@ ml_val_t ML_AllocArray (ml_state_t *msp, int len, ml_val_t initVal)
 	res = ML_Alloc (msp, len);
     }
 
-    for (p = PTR_MLtoC(ml_val_t, res), i = 0;  i < len; i++)
+    for (p = PTR_MLtoC(ml_val_t, res), i = 0;  i < len; i++) {
 	*p++ = initVal;
+    }
+
+    return res;
+
+} /* end of ML_AllocArrayData. */
+
+/* ML_AllocArray:
+ *
+ * Allocate an ML array using initVal as an initial value.  Assume
+ * that len > 0.
+ */
+ml_val_t ML_AllocArray (ml_state_t *msp, int len, ml_val_t initVal)
+{
+    ml_val_t	res;
+
+    res = ML_AllocArrayData (msp, len, initVal);
 
     SEQHDR_ALLOC (msp, res, DESC_polyarr, res, len);
 
@@ -461,12 +482,22 @@ ml_val_t ML_SysConstList (ml_state_t *msp, sysconst_tbl_t *tbl)
 {
     int		i;
     ml_val_t	name, sysConst, list;
+    Addr_t	availSpace, reqSpace;
 
-/** should check for available heap space !!! **/
+    availSpace = ((size_t)msp->ml_limitPtr - (size_t)msp->ml_allocPtr);
     for (list = LIST_nil, i = tbl->numConsts;  --i >= 0;  ) {
+      /* required space for string header+data (4 words + string bytes), pair (3 words),
+       * cons (3 words).
+       */
+	reqSpace = (4 + 3 + 3) * WORD_SZB + BYTES_TO_WORDS(strlen(tbl->consts[i].name) + 1);
+	if (reqSpace >= availSpace) {
+	    InvokeGCWithRoots (msp, 0, (ml_val_t *)&list, NIL(ml_val_t *));
+	    availSpace = ((size_t)msp->ml_limitPtr - (size_t)msp->ml_allocPtr);
+	}
 	name = ML_CString (msp, tbl->consts[i].name);
 	REC_ALLOC2 (msp, sysConst, INT_CtoML(tbl->consts[i].id), name);
 	LIST_cons(msp, list, sysConst, list);
+	availSpace -= reqSpace;
     }
 
     return list;
@@ -474,7 +505,7 @@ ml_val_t ML_SysConstList (ml_state_t *msp, sysconst_tbl_t *tbl)
 } /* end of ML_SysConstList */
 
 
-/* ML_CData:
+/* ML_AllocCData:
  *
  * Allocate a 64-bit aligned raw data object (to store abstract C data).
  */
@@ -482,7 +513,7 @@ ml_val_t ML_AllocCData (ml_state_t *msp, int nbytes)
 {
     ml_val_t	obj;
 
-    obj = ML_AllocRaw64 (msp, (nbytes+7)>>2);
+    obj = ML_AllocRaw64 (msp, (nbytes+7) >> 3);
 
     return obj;
 
@@ -500,7 +531,7 @@ ml_val_t ML_CData (ml_state_t *msp, void *data, int nbytes)
     if (nbytes == 0)
 	return ML_unit;
     else {
-	obj = ML_AllocRaw64 (msp, (nbytes+7)>>2);
+	obj = ML_AllocRaw64 (msp, (nbytes+7) >> 3);
 	memcpy (PTR_MLtoC(void, obj), data, nbytes);
 
 	return obj;

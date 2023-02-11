@@ -1,9 +1,9 @@
-/* init-gc.c
+/*! \file init-gc.c
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * The GC initialization code.
- *
  */
 
 #ifdef PAUSE_STATS		/* GC pause statistics are UNIX dependent */
@@ -32,10 +32,9 @@ PVT int		DfltRatios[MAX_NUM_GENS] = {
 	DFLT_RATIO,	DFLT_RATIO,	DFLT_RATIO
     };
 
-#ifdef TWO_LEVEL_MAP
-#  error two level map not supported
-#else
-aid_t		*BIBOP;
+bibop_t		BIBOP;
+#ifdef SIZE_64
+l2_bibop_t	UnmappedL2;
 #endif
 
 #ifdef COLLECT_STATS /** should this go into gc-stats.c ??? **/
@@ -110,7 +109,7 @@ heap_params_t *ParseHeapParams (char **argv)
 		    params->cacheGen = MAX_NGENS;
 	    }
 	    else if (MATCH("unlimited-heap"))
-		UnlimitedHeap = TRUE;	
+		UnlimitedHeap = TRUE;
 	}
 	if (errFlg)
 	    return NIL(heap_params_t *);
@@ -119,6 +118,67 @@ heap_params_t *ParseHeapParams (char **argv)
     return params;
 
 } /* end of ParseHeapParams */
+
+/* InitBibop:
+ *
+ * Initialize the big-bag-of-pages map.
+ */
+bibop_t InitBibop ()
+{
+    bibop_t bibop;
+    size_t bibopSz;
+    int i;
+
+#ifdef SIZE_64
+  /* initialize the level-2 table for unmapped regions */
+    for (i = 0;  i < BIBOP_L2_SZ;  i++) {
+	UnmappedL2.tbl[i] = AID_UNMAPPED;
+    }
+    UnmappedL2.numMapped = 0;
+
+    bibopSz = BIBOP_L1_SZ * sizeof(l2_bibop_t *);
+#else
+    bibopSz = BIBOP_SZ * sizeof(aid_t);
+#endif
+
+    if ((bibop = MALLOC(bibopSz)) == NIL(bibop_t)) {
+	Die("InitBibop: unable to allocate Bibop");
+    }
+
+#ifdef SIZE_64
+#ifdef VERBOSE
+    SayDebug("InitBibop: UnmappedL2 = %p\n", &UnmappedL2);
+#endif
+    for (i = 0;  i < BIBOP_L1_SZ;  i++) {
+	bibop[i] = &UnmappedL2;
+    }
+#else
+    for (i = 0;  i < BIBOP_SZ;  i++) {
+	bibop[i] = AID_UNMAPPED;
+    }
+#endif
+
+    return bibop;
+}
+
+/* FreeBibop:
+ *
+ * deallocate memory for a Bibop.
+ */
+void FreeBibop (bibop_t bibop)
+{
+#ifdef SIZE_64
+    int i;
+    for (i = 0;  i < BIBOP_L1_SZ;  i++) {
+	if (bibop[i] != &UnmappedL2) {
+	    FREE(bibop[i]);
+	}
+    }
+#endif
+
+    FREE(bibop);
+
+}
 
 /* InitHeap:
  *
@@ -139,29 +199,17 @@ void InitHeap (ml_state_t *msp, bool_t isBoot, heap_params_t *params)
   /* First we initialize the underlying memory system */
     MEM_InitMemory ();
 
-  /* allocate the base memory object (holds the BIBOP and allocation space) */
+  /* allocate the base memory object that holds the allocation space */
     {
-	long	bibopSz;
-
-#ifdef TWO_LEVEL_MAP
-#  error two level map not supported
-#else
-	bibopSz = BIBOP_SZ * sizeof(aid_t);
-#endif
-	baseObj = MEM_AllocMemObj (MAX_NUM_PROCS*params->allocSz + bibopSz);
-	if (baseObj == NIL(mem_obj_t *))
-	    Die ("unable to allocate memory object for BIBOP");
-	BIBOP = (bibop_t)MEMOBJ_BASE(baseObj);
-	allocBase = (ml_val_t *)(((Addr_t)BIBOP) + bibopSz);
+	baseObj = MEM_AllocMemObj (MAX_NUM_PROCS*params->allocSz);
+	if (baseObj == NIL(mem_obj_t *)) {
+	    Die ("unable to allocate memory object for allocation spaces");
+	}
+	allocBase = (ml_val_t *)MEMOBJ_BASE(baseObj);
     }
 
   /* initialize the BIBOP */
-#ifdef TWO_LEVEL_MAP
-#  error two level map not supported
-#else
-    for (i = 0;  i < BIBOP_SZ;  i++)
-	BIBOP[i] = AID_UNMAPPED;
-#endif
+    BIBOP = InitBibop();
 
   /* initialize heap descriptor */
     heap = NEW_OBJ(heap_t);
@@ -192,13 +240,15 @@ void InitHeap (ml_state_t *msp, bool_t isBoot, heap_params_t *params)
 	    gen->arena[j]->maxSizeB = max_sz;
 	    gen->arena[j]->id = MAKE_AID(i+1, j+1, 0);
 	}
-	for (j = 0;  j < NUM_BIGOBJ_KINDS;  j++)
+	for (j = 0;  j < NUM_BIGOBJ_KINDS;  j++) {
 	    gen->bigObjs[j] = NIL(bigobj_desc_t *);
+	}
     }
     for (i = 0;  i < params->numGens;  i++) {
 	int	k = (i == params->numGens-1) ? i : i+1;
-	for (j = 0;  j < NUM_ARENAS;  j++)
+	for (j = 0;  j < NUM_ARENAS;  j++) {
 	    heap->gen[i]->arena[j]->nextGen = heap->gen[k]->arena[j];
+	}
     }
     heap->numGens		= params->numGens;
     heap->cacheGen		= params->cacheGen;
@@ -212,16 +262,19 @@ void InitHeap (ml_state_t *msp, bool_t isBoot, heap_params_t *params)
     heap->freeBigObjs->prev	= heap->freeBigObjs;
     heap->freeBigObjs->next	= heap->freeBigObjs;
     heap->weakList		= NIL(ml_val_t *);
+#ifdef VERBOSE
+    SayDebug("Free Big Objects list header = %p\n", heap->freeBigObjs);
+#endif
 
   /* initialize new space */
     heap->baseObj = baseObj;
     heap->allocBase = allocBase;
     heap->allocSzB = MAX_NUM_PROCS*params->allocSz;
-    MarkRegion (BIBOP, (ml_val_t *)BIBOP, MEMOBJ_SZB(heap->baseObj), AID_NEW);
+    MarkRegion (BIBOP, (ml_val_t *)MEMOBJ_BASE(baseObj), MEMOBJ_SZB(heap->baseObj), AID_NEW);
 #ifdef VERBOSE
-    SayDebug ("NewSpace = [%#x, %#x:%#x), %d bytes\n",
+    SayDebug ("NewSpace = [%p, %p:%p), %d bytes\n",
 	heap->allocBase, HEAP_LIMIT(heap),
-	(Word_t)(heap->allocBase)+params->allocSz, params->allocSz);
+	(void *)((Addr_t)heap->allocBase+params->allocSz), params->allocSz);
 #endif
 
 #ifdef GC_STATS
@@ -242,12 +295,15 @@ void InitHeap (ml_state_t *msp, bool_t isBoot, heap_params_t *params)
 
     if (isBoot) {
       /* Create the first generation's to-space. */
-	for (i = 0;  i < NUM_ARENAS;  i++)
+	for (i = 0;  i < NUM_ARENAS;  i++) {
 	    heap->gen[0]->arena[i]->tospSizeB = RND_MEMOBJ_SZB(2 * heap->allocSzB);
-	if (NewGeneration(heap->gen[0]) == FAILURE)
+	}
+	if (NewGeneration(heap->gen[0]) == FAILURE) {
 	    Die ("unable to allocate initial first generation space\n");
-	for (i = 0;  i < NUM_ARENAS;  i++)
+	}
+	for (i = 0;  i < NUM_ARENAS;  i++) {
 	    heap->gen[0]->arena[i]->oldTop = heap->gen[0]->arena[i]->tospBase;
+	}
     }
 
   /* initialize the GC related parts of the ML state */
@@ -258,6 +314,11 @@ void InitHeap (ml_state_t *msp, bool_t isBoot, heap_params_t *params)
 #else
     msp->ml_limitPtr	= HEAP_LIMIT(heap);
 #endif
+
+#ifdef CHECK_HEAP
+    CheckBIBOP (heap);
+    SayDebug("****** GC initialization done ******\n");
+#endif /* CHECK_HEAP */
 
 } /* end of InitHeap */
 
@@ -278,4 +339,3 @@ void ClearGCStats (heap_t *heap)
 
 } /* end of ClearStats */
 #endif
-

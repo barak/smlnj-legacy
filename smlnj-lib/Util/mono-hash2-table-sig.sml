@@ -1,13 +1,13 @@
 (* mono-hash2-table-sig.sml
  *
- * COPYRIGHT (c) 1996 by AT&T Research.
+ * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Hash tables that are keyed by two keys (in different domains).
  *
  * AUTHOR:  John Reppy
- *	    AT&T Bell Laboratories
- *	    Murray Hill, NJ 07974
- *	    jhr@research.att.com
+ *	    University of Chicago
+ *	    https://cs.uchicago.edu/~jhr
  *)
 
 signature MONO_HASH2_TABLE =
@@ -66,11 +66,14 @@ signature MONO_HASH2_TABLE =
 		-> 'b hash_table
 	(* Map a table to a new table that has the same keys *)
 
+(* TODO: add mapPartial and mapPartiali *)
+
     val fold  : (('a * 'b) -> 'b) -> 'b -> 'a hash_table -> 'b
     val foldi : ((Key1.hash_key * Key2.hash_key * 'a * 'b) -> 'b) -> 'b
 		-> 'a hash_table -> 'b
 
-(** Also mapPartial?? *)
+(* TODO: add modify and modifyi *)
+
     val filter  : ('a -> bool) -> 'a hash_table -> unit
     val filteri : ((Key1.hash_key * Key2.hash_key * 'a) -> bool) -> 'a hash_table
 		-> unit

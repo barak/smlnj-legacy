@@ -1,53 +1,42 @@
 (* win32-bin-prim-io.sml
  *
- * COPYRIGHT (c) 1998 Bell Labs, Lucent Technologies.
- * COPYRIGHT (c) 1995 AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * This implements the Win32 version of the OS specific binary primitive
  * IO structure.  The Text IO version is implemented by a trivial translation
  * of these operations (see nt-text-prim-io.sml).
  *)
 
-structure Win32BinPrimIO : OS_PRIM_IO = 
+structure Win32BinPrimIO : OS_PRIM_IO =
   struct
 
     structure SV = SyncVar
 
     structure PrimIO = BinPrimIO
-	
+
     structure W32FS = Win32.FileSys
     structure W32IO = Win32.IO
     structure W32G = Win32.General
 
     structure V = Word8Vector
-	
+
     type file_desc = W32G.hndl
-	
-    val pfi = Position.fromInt
-    val pti = Position.toInt
-    val pfw = Position.fromInt o W32G.Word.toInt
-    val ptw = W32G.Word.fromInt o Position.toInt
-	    
-    val say = W32G.logMsg
 
     val bufferSzB = 4096
 
-    val seek = pfw o W32IO.setFilePointer'
+    val seek = W32IO.setFilePointer'
 
-    fun posFns iod = 
+    fun posFns iod =
 	  if (OS.IO.kind iod = OS.IO.Kind.file)
 	    then let
-	      val pos : Position.int ref = ref(pfi 0)
+	      val pos : Position.int ref = ref 0
 	      fun getPos () : Position.int = !pos
-	      fun setPos p = 
-		    pos := seek (W32FS.IODToHndl iod, ptw p, W32IO.FILE_BEGIN)
-	      fun endPos () : Position.int = (
-		    case W32FS.getLowFileSize (W32FS.IODToHndl iod)
-		     of SOME w => pfw w
-		      | _ => raise OS.SysErr("endPos: no file size", NONE)
-		    (* end case *))
+	      fun setPos p =
+		    pos := seek (W32FS.IODToHndl iod, p, W32IO.FILE_BEGIN)
+	      fun endPos () : Position.int = W32FS.getFileSize (W32FS.IODToHndl iod)
 	      fun verifyPos () = (
-		    pos := seek (W32FS.IODToHndl iod, 0wx0, W32IO.FILE_CURRENT);
+		    pos := seek (W32FS.IODToHndl iod, 0, W32IO.FILE_CURRENT);
 		    !pos)
 	      in
 		ignore (verifyPos());
@@ -58,11 +47,8 @@ structure Win32BinPrimIO : OS_PRIM_IO =
 		  verifyPos=SOME verifyPos
 		}
 	      end
-	    else {
-		pos=ref(pfi 0),
-		getPos=NONE,setPos=NONE,endPos=NONE,verifyPos=NONE
-	      }
-		
+	    else { pos=ref 0, getPos=NONE, setPos=NONE, endPos=NONE, verifyPos=NONE }
+
     fun addCheck f (SOME g) = SOME (f g)
       | addCheck _ NONE = NONE
 
@@ -77,7 +63,7 @@ structure Win32BinPrimIO : OS_PRIM_IO =
 	    | withLock' (SOME f) = SOME(withLock f)
 	  val closed = ref false
           val {pos, getPos, setPos, endPos, verifyPos} = posFns iod
-	  fun incPos k = pos := Position.+(!pos, pfi k)
+	  fun incPos k = pos := Position.+(!pos, Position.fromInt k)
 	  fun blockWrap f x = (
 		if !closed then raise IO.ClosedStream else ();
 		f x)
@@ -115,12 +101,9 @@ structure Win32BinPrimIO : OS_PRIM_IO =
 		else (closed:=true; W32IO.close (W32FS.IODToHndl iod))
 	  fun avail () = if !closed
 		then SOME 0
-		else (case W32FS.getLowFileSize (W32FS.IODToHndl iod)
-		   of SOME w => SOME (Position.-(pfw w,!pos))
-		    | NONE => NONE
-		  (* end case *))
+		else SOME(Position.-(W32FS.getFileSize (W32FS.IODToHndl iod), !pos))
 	  in
-	    BinPrimIO.RD{
+	    PrimIO.RD{
 		name		= name,
 		chunkSize	= bufferSzB,
 		readVec		= withLock (blockWrap readVec),
@@ -166,7 +149,7 @@ structure Win32BinPrimIO : OS_PRIM_IO =
 	    | withLock' (SOME f) = SOME(withLock f)
 	  val closed = ref false
           val {pos, getPos, setPos, endPos, verifyPos} = posFns iod
-	  fun incPos k = pos := Position.+(!pos, pfi k)
+	  fun incPos k = pos := Position.+(!pos, Position.fromInt k)
 	  fun ensureOpen () = if !closed then raise IO.ClosedStream else ()
 	  fun putV x = W32IO.writeVec x
 	  fun putA x = W32IO.writeArr x
@@ -197,7 +180,7 @@ structure Win32BinPrimIO : OS_PRIM_IO =
 		then ()
 		else (closed:=true; W32IO.close (W32FS.IODToHndl iod))
 	  in
-	    BinPrimIO.WR{
+	    PrimIO.WR{
 		name		= name,
 		chunkSize	= chunkSize,
 		writeVec	= withLock (write putV),
@@ -234,7 +217,7 @@ structure Win32BinPrimIO : OS_PRIM_IO =
 		  mode=W32IO.OPEN_ALWAYS,
 		  attrs=W32FS.FILE_ATTRIBUTE_NORMAL
 		})
-	  val _ = W32IO.setFilePointer' (h,0wx0,W32IO.FILE_END)
+	  val _ = seek (h, 0, W32IO.FILE_END)
 	  in
 	    mkWriter{fd = h, name = name, appendMode = true, chunkSize = bufferSzB}
 	  end

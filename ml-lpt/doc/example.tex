@@ -73,7 +73,7 @@ in      => ( T.KW_in );
 "("     => ( T.LP );
 ")"     => ( T.RP );
 " " | \n | \t
-        => ( continue() );
+        => ( skip() );
 .       => ( (* handle error *) );
 \end{lstlisting}
 \caption{The ml-ulex specification: \texttt{calc.lex}}

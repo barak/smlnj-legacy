@@ -1,15 +1,16 @@
 (* text-io-fn.sml
  *
- * COPYRIGHT (c) 1995 AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * QUESTION: what operations should raise exceptions when the stream is
  * closed?
- *
  *)
 
 local
-    structure Int = IntImp
-    structure OS = OSImp
+  structure Int = IntImp
+  structure Position = PositionImp
+  structure OS = OSImp
 in
 functor TextIOFn (
 
@@ -72,6 +73,9 @@ functor TextIOFn (
 	type reader = PIO.reader
 	type writer = PIO.writer
 	type pos = PIO.pos
+
+      (* maximum size of an input request *)
+	val maxInputSz = Position.fromInt V.maxLen
 
       (*** Functional input streams ***
        ** We represent an instream by a pointer to a buffer and an offset
@@ -152,6 +156,7 @@ functor TextIOFn (
 	      in
 		case (chunkSize - 1)
 		 of 0 => (fn n => readVec n)
+(* FIXME: what if the rounded size is > maxInputSz? *)
 		  | k => (* round up to next multiple of chunkSize *)
 		      (fn n => readVec(Int.quot((n+k), chunkSize) * chunkSize))
 		(* end case *)
@@ -173,7 +178,6 @@ functor TextIOFn (
 		get
 	      end
 
-
       (* terminate an input stream *)
 	fun terminate (INFO{tail, cleanTag, ...}) = (case !tail
 	       of (m as ref NOMORE) => (
@@ -185,6 +189,7 @@ functor TextIOFn (
 
 	fun input (strm as ISTRM(buf, _)) =
 	      generalizedInput (getBuffer (readVec buf, "input")) strm
+
 	fun input1 (ISTRM(buf, pos)) = let
 	      val IBUF{data, more, ...} = buf
 	      in
@@ -201,6 +206,7 @@ functor TextIOFn (
 		      | TERMINATED => NONE
 		    (* end case *))
 	      end
+
 	fun inputN (ISTRM(buf, pos), n) = let
 	      fun join (item, (list, strm)) = (item::list, strm)
 	      fun inputList (buf as IBUF{data, ...}, i, n) = let
@@ -227,6 +233,7 @@ functor TextIOFn (
 	      in
 		(V.concat data, strm)
 	      end
+
 	fun inputAll (strm as ISTRM(buf, _)) = let
 	      val INFO{reader=PIO.RD{avail, ...}, ...} = infoOfIBuf buf
  	    (* Read a chunk that is as large as the available input.  Note
@@ -236,7 +243,9 @@ functor TextIOFn (
 	      fun bigChunk _ = let
 		    val delta = (case avail()
 			   of NONE => chunkSzOfIBuf buf
-			    | (SOME n) => n
+			    | (SOME n) => if (n > maxInputSz)
+				then raise Size
+				else Position.toInt n
 			  (* end case *))
 		    in
 		      readChunk buf delta
@@ -338,7 +347,7 @@ functor TextIOFn (
 (** Suggestion: When building a stream with supplied initial data,
  ** nothing can be said about the positions inside that initial
  ** data (who knows where that data even came from!).
- **) 
+ **)
 	      val basePos = if (V.length data = 0)
 		    then getPos()
 		    else NONE
@@ -868,4 +877,3 @@ functor TextIOFn (
 
   end (* TextIOFn *)
 end
-

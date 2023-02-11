@@ -1,6 +1,6 @@
 (* date.sml
  *
- * COPYRIGHT (c) 2015 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
  * All rights reserved.
  *
  * The SML Basis Library Date module.  This code is partially based on
@@ -14,6 +14,9 @@
  * C++, Lisp, and EmacsLisp code from that paper can be found at
  *
  *	http://emr.cs.iit.edu/~reingold/calendars.shtml
+ *
+ * The SML/NJ runtime system interface uses unsigned 64-bit values (in nanoseconds
+ * since the Epoch) to represent time values.
  *)
 
 structure Date : DATE =
@@ -21,6 +24,7 @@ structure Date : DATE =
 
     structure Int = IntImp
     structure Int32 = Int32Imp
+    structure Word64 = Word64Imp
     structure IntInf = IntInfImp
     structure String = StringImp
     structure Time = TimeImp
@@ -56,50 +60,41 @@ structure Date : DATE =
   (* note: mkTime assumes the tm structure passed to it reflects
    * the local time zone
    *)
-    val ascTime : tm -> string
-	  = wrap (CInterface.c_function "SMLNJ-Date" "ascTime")
-    val localTime' : Int32.int -> tm
+    val localTime' : Word64.word -> tm
 	  = wrap (CInterface.c_function "SMLNJ-Date" "localTime")
-    val gmTime' : Int32.int -> tm
+    val gmTime' : Word64.word -> tm
 	  = wrap (CInterface.c_function "SMLNJ-Date" "gmTime")
-    val mkTime' : tm -> Int32.int
+    val mkTime' : tm -> Word64.word
 	  = wrap (CInterface.c_function "SMLNJ-Date" "mkTime")
     val strfTime : (string * tm) -> string
 	  = wrap (CInterface.c_function "SMLNJ-Date" "strfTime")
 
   (* conversions between integer numbers of seconds (used by runtime) and Time.time values *)
-    fun secsToTime s = Time.fromSeconds (Int32.toLarge s)
-    fun timeToSecs t = Int32.fromLarge (Time.toSeconds t)
+    fun nsToTime s = Time.fromNanoseconds (Word64.toLargeInt s)
+    fun timeToNs t = Word64.fromLargeInt (Time.toNanoseconds t)
 
-    val localTime = localTime' o timeToSecs
-    val gmTime = gmTime' o timeToSecs
+    val localTime = localTime' o timeToNs
+    val gmTime = gmTime' o timeToNs
 
-
-  (* TODO: switch to runtime system functions (added in 110.79) *)
-    local
-      val gettimeofday : unit -> (Int32.int * int) =
-	    CInterface.c_function "SMLNJ-Time" "timeofday"
-      fun currentTimeInSeconds () = #1 (gettimeofday ())
-    in
   (* a function to return the offset from UTC of the time t in the local timezone.
    * This value reflects not only the geographical location of the host system, but
    * also daylight savings time (if it is in effect).  Note that this value is
    * positive to the east of UTC and negative to the west.  Add it to UTC to get
    * the local time.
+   * Note that the offset is signed!!!
    *)
-    fun localOffsetForTime t = let
-	  val utcTM = gmTime' t
-	  val localTM = localTime' t
-	  val dt = t - mkTime' (set_tm_isdst(utcTM, tm_isdst localTM));
-	  in
-	    dt
-	  end
-    fun localOffset () = secsToTime (localOffsetForTime (currentTimeInSeconds ()))
+    local
+      val toTime = Time.fromSeconds o Int32.toLarge
+      val localOffsetForTime' : Word64.word -> Int32.int =
+	    wrap (CInterface.c_function "SMLNJ-Date" "localOffsetForTime")
+      val localOffset' : unit -> Int32.int =
+	    wrap (CInterface.c_function "SMLNJ-Date" "localOffset")
+    in
+    val localOffsetForTime = toTime o localOffsetForTime'
+  (* localOffset for the current time *)
+    val localOffset = toTime o localOffset'
     end (* local *)
 
-  (* the run-time system indexes the year off this *)
-    val baseYear = 1900
-	
     datatype weekday = Mon | Tue | Wed | Thu | Fri | Sat | Sun
 
     datatype month
@@ -121,7 +116,7 @@ structure Date : DATE =
 
   (* tables for mapping integers to days/months *)
     val dayTbl = #[Sun, Mon, Tue, Wed, Thu, Fri, Sat]
-    val monthTbl = #[Jan, Feb, Mar, Apr, May, Jun, Jul, 
+    val monthTbl = #[Jan, Feb, Mar, Apr, May, Jun, Jul,
 		     Aug, Sep, Oct, Nov, Dec]
 
     fun dayToInt Sun = 0
@@ -159,7 +154,7 @@ structure Date : DATE =
 
   (* convert runtime tm tuple to date type *)
     fun tm2date (tm : tm, offset) = DATE{
-	    year = tm_year tm + baseYear,
+	    year = tm_year tm,
 	    month = Vector.sub(monthTbl, tm_mon tm),
 	    day = tm_mday tm,
 	    hour = tm_hour tm,
@@ -178,7 +173,7 @@ structure Date : DATE =
 	    #hour d,			(* tm_hour *)
 	    #day d,			(* tm_mday *)
 	    monthToInt(#month d),	(* tm_mon *)
-	    #year d - baseYear,		(* tm_year *)
+	    #year d,			(* tm_year *)
 	    dayToInt(#wday d),		(* tm_wday *)
 	    #yday d,			(* tm_yday *)
 	    case (#isDst d)		(* tm_isdst *)
@@ -354,7 +349,7 @@ structure Date : DATE =
 	  end
 
     fun fromTimeLocal t = let
-	  val offset = secsToTime (localOffsetForTime (timeToSecs t))
+	  val offset = localOffsetForTime (timeToNs t)
 	  in
 	    tm2date (localTime t, SOME offset)
 	  end
@@ -366,17 +361,14 @@ structure Date : DATE =
 	  val t = mkTime' (date2tm date)
 	  in
 	    case offset
-	     of NONE => secsToTime t
-	      | SOME offset => let
+	     of NONE => nsToTime t
+	      | SOME offset =>
 		(* note that representation of a date is canonical, which means that the
 		 * offset has already been applied, so we do not need to adjust by the
 		 * date's offset.  On the other hand, mkTime' returns the _local_ time,
 		 * so we do need to adjust for the local offset.
 		 *)
-		  val t = t + localOffsetForTime t  (* converts local time to UTC *)
-		  in
-		    secsToTime t
-		  end
+		  Time.+(nsToTime t, localOffsetForTime t)  (* converts local time to UTC *)
 	    (* end case *)
 	  end
 
@@ -399,8 +391,6 @@ structure Date : DATE =
 
 
   (***** String conversions *****)
-
-    fun toString d = ascTime (date2tm d)
 
   (* the size of the runtime system character buffer, not including space for the '\0' *)
     val fmtBuf = 512-1
@@ -479,6 +469,8 @@ structure Date : DATE =
 	  in
 	    fn d => let val tm = date2tm d in String.concat(List.map (fn f => f tm) fmtFns) end
 	  end
+
+    val toString = fmt "%a %b %d %H:%M:%S %Y"
 
   (* Date scanner *)
     fun scan getc s = let

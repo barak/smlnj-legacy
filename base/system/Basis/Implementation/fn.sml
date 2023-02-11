@@ -35,13 +35,13 @@
 structure Fn : FN =
   struct
 
-    fun id x = x
+    val id = InlineT.identity
 
     fun const x y = x
 
     fun apply (f, x) = f x
 
-    val op o = op o
+    val op o = InlineT.compose
 
     fun curry f x y = f(x, y)
 

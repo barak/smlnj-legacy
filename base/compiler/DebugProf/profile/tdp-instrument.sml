@@ -1,11 +1,12 @@
 (* tdp-instrument.sml
  *
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
  * Perform Absyn annotations for tracing- debugging- and profiling support.
  *   This adds a tdp_enter at the entry point of each FNexp,
  *   a push-restore sequence (tdp_push) at each non-tail call site of
  *   a non-primitive function, and a save-restore sequence to each HANDLEexp.
- *
- * Copyright (c) 2004 by The Fellowship of SML/NJ
  *
  * Author: Matthias Blume (blume@tti-c.org)
  *)
@@ -15,7 +16,7 @@ local
     structure SP = SymPath
     structure EM = ErrorMsg
     structure VC = VarCon
-    structure BT = CoreBasicTypes
+    structure BT = BasicTypes
     structure AU = AbsynUtil
 in
 
@@ -75,7 +76,7 @@ structure TDPInstrument :> TDP_INSTRUMENT = struct
 	    val sy = Symbol.varSymbol n
 	in
 	    VC.VALvar { access = Access.namedAcc (sy, mkv),
-	    		prim = PrimOpId.NonPrim,
+	    		prim = PrimopId.NonPrim,
 			path = SP.SPATH [sy], typ = ref t, btvs = ref []}
 	end
 
@@ -95,7 +96,7 @@ structure TDPInstrument :> TDP_INSTRUMENT = struct
 	    fn s => List.exists (fn s' => Symbol.eq (s, s')) l
 	end
 *)
-	     
+
 	fun cons (s, []) = if isSpecial s then [] else [(s, 0)]
 	  | cons (s, l as ((s', m) :: t)) =
 	      if isSpecial s then l
@@ -122,7 +123,7 @@ structure TDPInstrument :> TDP_INSTRUMENT = struct
 	val tdp_module_var = tmpvar ("<tdp_module>", BT.intTy)
 
 	fun VARexp v = A.VARexp (ref v, [])
-	fun INTexp i = A.INTexp (IntInf.fromInt i, BT.intTy)
+	fun INTexp i = A.NUMexp("<lit>", {ival = IntInf.fromInt i, ty = BT.intTy})
 
 	val uExp = AU.unitExp
 	val pushexp = A.APPexp (VARexp tdp_push_var, uExp)
@@ -164,8 +165,8 @@ structure TDPInstrument :> TDP_INSTRUMENT = struct
 
 	fun is_prim_exp (A.VARexp (ref (VC.VALvar v), _)) =
               (case #prim v
-                 of PrimOpId.Prim _ => true
-                  | PrimOpId.NonPrim => false)
+                 of PrimopId.Prim _ => true
+                  | PrimopId.NonPrim => false)
 	  | is_prim_exp (A.CONexp _) = true
 	  | is_prim_exp (A.CONSTRAINTexp (e, _)) = is_prim_exp e
 	  | is_prim_exp (A.MARKexp (e, _)) = is_prim_exp e
@@ -205,8 +206,6 @@ structure TDPInstrument :> TDP_INSTRUMENT = struct
 	      A.SELECTexp (l, i_exp false loc e)
 	  | i_exp _ loc (A.VECTORexp (l, t)) =
 	      A.VECTORexp (map (i_exp false loc) l, t)
-	  | i_exp tail loc (A.PACKexp (e, t, tcl)) =
-	      A.PACKexp (i_exp tail loc e, t, tcl)
 	  | i_exp tail loc (e as A.APPexp (f, a)) =
 	    let val mainexp =  A.APPexp (i_exp false loc f, i_exp false loc a)
 	    in
@@ -275,9 +274,8 @@ structure TDPInstrument :> TDP_INSTRUMENT = struct
 	      A.CONSTRAINTexp (i_exp tail loc e, t)
 	  | i_exp tail (n, _) (A.MARKexp (e, r)) =
 	      A.MARKexp (i_exp tail (n, r) e, r)
-	  | i_exp _ _ (e as (A.VARexp _ | A.CONexp _ | A.INTexp _ |
-			     A.WORDexp _ | A.REALexp _ | A.STRINGexp _ |
-			     A.CHARexp _)) = e
+	  | i_exp _ _ (e as (A.VARexp _ | A.CONexp _ | A.NUMexp _ |
+			     A.REALexp _ | A.STRINGexp _ | A.CHARexp _)) = e
 
 	and i_dec loc (A.VALdec l) = A.VALdec (map (i_vb loc) l)
 	  | i_dec loc (A.VALRECdec l) = A.VALRECdec (map (i_rvb loc) l)
@@ -286,7 +284,6 @@ structure TDPInstrument :> TDP_INSTRUMENT = struct
 			     body = i_dec loc body }
 	  | i_dec loc (A.EXCEPTIONdec l) = A.EXCEPTIONdec (map (i_eb loc) l)
 	  | i_dec loc (A.STRdec l) = A.STRdec (map (i_strb loc) l)
-	  | i_dec loc (A.ABSdec l) = A.ABSdec (map (i_strb loc) l)
 	  | i_dec loc (A.FCTdec l) = A.FCTdec (map (i_fctb loc) l)
 	  | i_dec loc (A.LOCALdec (d, d')) =
 	      A.LOCALdec (i_dec loc d, i_dec loc d')
@@ -312,12 +309,12 @@ structure TDPInstrument :> TDP_INSTRUMENT = struct
 		case gv pat of
 		    SOME (VC.VALvar { path = SP.SPATH [x], prim, ... }) =>
                       (case prim
-                        of PrimOpId.Prim _ => vb
-                         | PrimOpId.NonPrim => recur (cons (x, n)))
+                        of PrimopId.Prim _ => vb
+                         | PrimopId.NonPrim => recur (cons (x, n)))
 		  | SOME (VC.VALvar { prim, ... }) =>
                       (case prim
-                        of PrimOpId.Prim _ => vb
-                         | PrimOpId.NonPrim => recur n)
+                        of PrimopId.Prim _ => vb
+                         | PrimopId.NonPrim => recur n)
 		  | _ => recur n
 	    end
 

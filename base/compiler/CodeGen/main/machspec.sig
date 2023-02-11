@@ -1,9 +1,10 @@
 (* machspec.sig
  *
- * COPYRIGHT (c) 1994 AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * This signature contains various machine and code-generator specific
- * parameters. 
+ * parameters.
  *
  * When should a code-generator parameter be put in this signature?
  * Only when changing it will yield incompatible code.
@@ -18,20 +19,17 @@ signature MACH_SPEC =
     val architecture : string
 
     val framesize : int
-   
+
   (* code generator flags *)
     val polling : bool
     val unboxedFloats : bool
-    val representations : bool
     val newClosure : bool
     val numRegs : int		(* the number of registers used by ML *)
     val numFloatRegs : int	(* the number of registers used by ML *)
     val numArgRegs : int	(* the number of registers used to pass args. *)
-    val maxRepRegs : int	(* rename or eliminate this *)
     val numFloatArgRegs : int	(* the number of FP registers used for args. *)
     val numCalleeSaves : int
     val numFloatCalleeSaves : int
-    val untaggedInt : bool      (* represent all integers without tags *)
 
   (* machine representations *)
     type value_tag = {
@@ -59,17 +57,8 @@ signature MACH_SPEC =
 
     val startgcOffset 	: int
     val constBaseRegOffset : int
- 
-    val quasiStack : bool	(* default false *)
-    val quasiFree  : bool	(* default false *)
-    val quasiFrameSz : int	(* default 7 *)
-
-    val newListRep : bool	(* default false *)
-    val listCellSz : int    	(* default 2 *)
 
     val floatRegParams : bool	(* for old-style codegen; default true *)
-
-    val writeAllocateHack : bool     (* default false *)
 
    (* get "conreps" into here eventually.
 	Didn't want to do it now, because it would require
@@ -78,7 +67,7 @@ signature MACH_SPEC =
     val fixedArgPassing : bool
     (* Use fixed argument passing registers for known functions that
      * require garbage collection. Only an issue on  the x86 or machines
-     * that have registers implemented as memory locations, i.e., at the 
+     * that have registers implemented as memory locations, i.e., at the
      * call to GC, there aren't enough registers to hold alll the roots.
      * The correct way to solve this problem is to create a record of
      * live variables inside the code that invokes the garbage collector
@@ -97,11 +86,22 @@ signature MACH_SPEC =
     val LimitPtrMaskOffVSP : int	(* within VProc struct *)
 
     (* On machines with a real frame pointer, there is no point in
-     * attempting to omit a (virtual) frame pointer.  Example: Sparc *)
+     * attempting to omit a (virtual) frame pointer.  Example: Sparc
+     *)
     val framePtrNeverVirtual : bool	(* suppress omit-frame-ptr phase *)
 
     (* On machines where C arguments are allocated in the caller's frame
      * we pre-allocate a large chunk of stack space for this purpose.
-     * Example: PPC *)
+     * Example: PPC
+     *)
     val ccall_prealloc_argspace : int option
+
+  (* number of bits and bytes per ML word *)
+    val wordBitWidth	: int
+    val wordByteWidth	: int
+
+  (* number of bits and bytes per C pointer *)
+    val addressByteWidth : int
+    val addressBitWidth  : int
+
   end (* MACH_SPEC *)

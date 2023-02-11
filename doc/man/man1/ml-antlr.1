@@ -1,70 +1,80 @@
 '\" t
 .\"     Title: ml-antlr
-.\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 10/04/2015
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-04-02
 .\"    Manual: \ \&
-.\"    Source: SML/NJ 110.79
+.\"    Source: SML/NJ
 .\"  Language: English
 .\"
-.TH "ML\-ANTLR" "1" "10/04/2015" "SML/NJ 110\&.79" "\ \&"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.TH "ML\-ANTLR" "1" "2020-04-02" "SML/NJ" "\ \&"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
-.\" -----------------------------------------------------------------
-.\" * set default formatting
-.\" -----------------------------------------------------------------
-.\" disable hyphenation
+.ss \n[.ss] 0
 .nh
-.\" disable justification (adjust text to left margin only)
 .ad l
-.\" -----------------------------------------------------------------
-.\" * MAIN CONTENT STARTS HERE *
-.\" -----------------------------------------------------------------
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
 .SH "NAME"
-ml-antlr \- an LL(k) parser generator
+ml\-antlr \- an LL(k) parser generator for Standard ML
 .SH "SYNOPSIS"
 .sp
-\fBml\-antlr\fR [\fIOPTIONS\fR] \fIfile\fR
+\fBml\-antlr\fP [\fIOPTIONS\fP] \fIfile\fP
 .SH "DESCRIPTION"
 .sp
-ML\-Antlr is an LL(k) parser generator for Standard ML that is loosely modeled on Terence Parr\(cqs \fBANTLR\fR parser generator\&.
+\fBML\-Antlr\fP is an LL(k) parser generator for Standard ML that is loosely modeled
+on Terence Parr\(cqs \fBANTLR\fP parser generator.
 .SH "OPTIONS"
-.PP
-\fB\-\-dot\fR
+.sp
+\fB\-32\fP
 .RS 4
-generate DOT output (http://www\&.graphviz\&.org)\&. The generated file will be named
-file\&.dot, where
-file
-is the input file\&.
+run the 32\-bit version of the program (currently the default).
 .RE
-.PP
-\fB\-\-latex\fR
+.sp
+\fB\-64\fP
 .RS 4
-generate a simple LaTeX version of the grammar, named
-file\&.tex\&.
+run the 64\-bit version of the program.  This option only applies to
+the \fBx86\-64\fP (aka \fBamd64\fP) architecture.
 .RE
-.PP
-\fB\-\-unit\-actions\fR
+.sp
+\fB\-\-dot\fP
 .RS 4
-ignore the action code in the grammar, and instead return
-unit
-for every production\&.
+generate DOT output (\c
+.URL "http://www.graphviz.org" "" ")."
+The generated file will be named \f(CRfile.dot\fP,
+where \f(CRfile\fP is the input file.
+.RE
+.sp
+\fB\-\-latex\fP
+.RS 4
+generate a simple LaTeX version of the grammar, named \f(CRfile.tex\fP.
+.RE
+.sp
+\fB\-\-unit\-actions\fP
+.RS 4
+ignore the action code in the grammar, and instead return \f(CRunit\fP for every production.
 .RE
 .SH "AUTHOR"
 .sp
-ml\-antlr(1) was written by Aaron Turon\&.
+\fBML\-Antlr\fP was written by Aaron Turon.
+.SH "SEE\-ALSO"
+.sp
+ml\-ulex(1), ml\-yacc(1)
 .SH "COPYING"
 .sp
-Copyright \(co 2014 The Fellowship of SML/NJ
+Copyright \(co 2020 The Fellowship of SML/NJ
 .sp
-This is free software; see the source for copying conditions\&. There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE\&.
-.SH "SEE-ALSO"
-.sp
-ml\-ulex(1)
+This is free software; see the source for copying  conditions.   There  is  NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

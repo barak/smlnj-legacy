@@ -26,14 +26,16 @@ ml_val_t _ml_P_ProcEnv_times (ml_state_t *msp, ml_val_t arg)
     if (t == -1)
 	return RAISE_SYSERR(msp, -1);
 
-    INT32_ALLOC(msp, e, t);
-    INT32_ALLOC(msp, u, ts.tms_utime);
-    INT32_ALLOC(msp, s, ts.tms_stime);
-    INT32_ALLOC(msp, cu, ts.tms_cutime);
-    INT32_ALLOC(msp, cs, ts.tms_cstime);
+/* FIXME: we should do the conversion to 64-bit nanoseconds here and then
+ * return the result as a 64-bit value
+ */
+    e = INT32_CtoML(msp, t);
+    u = INT32_CtoML(msp, ts.tms_utime);
+    s = INT32_CtoML(msp, ts.tms_stime);
+    cu = INT32_CtoML(msp, ts.tms_cutime);
+    cs = INT32_CtoML(msp, ts.tms_cstime);
     REC_ALLOC5(msp, v, e, u, s, cu, cs);
 
     return v;
 
 } /* end of _ml_P_ProcEnv_times */
-

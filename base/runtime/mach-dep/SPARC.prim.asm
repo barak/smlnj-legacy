@@ -1,11 +1,7 @@
-/* SPARC.prim.asm
+/*! \file SPARC.prim.asm
  *
- * COPYRIGHT (c) 1992 by AT&T Bell Laboratories.
- *
- * AUTHOR:  John Reppy
- *	    Cornell University
- *	    Ithaca, NY 14853
- *	    jhr@cs.cornell.edu
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  */
 
 #include "asm-base.h"
@@ -33,7 +29,7 @@
  *	%o6  	sp
  *   	%o7  	gcLink
  *
- *	%l0-4  misc regs	
+ *	%l0-4  misc regs
  *
  *	%i0	standard arg
  * 	%i1	standard cont
@@ -42,8 +38,8 @@
  *	%i4  	misc reg
  * 	%i5  	var ptr
  *	%i6  	fp (don't touch)
- *   	%i7  	misc reg 
- * 
+ *   	%i7  	misc reg
+ *
  */
 
 
@@ -56,7 +52,7 @@
 #define   STDCONT %i1		/* standard continuation (ml_cont) */
 #define   STDCLOS %i2		/* standard closure  (ml_clos)	*/
 #define    VARPTR %i5		/* var pointer       (ml_varptr)   */
-#define   STDLINK %g1		/* standard link     (ml_linkptr) */  
+#define   STDLINK %g1		/* standard link     (ml_linkptr) */
 #define  MISCREG0 %g2
 #define  MISCREG1 %g3
 #define  MISCREG2 %o0
@@ -64,7 +60,7 @@
 
 #define   ASMTMP  %o2		/* assembly temporary used in ML */
 #define   TMPREG1 ASMTMP
-#define   TMPREG2 %o3   
+#define   TMPREG2 %o3
 #define   TMPREG3 %o4
 #define   TMPREG4 %o5
 
@@ -79,7 +75,7 @@
  *
  *	%fp = %sp+4096
  *                      +-------------------+
- *                      |                   |	
+ *                      |                   |
  *                      .                   .
  *			|                   |
  *	%sp+116:	|  spill area       |
@@ -97,13 +93,13 @@
  *			+-------------------+
  *	%sp+88:		|  temp for cvti2d  |
  *			+-------------------+
- *      %sp+84:		|  addr of _ml_udiv |
+ *      %sp+84:		|  addr of _ml_udiv |  -- unused
  *			+-------------------+
- *      %sp+80:		|  addr of _ml_umul |
+ *      %sp+80:		|  addr of _ml_umul |  -- unused
  *			+-------------------+
- *	%sp+76:		|  addr of _ml_div  |
+ *	%sp+76:		|  addr of _ml_div  |  -- unused
  *			+-------------------+
- *	%sp+72:		|  addr of _ml_mul  |
+ *	%sp+72:		|  addr of _ml_mul  |  -- unused
  *			+-------------------+
  *	%sp+68:		|     saved %g6     |
  *			+-------------------+
@@ -119,10 +115,6 @@
  */
 #define ML_FRAMESIZE 4096
 
-#define      MUL_OFFSET 72
-#define      DIV_OFFSET 76
-#define     UMUL_OFFSET 80
-#define     UDIV_OFFSET 84
 #define    FLOOR_OFFSET 92
 #define  MLSTATE_OFFSET 96
 #define  STARTGC_OFFSET 100
@@ -263,21 +255,13 @@ ENTRY(restoreregs)
 	mov	%i0,MLState			/* transfer MLState ptr to tmpreg4 */
 	std	%g6,[%sp+64]			/* save C registers %g6 & %g7 */
 	st	%i7, [%sp+i7_OFFSET]		/* save C return address */
-	set	_ml_mul,TMPREG4			/* set pointer to ml_mul */
-	st	TMPREG4,[%sp+MUL_OFFSET]
-	set	_ml_div,TMPREG4			/* set pointer to ml_div */
-	st	TMPREG4,[%sp+DIV_OFFSET]
-	set	_ml_umul,TMPREG4		/* set pointer to ml_umul */
-	st	TMPREG4,[%sp+UMUL_OFFSET]
-	set	_ml_udiv,TMPREG4		/* set pointer to ml_udiv */
-	st	TMPREG4,[%sp+UDIV_OFFSET]
 	ld	[MLState+AllocPtrOffMSP],ALLOCPTR
 	ld	[MLState+LimitPtrOffMSP],LIMITPTR
 	ld	[MLState+StorePtrOffMSP],STOREPTR
 	ld	[MLState+PCOffMSP],PC
-	ld	[MLState+StdArgOffMSP],STDARG  
+	ld	[MLState+StdArgOffMSP],STDARG
 	ld	[MLState+StdContOffMSP],STDCONT
-	ld	[MLState+StdClosOffMSP],STDCLOS     
+	ld	[MLState+StdClosOffMSP],STDCLOS
 	ld 	[MLState+VarPtrOffMSP],VARPTR
 	ld	[MLState+LinkRegOffMSP],STDLINK
 	ld	[MLState+ExnPtrOffMSP],EXNCONT	/* restore exnptr */
@@ -306,28 +290,6 @@ pending_sigs:	/* there are pending signals */
 	st	TMPREG2,[VProcPtr+HandlerPendingOffVSP]
 	ba	ml_go
 	mov	ALLOCPTR,LIMITPTR	    /* (delay slot) */
-
-
-#if defined(OPSYS_SUNOS) || defined(OPSYS_NEXTSTEP)
-/* ZeroLimitPtr:
- *
- * Zero the heap limit pointer so that a trap will be generated on the next limit
- * check and then continue executing ML code.
- * NOTE: this code cannot trash any registers (other than limitptr) or the condition
- * code. To achieve this we work inside a new register window.
- * Also note that this code is not needed under SOLARIS 2.x, since we can
- * directly change the register from C.
- */
-	TEXT
-ENTRY(ZeroLimitPtr)
-	save	%sp,-SA(WINDOWSIZE),%sp
-	sethi	%hi(CSYM(SavedPC)),%l1
-	ld	[%l1+%lo(CSYM(SavedPC))],%o0
-	set	0,LIMITPTR
-	jmp	%o0
-	restore				/* (delay slot) */
-#endif /* OPSYS_SUNOS */
-
 
 /* array : (int * 'a) -> 'a array
  * Allocate and initialize a new array.	 This can cause GC.
@@ -416,7 +378,7 @@ ML_CODE_HDR(create_b_a)
 	nop
       /* Allocate the data object */
 	sll	TMPREG2,TAG_SHIFTW,TMPREG1	/* build data desc in tmp1 */
-	or	TMPREG1,MAKE_TAG(DTAG_raw32),TMPREG1
+	or	TMPREG1,MAKE_TAG(DTAG_raw),TMPREG1
 	st	TMPREG1,[ALLOCPTR]		/* store the data descriptor */
 	inc	4,ALLOCPTR			/* allocptr++ */
 	mov	ALLOCPTR,TMPREG3		/* tmp3 = data object */
@@ -451,7 +413,7 @@ ML_CODE_HDR(create_s_a)
 	nop
       /* Allocate the data object */
 	sll	TMPREG2,TAG_SHIFTW,TMPREG1	/* build data desc in tmp1 */
-	or	TMPREG1,MAKE_TAG(DTAG_raw32),TMPREG1
+	or	TMPREG1,MAKE_TAG(DTAG_raw),TMPREG1
 	st	TMPREG1,[ALLOCPTR]		/* store the data descriptor */
 	inc	4,ALLOCPTR			/* allocptr++ */
 	mov	ALLOCPTR,TMPREG3		/* tmp3 = data object */
@@ -532,7 +494,7 @@ ML_CODE_HDR(floor_a)
 	add	TMPREG2,TMPREG2,TMPREG2
 	add	TMPREG2,1,STDARG
 	CONTINUE
-	
+
 1:				/* handle negative case. */
 	fdtoi	%f0,%f2		    /* cvt to int (round towards 0) */
 	st	%f2,[%sp+FLOOR_OFFSET]
@@ -606,119 +568,8 @@ under:				/* handle underflow */
 	ba	7b
 	nop
 
-/** Integer multiplication and division routines **/
-	.global .mul, .div, .umul, .udiv
-
-/* ml_mul:
- * multiply %o2 by %o3, returning the result in %o2
- * Note: this code assumes that .mul doesn't trash any global or input
- * registers.
- */
-_ml_mul:
-	save	%sp,-SA(WINDOWSIZE),%sp
-/** NOTE: if %g1, %g2, %g3 are not callee save, then this can be avoided **/
-/** NOTE: .mul doesn't use %g2, %g3, but the dynamic linking initialization
- ** does.
- **/
-	mov	%g1,%l1			  /* save %g1 which may get trashed */
-	mov	%g2,%l2
-	mov	%g3,%l3
-	mov	%i2,%o0
-	call	.mul
-	mov	%i3,%o1			  /* (delay slot) */
-	mov	%l1,%g1			  /* restore %g1 */
-	mov	%l2,%g2
-	mov	%l3,%g3
-	bnz	1f			  /* if z is clear, then overflow */
-	restore %o0,0,%o2		  /* result in %o2 (delay slot) */
-	retl
-	nop
-1:					/* handle overflow. */
-	t	ST_INT_OVERFLOW		  /* generate an Overflow exn.  We do this */
-					  /* via a trap to produce a SIGOVFL */
-
-/* ml_div:
- * divide %o2 by %o3, returning the result in %o2.
- * Note: .div uses %g1, %g2 and %g3, so we must save them.  We do this using the
- * locals of the new window, since .div is a leaf routine.
- */
-_ml_div:
-	save	%sp,-SA(WINDOWSIZE),%sp
-	addcc	%i3,%g0,%o1		/* %o1 is divisor (and check for zero) */
-	bz	1f
-				    /* save %g1, %g2 and %g3 (using new window) */
-/** NOTE: if %g1, %g2, %g3 are not callee save, then this can be avoided **/
-	mov	%g1,%l1			/* (delay slot) */
-	mov	%g2,%l2
-	mov	%g3,%l3
-	call	.div
-	mov	%i2,%o0			/* (delay slot) */
-				    /* restore %g1, %g2 and %g3 */
-	mov	%l3,%g3
-	mov	%l2,%g2
-	mov	%l1,%g1
-	ret
-	restore %o0,0,%o2		/* result in %o2 (delay slot) */
-1:				    /* handle zero divide */
-	restore				/* restore ML window */
-	t	ST_DIV0			/* generate a Div exn.  We do this via a */
-					/* trap to produce a SIGDIV */
-
-/* ml_umul:
- * multiply %o2 by %o3 (unsigned), returning the result in %o2.  This does
- * raise Overflow.
- * Note: this code assumes that .mul doesn't trash any global or input
- * registers.
- */
-_ml_umul:
-	save	%sp,-SA(WINDOWSIZE),%sp
-/** NOTE: if %g1, %g2, %g3 are not callee save, then this can be avoided **/
-/** NOTE: .mul doesn't use %g2, %g3, but the dynamic linking initialization
- ** does.
- **/
-	mov	%g1,%l1			  /* save %g1 which may get trashed */
-	mov	%g2,%l2
-	mov	%g3,%l3
-	mov	%i2,%o0
-	call	.umul
-	mov	%i3,%o1			  /* (delay slot) */
-	mov	%l1,%g1			  /* restore %g1 */
-	mov	%l2,%g2
-	mov	%l3,%g3
-	ret
-	restore %o0,0,%o2		  /* result in %o2 (delay slot) */
-
-
-/* ml_udiv:
- * divide %o2 by %o3 (unsigned), returning the result in %o2.
- * Note: .udiv uses %g1, %g2 and %g3, so we must save them.  We do this using the
- * locals of the new window, since .div is a leaf routine.
- */
-_ml_udiv:
-	save	%sp,-SA(WINDOWSIZE),%sp
-	addcc	%i3,%g0,%o1		/* %o1 is divisor (and check for zero) */
-	bz	1f
-				    /* save %g1, %g2 and %g3 (using new window) */
-/** NOTE: if %g1, %g2, %g3 are not callee save, then this can be avoided **/
-	mov	%g1,%l1			/* (delay slot) */
-	mov	%g2,%l2
-	mov	%g3,%l3
-	call	.udiv
-	mov	%i2,%o0			/* (delay slot) */
-				    /* restore %g1, %g2 and %g3 */
-	mov	%l3,%g3
-	mov	%l2,%g2
-	mov	%l1,%g1
-	ret
-	restore %o0,0,%o2		/* result in %o2 (delay slot) */
-1:				    /* handle zero divide */
-	restore				/* restore ML window */
-	t	ST_DIV0			/* generate a Div exn.  We do this via a */
-					/* trap to produce a SIGDIV */
-
-
 /* try_lock : spin_lock -> bool
- * low-level test-and-set style primitive for mutual-exclusion among 
+ * low-level test-and-set style primitive for mutual-exclusion among
  * processors.
  */
 ML_CODE_HDR(try_lock_a)
@@ -732,7 +583,7 @@ ML_CODE_HDR(try_lock_a)
 	CONTINUE
 #endif
 
-/* unlock : releases a spin lock 
+/* unlock : releases a spin lock
  */
 ML_CODE_HDR(unlock_a)
 #if (MAX_PROCS > 1)

@@ -1,7 +1,9 @@
 (* types.sig
  *
- * (C) 2001 Lucent Technologies, Bell Labs
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *)
+
 signature TYPES =
 sig
 
@@ -11,64 +13,65 @@ type polysign (* = bool list *)
 
 datatype eqprop = YES | NO | IND | OBJ | DATA | ABS | UNDEF
 
-datatype litKind = INT | WORD | REAL | CHAR | STRING
+type varSource = Symbol.symbol * SourceMap.region
+type litSource = IntInf.int * SourceMap.region
 
+(*
+and ovldSource
+  = OVAR of Symbol.symbol * SourceMap.region	(* overloaded variable occurrence *)
+  | OINT of IntInf.int * SourceMap.region	(* overloaded int literal occurrence *)
+  | OWORD of IntInf.int * SourceMap.region	(* overloaded word literal occurrence *)
+*)
 datatype openTvKind
   = META
   | FLEX of (label * ty) list
-
-and ovldSource
-  = OVAR of Symbol.symbol * SourceMap.region   (* overloaded variable *)
-  | OLIT of litKind * IntInf.int * SourceMap.region
-     (* overloaded int or word literal *)
-  (* in future, may need to add real, char, string literals as sources *)
-
+			 
+(* In future, may need to add real, char, string literals as new forms of
+ * overload tvKinds *)
 and tvKind
   = INSTANTIATED of ty
   | OPEN of {depth: int, eq: bool, kind: openTvKind}
   | UBOUND of {depth: int, eq: bool, name: Symbol.symbol}
-  | OVLD of (* overloaded operator type scheme variable,
-	     * representing one of a finite set of ground type options *)
-     {sources: ovldSource list,   (* name of overloaded variable *)
-      options: ty list} (* possible resolution types *)
-  (* for marking a type variable so that it can be easily identified
-   * (A type variable's ref cell provides an identity already, but
-   * since ref cells are unordered, this is not enough for efficient
-   * data structure lookups (binary trees...).  TV_MARK is really
-   * a hack for the benefit of later translation phases (FLINT),
-   * but unlike the old "LBOUND" thing, it does not need to know about
-   * specific types used by those phases. In any case, we should figure
-   * out how to get rid of it altogether.)
-   ** DBM: confusing and apparently obsolete comment. Sounds like TV_MARK
-   ** was supposed to replace LBOUND *)
+  | OVLDV of  (* overloaded variable (operator) *)
+    {eq: bool,  (* equality attribute, may be set by unification *)
+     sources: varSource list} (* names and locations of overloaded
+				  variables or literals *)
+     (* used to instantiate overloaded operator type scheme,
+      * representing one of a finite set of possible ground types used as
+      * "indicator" types to resolve the overloading *)
+  | OVLDI of litSource list  (* overloaded integer literal *)
+  | OVLDW of litSource list  (* overloaded word literal *)
   | LBOUND of {depth: int, eq: bool, index: int}
      (* FLINT-style de Bruijn index for notional "lambda"-bound type variables
       * associated with polymorphic bindings (including val bindings and
       * functor parameter bindings). The depth is depth of type lambda bindings,
-      * (1-based), and the index is the index within a sequence of 
-      * type variables bound at a given binding site. LBOUNDs must carry 
+      * (1-based), and the index is the index within a sequence of
+      * type variables bound at a given binding site. LBOUNDs must carry
       * equality type information for signature matching because the OPENs
       * are turned into LBOUNDs before equality type information is matched. *)
 
 and tycpath
-  = TP_VAR of exn
+  = TP_VAR of
+      { tdepth: DebIndex.depth,
+        num: int, kind: TKind.tkind }
   | TP_TYC of tycon
   | TP_FCT of tycpath list * tycpath list
   | TP_APP of tycpath * tycpath list
   | TP_SEL of tycpath * int
 
 and tyckind
-  = PRIMITIVE of int		(* primitive kinds are abstractly numbered *)
+   = PRIMITIVE 		(* primitive tycons *)
   | ABSTRACT of tycon
   | DATATYPE of
      {index: int,
       stamps: Stamps.stamp vector,
-      root : EntPath.entVar option,
-      freetycs: tycon list,
-      family : dtypeFamily}
-  | FLEXTYC of tycpath
-  | FORMAL
-  | TEMP
+      root : EntPath.entVar option,    (* the root field used by type spec only *)
+      freetycs: tycon list,            (* tycs derived from functor params *)
+      family : dtypeFamily,
+      stripped : bool}                 (* true if datatype has matched a simple type spec *)
+  | FLEXTYC of tycpath          (* instantiated formal type constructor *)
+  | FORMAL                      (* used only inside signatures *)
+  | TEMP                        (* used only during datatype elaborations *)
 
 and tycon
   = GENtyc of gtrec
@@ -117,7 +120,7 @@ and dtypeFamily =
   {mkey: Stamps.stamp,
    members: dtmember vector,
    properties: PropList.holder}
-	       
+
 
 and stubinfo =
     {owner : PersStamps.persstamp,

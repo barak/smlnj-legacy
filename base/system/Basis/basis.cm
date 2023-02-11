@@ -3,7 +3,7 @@
  * This is the default SML/NJ Basis, which includes the latest updates (and proposed changes)
  * to the Standard ML Basis Library (see https://github.com/SMLFamily/BasisLibrary).
  *
- * Copyright (c) 2015 by The Fellowship of SML/NJ
+ * Copyright (c) 2020 by The Fellowship of SML/NJ
  *)
 
 Library
@@ -58,6 +58,8 @@ Library
 	signature EITHER	(* proposal 2015-002 *)
 	signature FN		(* proposal 2015-005 *)
 	signature REF		(* proposal 2015-007 *)
+	signature MONO_BUFFER	(* proposal 2018-001 *)
+	signature UNIVERSAL	(* proposal 2020-001 *)
 
 	signature SML90
 
@@ -101,7 +103,6 @@ Library
 	structure General
 	structure IEEEReal
 	structure Int
-	structure Int31
 	structure Int32
 	structure Int64
 	structure IntInf
@@ -120,6 +121,8 @@ Library
 	structure PackWord16Little
 	structure PackWord32Big
 	structure PackWord32Little
+	structure PackWord64Big
+	structure PackWord64Little
 	structure Position
 	structure Real
 	structure Real64
@@ -143,7 +146,6 @@ Library
 	structure Vector
 	structure VectorSlice
 	structure Word
-	structure Word31
 	structure Word32
 	structure Word64
 	structure Word8
@@ -152,9 +154,21 @@ Library
 	structure Word8Vector
 	structure Word8VectorSlice
 
+(* target-size dependent modules *)
+#if defined(SIZE_32)
+	structure Int31
+	structure Word31
+#else (* 64-bits *)
+	structure Int63
+	structure Word63
+#endif
+
 	structure Either	(* proposal 2015-002 *)
 	structure Fn		(* proposal 2015-005 *)
 	structure Ref		(* proposal 2015-007 *)
+	structure CharBuffer	(* proposal 2018-001 *)
+	structure Word8Buffer	(* proposal 2018-001 *)
+	structure Universal	(* proposal 2020-001 *)
 
 	structure SML90
 

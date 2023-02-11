@@ -1,6 +1,7 @@
 (* code-obj.sml
  *
- * COPYRIGHT (c) 1998 Bell Labs, Lucent Technologies.
+ * COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * An interface for manipulating code objects.
  *)
@@ -18,8 +19,7 @@ structure CodeObj :> CODE_OBJ =
       }
 
     type csegments = {
-	c0 : code_object,
-	cn : code_object list, 
+	code : code_object,
 	data : Word8Vector.vector
       }
 
@@ -31,17 +31,15 @@ structure CodeObj :> CODE_OBJ =
     local
       structure CI = Unsafe.CInterface
     in
-    val allocCode : int -> W8A.array =
-	  CI.c_function "SMLNJ-RunT" "allocCode"
+    val allocCode : int -> W8A.array = CI.c_function "SMLNJ-RunT" "allocCode"
     val mkLiterals : W8V.vector -> object = CI.c_function "SMLNJ-RunT" "mkLiterals"
     val mkExec : W8A.array * int -> executable = CI.c_function "SMLNJ-RunT" "mkExec"
     end (* local *)
 
-  (* Allocate an uninitialized code object.
-   *)
-    fun alloc n =
-	(if (n <= 0) then raise Size else ();
-	 C { entrypoint = ref 0, obj = allocCode n })
+  (* Allocate an uninitialized code object. *)
+    fun alloc n = (
+	  if (n <= 0) then raise Size else ();
+	  C{ entrypoint = ref 0, obj = allocCode n })
 
   (* Allocate a code object of the given size and initialize it
    * from the input stream.
@@ -75,7 +73,7 @@ structure CodeObj :> CODE_OBJ =
   (* View the code object as an executable.  This has the side-effect
    * of flushing the instruction cache.
    *)
-    fun exec (C{obj, entrypoint = ref ep }) = mkExec (obj, ep)
+    fun exec (C{obj, entrypoint = ref ep}) = mkExec (obj, ep)
 
   (* return the size of the code object *)
     fun size (C{obj, ...}) = W8A.length obj

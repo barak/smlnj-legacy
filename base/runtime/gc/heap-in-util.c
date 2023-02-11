@@ -1,6 +1,7 @@
-/* heap-in-util.c
+/*! \file heap-in-util.c
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Utility routines to import an ML heap image.
  */
@@ -19,7 +20,7 @@
 #endif
 
 /* local routines */
-PVT status_t ReadBlock (FILE *file, void *blk, long len);
+PVT status_t ReadBlock (FILE *file, void *blk, size_t len);
 
 
 /* HeapIO_ReadExterns:
@@ -42,8 +43,9 @@ ml_val_t *HeapIO_ReadExterns (inbuf_t *bp)
 
   /* map the names of the external symbols to addresses in the run-time system */
     for (cp = buf, i = 0;  i < hdr.numExterns;  i++) {
-	if ((externs[i] = ImportCSymbol ((char *)cp)) == ML_unit)
+	if ((externs[i] = ImportCSymbol ((char *)cp)) == ML_unit) {
 	    Die ("Run-time system does not provide \"%s\"", cp);
+	}
 	cp += (strlen((char *)cp) + 1);
     }
     FREE (buf);
@@ -58,31 +60,34 @@ ml_val_t *HeapIO_ReadExterns (inbuf_t *bp)
  * Adjust the next character position to the given position in the
  * input stream.
  */
-status_t HeapIO_Seek (inbuf_t *bp, long offset)
+status_t HeapIO_Seek (inbuf_t *bp, off_t offset)
 {
     if (bp->file == NULL) {
       /* the stream is in-memory */
 	Byte_t	*newPos = bp->base + offset;
-	if (bp->buf + bp->nbytes <= newPos)
+	if (bp->buf + bp->nbytes <= newPos) {
 	    return FAILURE;
+	}
 	else {
 	    bp->nbytes -= (newPos - bp->buf);
 	    bp->buf = newPos;
 	    return SUCCESS;
 	}
     }
-    else {
-      if (fseek (bp->file, offset, SEEK_SET) != 0)
+    else if (fseek (bp->file, offset, SEEK_SET) != 0) {
 	Die ("unable to seek on heap image\n");
-      bp->nbytes = 0;		/* just in case? */
     }
+
+    bp->nbytes = 0;		/* just in case? */
+
+    return SUCCESS;
 
 } /* end of HeapIO_Seek */
 
 
 /* HeapIO_ReadBlock:
  */
-status_t HeapIO_ReadBlock (inbuf_t *bp, void *blk, long len)
+status_t HeapIO_ReadBlock (inbuf_t *bp, void *blk, off_t len)
 {
     status_t	sts = SUCCESS;
 
@@ -111,9 +116,9 @@ status_t HeapIO_ReadBlock (inbuf_t *bp, void *blk, long len)
 
 /* ReadBlock:
  */
-PVT status_t ReadBlock (FILE *file, void *blk, long len)
+PVT status_t ReadBlock (FILE *file, void *blk, size_t len)
 {
-    int		sts;
+    size_t	sts;
     Byte_t	*bp = (Byte_t *)blk;
 
     while (len > 0) {

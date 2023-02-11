@@ -1,7 +1,9 @@
-(*
- * Convert ASTs to CM's trimmed version thereof ("skeletons").
+(* skel-cvt.sml
  *
- *   Copyright (c) 1999 by Lucent Technologies, Bell Laboratories
+ * COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
+ * Convert ASTs to CM's trimmed version thereof ("skeletons").
  *
  *   The ideas here are based on those found in the original SC and
  *   also in an older version of CM (before 1999).  However, nearly
@@ -16,18 +18,28 @@
  * author: Matthias Blume (blume@cs.princeton.edu)
  *
  * The copyright notices of the earlier versions are:
+ *   Copyright (c) 1999 by Lucent Technologies, Bell Laboratories
  *   Copyright (c) 1995 by AT&T Bell Laboratories
  *   Copyright (c) 1993 by Carnegie Mellon University,
  *                         School of Computer Science
  *                         contact: Gene Rollins (rollins+@cs.cmu.edu)
  *)
-signature SKELCVT = sig
-    val convert : { tree: Ast.dec,
-		    err: ErrorMsg.severity -> Ast.region -> string -> unit }
-	-> { skeleton : Skeleton.decl, complain : unit -> unit }
-end
 
-structure SkelCvt :> SKELCVT = struct
+signature SKELCVT =
+  sig
+
+    val convert : {
+	    tree: Ast.dec,
+	    err: ErrorMsg.severity -> Ast.region -> string -> unit
+	  } -> {
+	    skeleton : Skeleton.decl,
+	    complain : unit -> unit
+	  }
+
+  end
+
+structure SkelCvt :> SKELCVT =
+  struct
 
     open Ast Skeleton
 
@@ -347,6 +359,7 @@ structure SkelCvt :> SKELCVT = struct
 
     and dec_dl (ValDec (l, _), d) = foldl vb_dl d l
       | dec_dl (ValrecDec (l, _), d) = foldl rvb_dl d l
+      | dec_dl (DoDec exp, d) = exp_dl (exp, d)
       | dec_dl (FunDec (l, _), d) = foldl fb_dl d l
       | dec_dl (TypeDec l, d) = dl_addS (foldl tb_s SS.empty l, d)
       | dec_dl (DatatypeDec { datatycs, withtycs }, d) =
@@ -357,7 +370,7 @@ structure SkelCvt :> SKELCVT = struct
 	dl_addS (foldl db_s (foldl tb_s SS.empty withtycs) abstycs,
 		 dec_dl (body, d))
       | dec_dl (ExceptionDec l, d) = dl_addS (foldl eb_s SS.empty l, d)
-      | dec_dl ((StrDec l | AbsDec l), d) = let
+      | dec_dl ((StrDec l), d) = let
 	    fun one (MarkStrb (arg, _), x) = one (arg, x)
 	      | one (Strb { name, def, constraint }, (s, bl)) = let
 		    val (s', e) = ign (strexp_p def, sigexpc_p constraint)
@@ -401,8 +414,7 @@ structure SkelCvt :> SKELCVT = struct
 	local_dl (dec_dl (bdg, []), dec_dl (body, []), d)
       | dec_dl (SeqDec l, d) = foldr dec_dl d l
       | dec_dl (OpenDec l, d) = parcons (map (Open o Var o SP.SPATH) l, d)
-      | dec_dl (OvldDec (_, t, l), d) = dl_addS (ty_s (t, SS.empty),
-						 foldl exp_dl d l)
+      | dec_dl (OvldDec (_, l), d) = foldl exp_dl d l
       | dec_dl (FixDec _, d) = d
       | dec_dl (MarkDec (arg, _), d) = dec_dl (arg, d)
 
@@ -417,19 +429,18 @@ structure SkelCvt :> SKELCVT = struct
 	      | sameReg (OpenDec _, k) =
 		(fn () => (k (); err EM.COMPLAIN reg "toplevel open"))
 	      | sameReg (MarkDec (arg, reg), k) = complainCM reg (arg, k)
-	      | sameReg ((StrDec _ | AbsDec _ | FctDec _ | SigDec _ |
-			  FsigDec _), k) = k
+	      | sameReg ((StrDec _ | FctDec _ | SigDec _ | FsigDec _), k) = k
 	      | sameReg (_, k) =
 		(fn () =>
 		 (k (); err EM.WARN reg "definition not tracked by CM"))
-
-	in
-	    sameReg
-	end
+	    in
+	      sameReg
+	    end
 
 	fun warn0 () = ()
 	val complain = complainCM (0, 0) (tree, warn0)
-    in
-	{ complain = complain, skeleton = c_dec tree }
-    end
-end
+	in
+	  { complain = complain, skeleton = c_dec tree }
+	end
+
+  end

@@ -1,6 +1,7 @@
 /* signal-sysdep.h
  *
- * COPYRIGHT (c) 2006 The SML/NJ Fellowship.
+ * COPYRIGHT (c) 2019 The SML/NJ Fellowship.
+ * All rights reserved.
  *
  * O.S. and machine dependent signal definitions for UNIX systems:
  *
@@ -32,10 +33,6 @@
  *				the signal handling state (or hardware status
  *				registers) on machines that require it; otherwise
  *				it is defined to the empty statement.
- *
- * Predicates on signals, the arguments are (signal, code).
- *   INT_DIVZERO(s, c)
- *   INT_OVFLW(s, c)
  *
  * There are two ways to force a GC when a signal occurs.  For some machines,
  * this is done in an assembly routine called ZeroLimitPtr; for others, this
@@ -169,106 +166,38 @@ typedef int SigMask_t;
 
 /** Machine/OS dependent stuff **/
 
-#if defined(HOST_SPARC)
+#if defined(ARCH_SPARC)
 
 extern void SetFSR(int);
   /* disable all FP exceptions */
 #  define SIG_InitFPE()    SetFSR(0)
 
-#  if defined(OPSYS_SUNOS)
-    /** SPARC, SUNOS **/
-#    define USE_ZERO_LIMIT_PTR_FN
-#    define SIG_FAULT1		SIGFPE
-#    define INT_DIVZERO(s, c)	(((s) == SIGFPE) && ((c) == FPE_INTDIV_TRAP))
-#    define INT_OVFLW(s, c)	(((s) == SIGFPE) && ((c) == FPE_INTOVF_TRAP))
-#    define SIG_GetCode(info, scp)	(info)
-#    define SIG_GetPC(scp)	((scp)->sc_pc)
-#    define SIG_SetPC(scp, addr)	{			\
-	(scp)->sc_pc = (long)(addr);				\
-	(scp)->sc_npc = (scp)->sc_pc + 4;			\
-    }
-#    define SIG_SavePC(msp, scp)	{			\
-	SigContext_t	*__scp = (scp);				\
-	long		__pc = __scp->sc_pc;			\
-	if (__pc+4 != __scp->sc_npc)				\
-	  /* the pc is pointing to a delay slot, so back-up	\
-	   * to the branch. */					\
-	    __pc -= 4;						\
-	SavedPC = __pc;						\
-    }
-     typedef void SigReturn_t;
-
-#  elif defined(OPSYS_SOLARIS)
+#  if defined(OPSYS_SOLARIS)
     /** SPARC, SOLARIS **/
-#    define SIG_FAULT1	SIGFPE
-#    define INT_DIVZERO(s, c)		(((s) == SIGFPE) && ((c) == FPE_INTDIV))
-#    define INT_OVFLW(s, c)		(((s) == SIGFPE) && ((c) == FPE_INTOVF))
+#    define SIG_OVERFLOW	SIGFPE
 
 #    define SIG_GetCode(info,scp)	((info)->si_code)
 
 #    define SIG_GetPC(scp)		((scp)->uc_mcontext.gregs[REG_PC])
 #    define SIG_SetPC(scp, addr)	{			\
-	(scp)->uc_mcontext.gregs[REG_PC] = (long)(addr);	\
-	(scp)->uc_mcontext.gregs[REG_nPC] = (long)(addr) + 4;	\
+	(scp)->uc_mcontext.gregs[REG_PC] = (Addr_t)(addr);	\
+	(scp)->uc_mcontext.gregs[REG_nPC] = (Addr_t)(addr) + 4;	\
     }
 #    define SIG_ZeroLimitPtr(scp)	\
 	{ (scp)->uc_mcontext.gregs[REG_G4] = 0; }
 
 #  endif
 
-#elif defined(HOST_MIPS)
-
-extern void SetFSR();
-#  define SIG_InitFPE()    SetFSR()
-
-#  if defined(OPSYS_IRIX4)
-    /** MIPS, IRIX 4.0.x **/
-#    define SIG_FAULT1		SIGFPE
-#    define SIG_FAULT2		SIGTRAP
-#    include <sys/sbd.h>  /* for EXC_OV */
-#    define INT_DIVZERO(s, c)	(((s) == SIGTRAP) && ((c) == BRK_DIVZERO))
-#    define INT_OVFLW(s, c)	(((s) == SIGTRAP) && ((c) == BRK_OVERFLOW))
-#    define SIG_GetCode(info, scp)	((info) ? (info) : (scp)->sc_fpc_csr)
-#    define SIG_GetPC(scp)		((scp)->sc_pc)
-#    define SIG_SetPC(scp, addr)	{ (scp)->sc_pc = (long)(addr); }
-#    define SIG_ZeroLimitPtr(scp)	{ (scp)->sc_regs[19] = 0; }
-     typedef void SigReturn_t;
-
-#  elif defined(OPSYS_IRIX5)
-    /** MIPS, IRIX 5.x **/
-#    define SIG_FAULT1		SIGFPE
-#    define SIG_FAULT2		SIGTRAP
-
-#    define INT_DIVZERO(s, c)		(((s) == SIGFPE) && ((c) == FPE_INTDIV))
-#    define INT_OVFLW(s, c)		(((s) == SIGFPE) && ((c) == FPE_INTOVF))
-
-#    define SIG_GetCode(info,scp)	((info)->si_code)
-   /* We use a TRAP to signal zero divide on the mips, but IRIX 5.3 maps
-    * this back to SIGFPE.
-    */
-#    undef INT_DIVZERO		/* SIGTRAP used for this on MIPS */
-#    define INT_DIVZERO(s, c)	\
-	(((s) == SIGTRAP) || (((s) == SIGFPE) && ((c) == FPE_INTDIV)))
-
-#    define SIG_GetPC(scp)		((scp)->uc_mcontext.gregs[CTX_EPC])
-#    define SIG_SetPC(scp, addr)	\
-	{ (scp)->uc_mcontext.gregs[CTX_EPC] = (long)(addr); }
-#    define SIG_ZeroLimitPtr(scp)	\
-	{ (scp)->uc_mcontext.gregs[CTX_S3] = 0; }
-#  endif /* ARCH_MIPS */
-
-#elif (defined(HOST_RS6000) || defined(HOST_PPC))
+#elif defined(ARCH_PPC)
 #  if defined (OPSYS_AIX)
     /** RS6000 or PPC, AIX **/
 #    include <fpxcp.h>
-#    define SIG_FAULT1		SIGTRAP
+#    define SIG_OVERFLOW		SIGTRAP
 
-#    define INT_DIVZERO(s, c)	(((s) == SIGTRAP) && ((c) & FP_DIV_BY_ZERO))
-#    define INT_OVFLW(s, c)	(((s) == SIGTRAP) && ((c) == 0))
      PVT int SIG_GetCode (SigInfo_t info, SigContext_t *scp);
 #    define SIG_GetPC(scp)	((scp)->sc_jmpbuf.jmp_context.iar)
 #    define SIG_SetPC(scp, addr)	\
-	{ (scp)->sc_jmpbuf.jmp_context.iar = (long)(addr); }
+	{ (scp)->sc_jmpbuf.jmp_context.iar = (Addr_t)(addr); }
 #    define SIG_ZeroLimitPtr(scp)	\
 	{ (scp)->sc_jmpbuf.jmp_context.gpr[15] = 0; }
 #    define SIG_ResetFPE(scp)	{						\
@@ -284,48 +213,28 @@ extern void SetFSR();
 #  elif defined(OPSYS_DARWIN)
     /* PPC, Darwin */
 #    define SIG_InitFPE()        set_fsr()
-#    define SIG_ResetFPE(scp)    
-#    define SIG_FAULT1           SIGTRAP
-#    define INT_DIVZERO(s, c)	 ((s) == SIGTRAP)	/* This needs to be refined */
-#    define INT_OVFLW(s, c)	 ((s) == SIGTRAP)	/* This needs to be refined */
+#    define SIG_ResetFPE(scp)
+#    define SIG_OVERFLOW           SIGTRAP
    /* info about siginfo_t is missing in the include files 4/17/2001 */
 #    define SIG_GetCode(info,scp) 0
   /* see /usr/include/mach/ppc/thread_status.h */
 #    define SIG_GetPC(scp)		((scp)->uc_mcontext->ss.srr0)
-#    define SIG_SetPC(scp, addr)	{(scp)->uc_mcontext->ss.srr0 = (int) addr;}
+#    define SIG_SetPC(scp, addr)	{(scp)->uc_mcontext->ss.srr0 = (Addr_t) addr;}
   /* The offset of 17 is hardwired from reverse engineering the contents of
    * sc_regs. 17 is the offset for register 15.
    */
 #    define SIG_ZeroLimitPtr(scp)	{  (scp)->uc_mcontext->ss.r15 = 0; }
-#  elif defined(OPSYS_MKLINUX)
-    /* RS6000, MkLinux */
 
-#    include "mklinux-regs.h"
-     typedef struct mklinux_ppc_regs SigContext_t;
-
-#    define SIG_FAULT1		SIGILL
-
-#    define INT_DIVZERO(s, c)		(((s) == SIGILL) && ((c) == 0x84000000))
-#    define INT_OVFLW(s, c)		(((s) == SIGILL) && ((c) == 0x0))
-#    define SIG_GetPC(scp)		((scp)->nip)
-#    define SIG_SetPC(scp, addr)	{ (scp)->nip = (long)(addr); }
-#    define SIG_ZeroLimitPtr(scp)	{ ((scp)->gpr[15] = 0); }
-#    define SIG_GetCode(info,scp)	((scp)->fpscr)
-#    define SIG_ResetFPE(scp)		{ (scp)->fpscr = 0x0; }
-     typedef void SigReturn_t;
-
-#  elif (defined(TARGET_PPC) && defined(OPSYS_LINUX))
+#  elif (defined(ARCH_PPC) && defined(OPSYS_LINUX))
     /* PPC, Linux */
 
 #    include <signal.h>
-     typedef struct sigcontext_struct SigContext_t; 
+     typedef struct sigcontext_struct SigContext_t;
 
-#    define SIG_FAULT1          	SIGTRAP
+#    define SIG_OVERFLOW          	SIGTRAP
 
-#    define INT_DIVZERO(s, c)           (((s) == SIGTRAP) && (((c) == 0) || ((c) == 0x2000) || ((c) == 0x4000)))
-#    define INT_OVFLW(s, c)             (((s) == SIGTRAP) && (((c) == 0) || ((c) == 0x2000) || ((c) == 0x4000)))
 #    define SIG_GetPC(scp)              ((scp)->regs->nip)
-#    define SIG_SetPC(scp, addr)        { (scp)->regs->nip = (long)(addr); }
+#    define SIG_SetPC(scp, addr)        { (scp)->regs->nip = (Addr_t)(addr); }
 #    define SIG_ZeroLimitPtr(scp)       { ((scp)->regs->gpr[15] = 0); } /* limitptr = 15 (see src/runtime/mach-dep/PPC.prim.asm) */
 #    define SIG_GetCode(info,scp)       ((scp)->regs->gpr[PT_FPSCR])
 #    define SIG_ResetFPE(scp)           { (scp)->regs->gpr[PT_FPSCR] = 0x0; }
@@ -334,92 +243,17 @@ extern void SetFSR();
 #  elif defined(OPSYS_OPENBSD)
    /** PPC, OpenBSD **/
 
-#   define SIG_FAULT1			SIGTRAP
-#   define INT_DIVZERO(s, c)		((s) == SIGTRAP)
-#   define INT_OVFLW(s, c)		((s) == SIGTRAP)
+#    define SIG_OVERFLOW			SIGTRAP
 #    define SIG_GetPC(scp)              ((scp)->sc_frame.srr0)
-#    define SIG_SetPC(scp, addr)        { (scp)->sc_frame.srr0 = (long)(addr); }
+#    define SIG_SetPC(scp, addr)        { (scp)->sc_frame.srr0 = (Addr_t)(addr); }
 #    define SIG_ZeroLimitPtr(scp)       { ((scp)->sc_frame.fixreg[15] = 0); } /* limitptr = 15 (see src/runtime/mach-dep/PPC.prim.asm) */
 #    define SIG_GetCode(info,scp)       (info)
 
     typedef void SigReturn_t;
 
-#  endif /* HOST_RS6000/HOST_PPC */
+#  endif /* ARCH_PPC */
 
-#elif defined(HOST_HPPA)
-
-#  if defined(OPSYS_HPUX9)
-    /** HPPA, HPUX 9.x **/
-     typedef void SigReturn_t;
-#    define SIG_FAULT1 SIGFPE
-    /* Since exceptions can be raised both in data space and code space,
-     * implementing this on HPPA/HPUX is going to be complicated.
-     */
-#    define SIG_GetPC(scp)	0
-    /* pcoq and pcsq are equivalent to the instruction address
-     * offset queue (iaoq) and the IA space queue (iasq)
-     */
-#    define SIG_SetPC(scp, addr) {					\
-	SigContext_t *_scp = (scp);					\
-	_scp->sc_pcoq_head = addr;					\
-	_scp->sc_pcoq_tail = _scp->sc_pcoq_head + 4;			\
-	_scp->sc_pcsq_tail = _scp->sc_pcsq_head = pointer2space(addr);	\
-    }
-#    define SIG_ZeroLimitPtr(scp)	{ (scp)->sc_gr4 = 0; }
-
-#    define SIG_GetCode(info, scp)	info
-	 
-#    define INT_DIVZERO(s, c)  (((s) == SIGFPE) && ((c) == 13)) 
-#    define INT_OVFLW(s, c)    (((s) == SIGFPE) && ((c) == 12 || (c) == 14))
-#    define SIG_InitFPE()      set_fsr()
-
-#  endif
-
-#  if defined(OPSYS_HPUX)
-    /** HPPA, HPUX 10.x **/
-
-#    define SIG_FAULT1 SIGFPE
-
-    /* There are bugs in the HPUX *.10.* machine/save_state.h
-     * header file macros!! 
-     */
-#    define sc_pcoq_head sc_sl.sl_ss.ss_narrow.ss_pcoq_head
-#    define sc_pcoq_tail sc_sl.sl_ss.ss_narrow.ss_pcoq_tail
-#    define sc_pcsq_head sc_sl.sl_ss.ss_narrow.ss_pcsq_head
-#    define sc_pcsq_tail sc_sl.sl_ss.ss_narrow.ss_pcsq_tail
-#    define sc_gr3 sc_sl.sl_ss.ss_narrow.ss_gr3
-#    define sc_gr4 sc_sl.sl_ss.ss_narrow.ss_gr4
-
-    /* Since exceptions can be raised both in data space and code space,
-     * implementing this on HPPA/HPUX is going to be complicated.
-     */
-#    define SIG_GetPC(scp)	0
-    /*	pcoq and pcsq are equivalent to the instruction address
-     * offset queue (iaoq) and the IA space queue (iasq)
-     */
-#    define SIG_SetPC(scp, addr) {					\
-	SigContext_t *_scp = (scp);					\
-	_scp->sc_pcoq_head = addr;					\
-	_scp->sc_pcoq_tail = _scp->sc_pcoq_head + 4;			\
-	_scp->sc_pcsq_tail = _scp->sc_pcsq_head = pointer2space(addr);	\
-    }
-
-#    define SIG_ZeroLimitPtr(scp)	{ (scp)->sc_gr4 = 0; }
-#    define SIG_GetCode(info, scp)	(info)
-
-    /* The SVR4 API for SIGFPE isn't implemented correctly */
-#    undef INT_DIVZERO
-#    undef INT_OVFLW
-#    define INT_DIVZERO(s, c)  (((s) == SIGFPE) && ((c) == 0xd)) 
-#    define INT_OVFLW(s, c)    (((s) == SIGFPE) && ((c) == 0xc || (c) == 0xe))
-
-#    define SIG_InitFPE()      set_fsr()
-
-     typedef void SigReturn_t;
-
-#  endif
-
-#elif defined(HOST_X86)
+#elif defined(ARCH_X86)
 
 #  define LIMITPTR_X86OFFSET	3	/* offset (words) of limitptr in ML stack */
 					/* frame (see X86.prim.asm) */
@@ -427,137 +261,205 @@ extern void SetFSR();
    extern void FPEEnable ();		/* defined in X86.prim.asm */
 #  define SIG_InitFPE()    FPEEnable()
 
-#  if (defined(TARGET_X86) && defined(OPSYS_LINUX))
-    /** X86, LINUX **/
-#    define INTO_OPCODE		0xce	/* the 'into' instruction is a single */
-					/* instruction that signals Overflow */
+  /** OS-specific definitions for x86 */
+#  if defined(OPSYS_CYGWIN)
+     /** x86, Cygwin -- see mach-dep/cygwin-fault.c */
 
-#    define SIG_FAULT1		SIGFPE
-#    define SIG_FAULT2		SIGSEGV
-#    define INT_DIVZERO(s, c)	((s) == SIGFPE)
-#    define INT_OVFLW(s, c)	\
-	(((s) == SIGSEGV) && (((Byte_t *)c)[-1] == INTO_OPCODE))
+#    define SIG_OVERFLOW		SIGFPE
 
-#    define SIG_GetCode(info,scp)	((scp)->uc_mcontext.gregs[REG_EIP])
-/* for linux, SIG_GetCode simply returns the address of the fault */
-#    define SIG_GetPC(scp)		((scp)->uc_mcontext.gregs[REG_EIP])
-#    define SIG_SetPC(scp,addr)		{ (scp)->uc_mcontext.gregs[REG_EIP] = (long)(addr); }
-#    define SIG_ZeroLimitPtr(scp)	{ ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
-
-#  elif defined(OPSYS_FREEBSD)
-    /** x86, FreeBSD **/
-#    define SIG_FAULT1		SIGFPE
-#    define INT_DIVZERO(s, c)	(((s) == SIGFPE) && ((c) == FPE_INTDIV_TRAP))
-#    define INT_OVFLW(s, c)	(((s) == SIGFPE) && ((c) == FPE_INTOVF_TRAP))
-
-#    define SIG_GetCode(info, scp)	(info)
-#    define SIG_GetPC(scp)		((scp)->sc_pc)
-#    define SIG_SetPC(scp, addr)	{ (scp)->sc_pc = (long)(addr); }
 #    define SIG_ZeroLimitPtr(scp)	{ ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
 
      typedef void SigReturn_t;
 
+#  elif defined(OPSYS_DARWIN)
+    /** x86, Darwin **/
+#    define SIG_OVERFLOW		SIGFPE
+
+    /* see /usr/include/mach/i386/thread_status.h */
+#    define SIG_GetCode(info,scp)	((info)->si_code)
+#    if ((__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ - 1040) <= 0)
+      /* Tiger */
+#      define SIG_GetPC(scp)		((scp)->uc_mcontext->ss.eip)
+#      define SIG_SetPC(scp, addr)	{ (scp)->uc_mcontext->ss.eip = (Addr_t) addr; }
+#    else
+     /* Leopard or later */
+#      define SIG_GetPC(scp)		((scp)->uc_mcontext->__ss.__eip)
+#      define SIG_SetPC(scp, addr)	{ (scp)->uc_mcontext->__ss.__eip = (Addr_t) addr; }
+#    endif
+#    define SIG_ZeroLimitPtr(scp)	{ ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
+
+#  elif defined(OPSYS_FREEBSD)
+    /** x86, FreeBSD **/
+#    define SIG_OVERFLOW		SIGFPE
+
+#    define SIG_GetCode(info, scp)	(info)
+#    define SIG_GetPC(scp)		((scp)->uc_mcontext.mc_eip)
+#    define SIG_SetPC(scp, addr)	{ (scp)->uc_mcontext.mc_eip = (Addr_t)(addr); }
+#    define SIG_ZeroLimitPtr(scp)	{ ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
+
+     typedef void SigReturn_t;
+
+#  elif defined(OPSYS_LINUX)
+    /** X86, LINUX **/
+#    define INTO_OPCODE		0xce	/* the 'into' instruction is a single */
+					/* instruction that signals Overflow */
+
+#    define SIG_OVERFLOW		SIGSEGV
+
+#    define SIG_GetCode(info,scp)	((scp)->uc_mcontext.gregs[REG_EIP])
+/* for linux, SIG_GetCode simply returns the address of the fault */
+#    define SIG_GetPC(scp)		((scp)->uc_mcontext.gregs[REG_EIP])
+#    define SIG_SetPC(scp,addr)		{ (scp)->uc_mcontext.gregs[REG_EIP] = (Addr_t)(addr); }
+#    define SIG_ZeroLimitPtr(scp)	{ ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
+
+/* macro to check if SIGSEGV was caused by `into` instruction */
+#    define SIG_IS_OVERFLOW_TRAP(sig,pc) \
+	(((Byte_t*)pc)[-1] == 0xce)
+
 #  elif defined(OPSYS_NETBSD2)
     /** x86, NetBSD (version 2.x) **/
-#    define SIG_FAULT1		SIGFPE
-#    define SIG_FAULT2		SIGBUS
-#    define INT_DIVZERO(s, c)	0
-#    define INT_OVFLW(s, c)	(((s) == SIGFPE) || ((s) == SIGBUS))
+#    define SIG_OVERFLOW		SIGFPE	/* maybe this should be SIGBUS? */
 
 #    define SIG_GetCode(info, scp)	(info)
 #    define SIG_GetPC(scp)		((scp)->sc_pc)
-#    define SIG_SetPC(scp, addr)	{ (scp)->sc_pc = (long)(addr); }
+#    define SIG_SetPC(scp, addr)	{ (scp)->sc_pc = (Addr_t)(addr); }
 #    define SIG_ZeroLimitPtr(scp)	{ ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
 
      typedef void SigReturn_t;
 
 #  elif defined(OPSYS_NETBSD)
     /** x86, NetBSD (version 3.x) **/
-#    define SIG_FAULT1		SIGFPE
-#    define SIG_FAULT2		SIGBUS
-#    define INT_DIVZERO(s, c)	0
-#    define INT_OVFLW(s, c)	(((s) == SIGFPE) || ((s) == SIGBUS))
+#    define SIG_OVERFLOW		SIGFPE	/* maybe this should be SIGBUS? */
 
 #    define SIG_GetCode(info, scp)	(info)
 #    define SIG_GetPC(scp)		(_UC_MACHINE_PC(scp))
-#    define SIG_SetPC(scp, addr)	{ _UC_MACHINE_SET_PC(scp, ((long) (addr))); }
+#    define SIG_SetPC(scp, addr)	{ _UC_MACHINE_SET_PC(scp, ((Addr_t) (addr))); }
 #    define SIG_ZeroLimitPtr(scp)	{ ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
 
 #  elif defined(OPSYS_OPENBSD)
     /** x86, OpenBSD **/
-#    define SIG_FAULT1		SIGFPE
-#    define SIG_FAULT2		SIGBUS
-#    define INT_DIVZERO(s, c)	0
-#    define INT_OVFLW(s, c)	(((s) == SIGFPE) || ((s) == SIGBUS))
+#    define SIG_OVERFLOW		SIGFPE	/* maybe this should be SIGBUS? */
 
 #    define SIG_GetCode(info, scp)	(info)
 #    define SIG_GetPC(scp)		((scp)->sc_pc)
-#    define SIG_SetPC(scp, addr)	{ (scp)->sc_pc = (long)(addr); }
+#    define SIG_SetPC(scp, addr)	{ (scp)->sc_pc = (Addr_t)(addr); }
 #    define SIG_ZeroLimitPtr(scp)	{ ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
 
      typedef void SigReturn_t;
 
 #  elif defined(OPSYS_SOLARIS)
      /** x86, Solaris */
+#    define SIG_OVERFLOW		SIGFPE
 
+#    define SIG_GetCode(info, scp)	((info)->si_code)
 #    define SIG_GetPC(scp)		((scp)->uc_mcontext.gregs[EIP])
-#    define SIG_SetPC(scp, addr)	{ (scp)->uc_mcontext.gregs[EIP] = (int)(addr); }
+#    define SIG_SetPC(scp, addr)	{ (scp)->uc_mcontext.gregs[EIP] = (Addr_t)(addr); }
 #    define SIG_ZeroLimitPtr(scp)	{ ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
 
 #  elif defined(OPSYS_WIN32)
 #    define SIG_ZeroLimitPtr()		{ ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
 
-#  elif defined(OPSYS_CYGWIN)
-
-     typedef void SigReturn_t;
-#    define SIG_FAULT1		SIGFPE
-#    define SIG_FAULT2		SIGSEGV
-#    define INT_DIVZERO(s, c)	((s) == SIGFPE)
-#    define SIG_ZeroLimitPtr(scp)  { ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
-
-#  elif defined(OPSYS_DARWIN)
-    /** x86, Darwin **/
-#    define SIG_FAULT1		SIGFPE
-/* NOTE: MacOS X 10.4.7 sets the code to 0, so we need to test the opcode. */
-#    define INTO_OPCODE		0xce	/* the 'into' instruction is a single */
-					/* instruction that signals Overflow */
-/* NOTE: In 10.6, Apple finally got it right, but earlier versions either used the
- * FPE_FLT* codes are set the code to zero.
- */
-#    define INT_DIVZERO(s, c)	(((s) == SIGFPE) && (((c) == FPE_INTDIV) || ((c) == FPE_FLTDIV)))
-#    define INT_OVFLW(s, c)	(((s) == SIGFPE) && (((c) == FPE_INTOVF) || ((c) == FPE_FLTOVF)))
-    /* see /usr/include/mach/i386/thread_status.h */
-#    define SIG_GetCode(info,scp)	((info)->si_code)
-#    if ((__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ - 1040) <= 0)
-      /* Tiger */
-#      define SIG_GetPC(scp)		((scp)->uc_mcontext->ss.eip)
-#      define SIG_SetPC(scp, addr)	{ (scp)->uc_mcontext->ss.eip = (int) addr; }
-#    else
-     /* Leopard or later */
-#      define SIG_GetPC(scp)		((scp)->uc_mcontext->__ss.__eip)
-#      define SIG_SetPC(scp, addr)	{ (scp)->uc_mcontext->__ss.__eip = (int) addr; }
-#    endif
-#    define SIG_ZeroLimitPtr(scp)	{ ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }
-
 #  else
 #    error "unknown OPSYS for x86"
 #  endif
 
-#elif defined(HOST_ALPHA32)
+#elif defined(ARCH_AMD64)
 
-#  if (defined(OPSYS_OSF1) || defined(OPSYS_DUNIX))
-    /** Alpha AXP, OSF1 **/
-#    include <machine/fpu.h>
-#    define SIG_FAULT1		SIGFPE
-#    define INT_DIVZERO(s, c)	(((s) == SIGFPE) && ((c) == -2))
-#    define INT_OVFLW(s, c)	(((s) == SIGFPE) && ((c) == FPE_INTOVF_FAULT))
-#    define SIG_GetPC(scp)		((scp)->sc_pc)
-#    define SIG_SetPC(scp, addr)	{ (scp)->sc_pc = (long)(addr); }
-#    define SIG_GetCode(info, scp)	info
-#    define SIG_ZeroLimitPtr(scp)	{ (scp)->sc_regs[9] = 0; }
+#  define SIG_InitFPE()
+
+#  if defined(OPSYS_CYGWIN)
+     /** amd64, Cygwin -- see mach-dep/cygwin-fault.c */
+
+#    define SIG_OVERFLOW		SIGFPE
+
+#    define SIG_GetPC(scp)		((scp)->uc_mcontext.rip)
+#    define SIG_SetPC(scp, addr)	{ (scp)->uc_mcontext.rip = (Addr_t) addr; }
+#    define SIG_ZeroLimitPtr(scp)	{ (scp)->uc_mcontext.r14 = 0; }
+
      typedef void SigReturn_t;
-#    define SIG_InitFPE()	SetFSR()
+
+#    error Cygwin/AMD64 not supported yet
+
+#  elif defined(OPSYS_DARWIN)
+    /** amd64, Darwin **/
+#    define SIG_OVERFLOW		SIGFPE
+
+    /* see /usr/include/mach/i386/thread_status.h */
+#    define SIG_GetCode(info,scp)	((info)->si_code)
+#    define SIG_GetPC(scp)		((scp)->uc_mcontext->__ss.__rip)
+#    define SIG_SetPC(scp, addr)	{ (scp)->uc_mcontext->__ss.__rip = (Addr_t) addr; }
+#    define SIG_ZeroLimitPtr(scp)	{ (scp)->uc_mcontext->__ss.__r14 = 0; }
+
+#  elif defined(OPSYS_FREEBSD)
+    /** amd64, FreeBSD **/
+#    define SIG_OVERFLOW		SIGFPE
+
+#    define SIG_GetCode(info, scp)	(info)
+#    define SIG_GetPC(scp)		((scp)->uc_mcontext.mc_rip)
+#    define SIG_SetPC(scp, addr)	{ (scp)->uc_mcontext.mc_rip = (Addr_t)(addr); }
+#    define SIG_ZeroLimitPtr(scp)	{ (scp)->uc_mcontext.mc_r14 = 0; }
+
+     typedef void SigReturn_t;
+
+#  elif defined(OPSYS_LINUX)
+    /** amd64, LINUX **/
+/* on linux, overflow can occur in two ways:
+ *  (1) "int 4" instruction, which is invoked for addition and multiplication
+ *      overflow, causes a SIGSEGV.
+ *  (2) Division of the most negative number by -1 causes a SIGFPE.
+ */
+
+#    define SIG_OVERFLOW		SIGSEGV
+#    define SIG_OVERFLOW2		SIGFPE
+
+#    define SIG_GetCode(info,scp)	((scp)->uc_mcontext.gregs[REG_RIP])
+/* for linux, SIG_GetCode simply returns the address of the fault */
+#    define SIG_GetPC(scp)		((scp)->uc_mcontext.gregs[REG_RIP])
+#    define SIG_SetPC(scp,addr)		{ (scp)->uc_mcontext.gregs[REG_RIP] = (Addr_t)(addr); }
+#    define SIG_ZeroLimitPtr(scp)	{ (scp)->uc_mcontext.gregs[REG_R14] = 0; }
+
+/* macro to check if SIGSEGV was caused by `int 4` instruction */
+#    define SIG_IS_OVERFLOW_TRAP(sig,pc)					\
+	(((sig) == SIG_OVERFLOW2) ||						\
+	    ((((Byte_t*)pc)[-2] == 0xcd) && (((Byte_t*)pc)[-1] == 0x04)))
+
+#  elif defined(OPSYS_NETBSD)
+    /** amd64, NetBSD (version 3.x) **/
+#    define SIG_OVERFLOW		SIGFPE
+
+#    define SIG_GetCode(info, scp)	(info)
+#    define SIG_GetPC(scp)		((uc)->uc_mcontext.__gregs[_REG_RIP])
+#    define SIG_SetPC(scp, addr)	{ (uc)->uc_mcontext.__gregs[_REG_RIP] = (Addr_t)(addr); }
+#    define SIG_ZeroLimitPtr(scp)	{ (scp)->uc_mcontext.__gregs[_REG_R14] = 0; }
+
+#    error NetBSD/AMD64 not supported yet
+
+#  elif defined(OPSYS_OPENBSD)
+    /** amd64, OpenBSD **/
+#    define SIG_OVERFLOW		SIGFPE
+
+#    define SIG_GetCode(info, scp)	(info)
+#    define SIG_GetPC(scp)		((scp)->sc_rip)
+#    define SIG_SetPC(scp, addr)	{ (scp)->sc_rip = (Addr_t)(addr); }
+#    define SIG_SIG_ZeroLimitPtr(scp)	{ (scp)->sc_r14 = 0; }
+
+     typedef void SigReturn_t;
+
+#    error OpenBSD/AMD64 not supported yet
+
+#  elif defined(OPSYS_SOLARIS)
+     /** amd64, Solaris */
+
+#    define SIG_GetPC(scp)		((scp)->uc_mcontext.gregs[EIP])
+#    define SIG_SetPC(scp, addr)	{ (scp)->uc_mcontext.gregs[EIP] = (Addr_t)(addr); }
+/*#    define SIG_ZeroLimitPtr(scp)  { ML_X86Frame[LIMITPTR_X86OFFSET] = 0; }*/
+
+#    error Solaris/AMD64 not supported yet
+
+#  else
+#    error "unknown OPSYS for amd64"
 #  endif
+
 #endif
 
 #ifndef SIG_InitFPE

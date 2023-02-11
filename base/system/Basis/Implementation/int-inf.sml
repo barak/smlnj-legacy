@@ -1,9 +1,7 @@
 (* int-inf.sml
  *
- * COPYRIGHT (c) 2012 by The SML/NJ Fellowship.
- *
- * COPYRIGHT (c) 1995 by AT&T Bell Laboratories.
- *     See COPYRIGHT file for details.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Author of the current code: Matthias Blume (blume@tti-c.org)
  *
@@ -36,6 +34,7 @@
  * The current implementation is not as efficient as it could and should
  * be.
  *)
+
 structure IntInfImp :> INT_INF = struct
 
     type int = IntInf.int
@@ -44,10 +43,6 @@ structure IntInfImp :> INT_INF = struct
     val minInt = NONE
     val maxInt = NONE
 
-    (* The following assumes LargeInt = Int32.
-     * If IntInf is provided, it will be LargeInt and toLarge and fromLarge
-     * will be the identity function.
-     *)
     val toInt = InlineT.IntInf.toInt
     val fromInt = InlineT.IntInf.fromInt
     val toLarge = InlineT.IntInf.toLarge
@@ -56,7 +51,7 @@ structure IntInfImp :> INT_INF = struct
     datatype rep = datatype CoreIntInf.rep
     val concrete = CoreIntInf.concrete
     val abstract = CoreIntInf.abstract
-    val baseBits = Word31Imp.toIntX CoreIntInf.baseBits
+    val baseBits = WordImp.toIntX CoreIntInf.baseBits
 
     fun binary (f, genSign) (x, y) = let
 	val BI{negative=sx,digits=xs} = concrete x
@@ -73,17 +68,17 @@ structure IntInfImp :> INT_INF = struct
 	      (CoreIntInf.base - x - borrow, 0w1) (* borrow *)
 
         (* convert to ones's complement *)
-        val ones = twos 
+        val ones = twos
 
         fun loop ([], [], _, _, _) = []
-          | loop ([], y :: ys, bx, by, bz)  = 
+          | loop ([], y :: ys, bx, by, bz)  =
               loop1 (0w0, [], y, ys, bx, by, bz)
-          | loop (x :: xs, [], bx, by, bz) = 
+          | loop (x :: xs, [], bx, by, bz) =
               loop1 (x, xs, 0w0, [], bx, by, bz)
-          | loop (x :: xs, y::ys, bx, by, bz) = 
+          | loop (x :: xs, y::ys, bx, by, bz) =
               loop1 (x, xs, y, ys, bx, by, bz)
 
-	and loop1 (x, xs, y, ys, bx, by, bz) = 
+	and loop1 (x, xs, y, ys, bx, by, bz) =
             let (* convert from ones complement *)
                 val (x, bx) = twos (sx, x, bx)
                 val (y, by) = twos (sy, y, by)
@@ -103,19 +98,19 @@ structure IntInfImp :> INT_INF = struct
     end
 
     fun shiftAmount w =
-	{ bytes = Word31Imp.div (w, CoreIntInf.baseBits),
-	  bits = Word31Imp.mod (w, CoreIntInf.baseBits) }
+	{ bytes = WordImp.div (w, CoreIntInf.baseBits),
+	  bits = WordImp.mod (w, CoreIntInf.baseBits) }
 
     infix || && << >>
-    val op << = Word31Imp.<<
-    val op >> = Word31Imp.>>
-    val op && = Word31Imp.andb
-    val op || = Word31Imp.orb
+    val op << = WordImp.<<
+    val op >> = WordImp.>>
+    val op && = WordImp.andb
+    val op || = WordImp.orb
 
     (* formatting for bases 2, 8, 16 by slicing off the right number of
      * bits... *)
     fun bitfmt (bits, maxdig, digvec) i = let
-	fun dig d = StringImp.sub (digvec, Word31Imp.toIntX d)
+	fun dig d = StringImp.sub (digvec, WordImp.toIntX d)
 
 	val BI { digits, negative } = concrete i
 	fun addsign l = if negative then #"~" :: l else l
@@ -138,12 +133,12 @@ structure IntInfImp :> INT_INF = struct
 	case digits of
 	    [] => "0"
 	  | _ => loop ([], digits, 0w0, 0w0)
-    end			    
+    end
 
     val (decBase, decDigs) = let
 	fun try (b, d) =
 	    if b <= CoreIntInf.base then (b, d)
-	    else try (Word31Imp.div (b, 0w10), d - 1)
+	    else try (WordImp.div (b, 0w10), d - 1)
     in
 	try (0w1000000000, 9)
     end
@@ -151,7 +146,7 @@ structure IntInfImp :> INT_INF = struct
     (* decimal formatting by repeatedly dividing by the largest
      * possible power of 10: *)
     fun decfmt i = let
-	val toString = Word31Imp.fmt StringCvt.DEC
+	val toString = WordImp.fmt StringCvt.DEC
 	fun decDig d = StringCvt.padLeft #"0" decDigs (toString d)
 
 	fun loop (l, []) = l
@@ -179,7 +174,7 @@ structure IntInfImp :> INT_INF = struct
 	    BI { digits = [], ... } => 0
 	  | BI { negative, ... } => if negative then ~1 else 1
 
-    fun sameSign (i,j) = sign i = sign j
+    fun sameSign (i,j) = (sign i = sign j)
 
     fun notb x = ~(x + abstract (BI { negative = false, digits = [0w1] }))
 
@@ -189,7 +184,7 @@ structure IntInfImp :> INT_INF = struct
 	  | BI { digits, ... } => let
 		fun wloop (0w0, _) = raise Domain (* should never happen *)
 	          | wloop (0w1, lg) = lg
-		  | wloop (w, lg) = wloop (Word31Imp.>> (w, 0w1), lg + 1)
+		  | wloop (w, lg) = wloop (WordImp.>> (w, 0w1), lg + 1)
 		fun loop ([], lg) = raise Domain
 		  | loop ([x], lg) = wloop (x, lg)
 		  | loop (x :: xs, lg) = loop (xs, lg + baseBits)
@@ -197,16 +192,15 @@ structure IntInfImp :> INT_INF = struct
 		loop (digits, 0)
 	    end
 
-    val orb = binary (Word31Imp.orb, fn (x, y) => x orelse y)
-    val andb = binary (Word31Imp.andb, fn (x, y) => x andalso y)
-    val xorb = binary (Word31Imp.xorb, fn (x, y) => x <> y)
+    val orb = binary (WordImp.orb, fn (x, y) => x orelse y)
+    val andb = binary (WordImp.andb, fn (x, y) => x andalso y)
+    val xorb = binary (WordImp.xorb, fn (x, y) => x <> y)
 
     (* left shift; just shift the digits, no special treatment for
      * signed versus unsigned. *)
-    fun lshift (i, w) =
-	case concrete i of
-	    BI { digits = [], negative } => i (* i = 0 *)
-	  | BI { digits, negative } =>  let
+    fun lshift (i, w) = (case concrete i
+	   of BI { digits = [], negative } => i (* i = 0 *)
+	    | BI { digits, negative } =>  let
 		val { bytes, bits } = shiftAmount w
 		val bits' = CoreIntInf.baseBits - bits
 		fun pad (0w0, xs) = xs
@@ -214,21 +208,21 @@ structure IntInfImp :> INT_INF = struct
 		fun shift ([], 0w0) = []
 		  | shift ([], carry) = [carry]
 		  | shift (x :: xs, carry) = let
-			val maxVal = CoreIntInf.maxDigit
-			val digit = ((x << bits) || carry) && maxVal
-			val carry' = x >> bits'
-		    in
+		      val maxVal = CoreIntInf.maxDigit
+		      val digit = ((x << bits) || carry) && maxVal
+		      val carry' = x >> bits'
+		      in
 			digit :: shift (xs, carry')
-		    end
-	    in
-		abstract
-		    (BI { negative = negative,
-			  digits =
-			  if bits = 0w0 then
-			      pad (bytes, digits)
-			  else
-			      pad (bytes, shift (digits, 0w0)) })
-	    end
+		      end
+		in
+		  abstract (BI{
+		      negative = negative,
+		      digits = if bits = 0w0
+			then pad (bytes, digits)
+			else pad (bytes, shift (digits, 0w0))
+		    })
+		end
+	  (* end case *))
 
     (* Right shift. *)
     fun rshift (i, 0w0) = i
@@ -238,7 +232,7 @@ structure IntInfImp :> INT_INF = struct
 		val { bytes, bits } = shiftAmount w
 		val bits' = CoreIntInf.baseBits - bits
 	      (* drop digits while checking to see is they are all 0w0 (==> pow2)*)
-		fun drop (0w0, allZero, i) = (allZero, i) 
+		fun drop (0w0, allZero, i) = (allZero, i)
 		  | drop (n, allZero, []) = (allZero, [])
 		  | drop (n, allZero, 0w0 :: xs) = drop (n-0w1, allZero, xs)
 		  | drop (n, _, x :: xs) = drop (n-0w1, false, xs)
@@ -305,9 +299,7 @@ structure IntInfImp :> INT_INF = struct
           val pos0 = CoreIntInf.baseBits - bits
           val maxVal = CoreIntInf.maxDigit
           val maxDigit = (0w1 << bits) - 0w1
-          val scanPrefix = NumScan.scanPrefix
-                {wOkay=false, xOkay=xOkay, ptOkay=false, maxDigit=maxDigit}
-                  getchar
+          val scanPrefix = ScanUtil.scanPrefix (ScanUtil.hexPat false) getchar
           fun scan s = (case scanPrefix s
                  of SOME{neg, next, rest} => let
                       fun digloop (d, pos, nat, s) = let
@@ -324,7 +316,7 @@ structure IntInfImp :> INT_INF = struct
                               case getchar s
                                of NONE => done ()
                                 | SOME (c, s') => let
-                                    val v = NumScan.code c
+                                    val v = ScanUtil.code c
                                     in
                                       if (maxDigit < v)
                                         then done()
@@ -350,7 +342,7 @@ structure IntInfImp :> INT_INF = struct
           end
 
     fun decscan getchar s = let
-          fun digVal c = let val d = NumScan.code c
+          fun digVal c = let val d = ScanUtil.code c
                 in
                   if (d <= 0w9) then SOME d else NONE
                 end
@@ -366,7 +358,7 @@ structure IntInfImp :> INT_INF = struct
                 in
                   case getchar s
                    of SOME(c, s') => let
-                        val v' = NumScan.code c
+                        val v' = ScanUtil.code c
                         in
                           if (v' > 0w9)
                             then done()
@@ -423,4 +415,4 @@ structure IntInfImp :> INT_INF = struct
 
     val op << = lshift
     val ~>> = rshift
-end (* structure IntInf *)
+end (* structure IntInfImp *)

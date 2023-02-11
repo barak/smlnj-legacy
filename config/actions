@@ -3,7 +3,7 @@
 # See base/system/smlnj/installer/generic-install.sml for how this file
 # is to be interpreted.
 #
-# (C) 2006-2015 The Fellowship of SML/NJ
+# (C) 2006-2018 The Fellowship of SML/NJ
 #
 # Each action is on a single line and has one of the following forms:
 #
@@ -15,6 +15,7 @@
 #	<module> libanchor <a> <p>
 #	<module> prog ...
 #	<module> dprog ...
+#	<module> config <d>
 #	<module> src
 #
 # Short explanation:
@@ -57,12 +58,16 @@
 #     tree for this program resides; by default, this is taken to be
 #     identical to the module name
 #
+# "config" (configure a module) has one argument, which is the directory
+#    relative to the installation root where the config.sh (resp. config.bat)
+#    script can be found.
+#
 # "src" (register a source package that needs to be unpacked but requires
 #        no further action)
 #
 
 # modules that don't require installer actions other than
-# unpacking their respectivesource trees:
+# unpacking their respective source trees:
 runtime	    	src
 compiler	src
 smlnj-c		src
@@ -77,13 +82,16 @@ old-basis lib basis-2004.cm basis-2004.cm base/old-basis/2004
 # Addional components of the SML/NJ library that are not used by the compiler:
 #    (unix-lib.cm is installed only on Unix-like systems)
 smlnj-lib ulib unix-lib.cm      unix-lib.cm      smlnj-lib/Unix
+smlnj-lib  lib hash-cons-lib.cm hash-cons-lib.cm smlnj-lib/HashCons
+smlnj-lib  lib html-lib.cm	html-lib.cm	 smlnj-lib/HTML
+smlnj-lib  lib html4-lib.cm	html4-lib.cm	 smlnj-lib/HTML4
 smlnj-lib  lib inet-lib.cm      inet-lib.cm      smlnj-lib/INet
+smlnj-lib  lib json-lib.cm      json-lib.cm      smlnj-lib/JSON
+smlnj-lib  lib pp-extras-lib.cm pp-extras-lib.cm smlnj-lib/PP
 smlnj-lib  lib regexp-lib.cm    regexp-lib.cm    smlnj-lib/RegExp
 smlnj-lib  lib reactive-lib.cm  reactive-lib.cm  smlnj-lib/Reactive
-smlnj-lib  lib hash-cons-lib.cm hash-cons-lib.cm smlnj-lib/HashCons
-smlnj-lib  lib json-lib.cm      json-lib.cm      smlnj-lib/JSON
-smlnj-lib  lib html4-lib.cm	html4-lib.cm	 smlnj-lib/HTML4
 smlnj-lib  lib sexp-lib.cm      sexp-lib.cm      smlnj-lib/SExp
+smlnj-lib  lib uuid-lib.cm      uuid-lib.cm      smlnj-lib/UUID
 smlnj-lib  lib xml-lib.cm       xml-lib.cm       smlnj-lib/XML
 
 # Concurrent ML:
@@ -145,7 +153,7 @@ mlrisc anchor RA.cm MLRISC/cm
 mlrisc anchor Peephole.cm MLRISC/cm
 mlrisc anchor StagedAlloc.cm MLRISC/cm
 #mlrisc anchor IA32.cm MLRISC/cm
-#mlrisc anchor AMD64.cm MLRISC/cm
+mlrisc anchor AMD64.cm MLRISC/cm
 mlrisc anchor CCall.cm MLRISC/cm
 mlrisc anchor CCall-x86-64.cm MLRISC/cm
 mlrisc anchor CCall-x86.cm MLRISC/cm
@@ -158,7 +166,7 @@ mlrisc lib OTHER-MLRISC RA.cm             MLRISC/cm SMLNJ-MLRISC
 mlrisc lib OTHER-MLRISC Peephole.cm       MLRISC/cm SMLNJ-MLRISC
 #mlrisc lib OTHER-MLRISC IA32.cm  MLRISC/cm SMLNJ-MLRISC
 mlrisc lib OTHER-MLRISC IA32-Peephole.cm  MLRISC/cm SMLNJ-MLRISC
-#mlrisc lib OTHER-MLRISC AMD64.cm MLRISC/cm SMLNJ-MLRISC
+mlrisc lib OTHER-MLRISC AMD64.cm MLRISC/cm SMLNJ-MLRISC
 mlrisc lib OTHER-MLRISC AMD64-Peephole.cm MLRISC/cm SMLNJ-MLRISC
 #mlrisc lib OTHER-MLRISC SPARC.cm          MLRISC/cm SMLNJ-MLRISC
 mlrisc lib OTHER-MLRISC StagedAlloc.cm    MLRISC/cm SMLNJ-MLRISC
@@ -199,6 +207,13 @@ ml-antlr-grm-ext   lib 	 grm-ext.cm       grm-ext.cm       ml-lpt/ml-antlr/tool
 
 # support library for ml-ulex and ml-antlr:
 ml-lpt-lib 	   lib 	 ml-lpt-lib.cm ml-lpt-lib.cm ml-lpt/lib
+
+# ASDL generator and support library
+asdl               config asdl
+asdl               dprog  asdlgen - asdl/src/asdlgen
+asdl               lib    asdlgen-tool.cm asdlgen-tool.cm asdl/tool
+asdl               lib    asdl-ext.cm     asdl-ext.cm     asdl/tool
+asdl               lib    asdl-lib.cm     asdl-lib.cm     asdl/src/lib/sml
 
 # bottom-up rewrite code generator generator:
 ml-burg    	   prog

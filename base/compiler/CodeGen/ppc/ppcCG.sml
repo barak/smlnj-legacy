@@ -1,7 +1,12 @@
-(*
+(* ppcCG.sml
+ *
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
  * PPC specific backend
  *)
-structure PPCCG = 
+
+structure PPCCG =
   MachineGen
   ( structure MachSpec   = PPCSpec
     val abi_variant      = NONE
@@ -26,7 +31,25 @@ structure PPCCG =
       fun omitframeptr _ = ()
     end
 
-    structure MLTreeComp=
+    structure MLTreeUtils =
+      MLTreeUtils(
+	structure T = PPCMLTree
+	fun hashSext  _ _ = 0w0
+	fun hashRext  _ _ = 0w0
+	fun hashFext  _ _ = 0w0
+	fun hashCCext _ _ = 0w0
+	(* Equality extensions *)
+	fun eqSext  _ _ = false
+	fun eqRext  _ _ = false
+	fun eqFext  _ _ = false
+	fun eqCCext _ _ = false
+	(* Pretty printing extensions *)
+	fun showSext  _ _ = ""
+	fun showRext  _ _ = ""
+	fun showFext  _ _ = ""
+	fun showCCext _ _ = "")
+
+    structure MLTreeComp =
        PPC(structure PPCInstr = PPCInstr
            structure PPCMLTree = PPCMLTree
            structure PseudoInstrs=
@@ -52,13 +75,13 @@ structure PPCCG =
 		structure Props = PPCProps
                 structure Emitter = PPCMCEmitter)
 
-    structure RA = 
+    structure RA =
        RISC_RA
          (structure I         = PPCInstr
           structure CFG       = PPCCFG
           structure CpsRegs   = PPCCpsRegs
-          structure InsnProps = InsnProps 
-          structure Rewrite   = PPCRewrite(PPCInstr) 
+          structure InsnProps = InsnProps
+          structure Rewrite   = PPCRewrite(PPCInstr)
 	  structure SpillInstr= PPCSpillInstr(PPCInstr)
           structure Asm       = PPCAsmEmitter
           structure SpillHeur = ChaitinSpillHeur
@@ -79,14 +102,14 @@ structure PPCCG =
 
           fun pure _ = false
 
-          structure Int = 
+          structure Int =
           struct
              val avail     = PPCCpsRegs.availR
              val dedicated = PPCCpsRegs.dedicatedR
 
 	     fun mkDisp loc = T.LI(T.I.fromInt(32, SpillTable.getRegLoc loc))
 
-             fun spillLoc{info, an, cell, id} = 
+             fun spillLoc{info, an, cell, id} =
 		  {opnd=I.Displace{base=sp, disp=mkDisp(RAGraph.FRAME id), mem=spill},
 		   kind=SPILL_LOC}
 
@@ -99,7 +122,7 @@ structure PPCCG =
 
 	     fun mkDisp loc = T.LI(T.I.fromInt(32, SpillTable.getFregLoc loc))
 
-	     fun spillLoc(S, an, loc) = 
+	     fun spillLoc(S, an, loc) =
 		I.Displace{base=sp, disp=mkDisp(RAGraph.FRAME loc), mem=spill}
 
              val mode = RACore.NO_OPTIMIZATION
