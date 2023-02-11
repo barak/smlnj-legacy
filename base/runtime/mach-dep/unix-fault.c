@@ -1,6 +1,9 @@
-/* unix-fault.c
+/*! \file unix-fault.c
  *
- * COPYRIGHT (c) 1992 by AT&T Bell Laboratories.
+ * Common code for handling arithmetic traps and signals.
+ *
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Common code for handling arithmetic traps.
  */
@@ -18,12 +21,22 @@
 #include "ml-state.h"
 #include "ml-globals.h"
 
+#ifdef SIGNAL_DEBUG
+#include "gc.h"		/* for BO_AddrToCodeObjTag */
+#endif
+
 /* this is temporary */
 #define SELF_VPROC	(VProc[0])
 
 
 /* local routines */
-PVT SigReturn_t FaultHandler (/* int sig, SigInfo_t code, SigContext_t *scp */);
+#if defined(HAS_POSIX_SIGS) && defined(HAS_UCONTEXT)
+PVT SigReturn_t FaultHandler (int sig, SigInfo_t code, void *scp);
+#elif (defined(ARCH_PPC) && defined(OPSYS_LINUX))
+PVT SigReturn_t FaultHandler (int sig, SigContext_t *scp);
+#else
+PVT SigReturn_t FaultHandler (int sig, SigInfo_t code, SigContext_t *scp);
+#endif
 
 
 /* InitFaultHandlers:
@@ -31,12 +44,14 @@ PVT SigReturn_t FaultHandler (/* int sig, SigInfo_t code, SigContext_t *scp */);
 void InitFaultHandlers (ml_state_t *msp)
 {
 
-  /** Set up the Div and Overflow faults **/
-#ifdef SIG_FAULT1
-    SIG_SetHandler (SIG_FAULT1, FaultHandler);
+  /** Set up the Overflow fault(s) **/
+#ifdef SIG_OVERFLOW
+    SIG_SetHandler (SIG_OVERFLOW, FaultHandler);
+#else
+# error now signal for Overflow specified
 #endif
-#ifdef SIG_FAULT2
-    SIG_SetHandler (SIG_FAULT2, FaultHandler);
+#ifdef SIG_OVERFLOW2
+    SIG_SetHandler (SIG_OVERFLOW2, FaultHandler);
 #endif
 
   /** Initialize the floating-point unit **/
@@ -47,53 +62,49 @@ void InitFaultHandlers (ml_state_t *msp)
 
 /* FaultHandler:
  *
- * Handle arithmetic faults (e.g., divide by zero, integer overflow).
+ * Handle arithmetic faults. Note that since floating-point arithmetic
+ * is non-trapping in SML and since the compiler generates code to
+ * explicitly test for division by zero, and arithmetic trap should be
+ * mapped to Overflow.
  */
 #if defined(HAS_POSIX_SIGS) && defined(HAS_UCONTEXT)
 
-PVT SigReturn_t FaultHandler (int signal, siginfo_t *si, void *c)
+PVT SigReturn_t FaultHandler (int signal, siginfo_t *si, void *uc)
 {
-    ucontext_t	    *scp = (ucontext_t *)c;
+    ucontext_t	    *scp = (ucontext_t *)uc;
+    Addr_t	    pc = (Addr_t)SIG_GetPC(scp);
     ml_state_t	    *msp = SELF_VPROC->vp_state;
-    extern Word_t   request_fault[]; 
-    int		    code = SIG_GetCode(si, scp);
+    extern Word_t   request_fault[];
 
 #ifdef SIGNAL_DEBUG
-    SayDebug ("Fault handler: sig = %d, code = %d, inML = %d\n",
-	signal, code, SELF_VPROC->vp_inMLFlag);
-#endif
-
-    if (! SELF_VPROC->vp_inMLFlag) 
-	Die ("bogus fault not in ML: sig = %d, code = %#x, pc = %#x)\n",
-	    signal, SIG_GetCode(si, scp), SIG_GetPC(scp));
-
-   /* Map the signal to the appropriate ML exception. */
-#if defined(HOST_X86) && defined(OPSYS_DARWIN)
-  /* NOTE: early versions of Mac OS X 10.4.x set the code to FPE_FLTDIV or
-   * FPE_FLTOVF, but 10.4.7 sets it to 0, so we need this workaround.  With
-   * 10.6, the correct FPE_INTOVF and FPE_INTDIV codes are now used.
-   */
-    if ((signal == SIGFPE) && (code == 0)) {
-	if (((Byte_t *)SIG_GetPC(scp))[-1] == INTO_OPCODE)
-	    code = FPE_INTOVF;
-	else
-	    code = FPE_INTDIV;
+    SayDebug ("Fault handler: pc = %p, sig = %d, inML = %d\n",
+	(void*)pc, signal, SELF_VPROC->vp_inMLFlag);
+    if (SELF_VPROC->vp_inMLFlag) {
+	SayDebug ("  source file: %s\n", (char *)BO_AddrToCodeObjTag(pc));
     }
 #endif
-    if (INT_OVFLW(signal, code)) {
-	msp->ml_faultExn = OverflowId;
-	msp->ml_faultPC = (Word_t)SIG_GetPC(scp);
+
+    if (! SELF_VPROC->vp_inMLFlag) {
+	Die ("bogus fault not in ML: pc = %p, sig = %d\n", (void*)pc, signal);
     }
-    else if (INT_DIVZERO(signal, code)) {
-	msp->ml_faultExn = DivId;
-	msp->ml_faultPC = (Word_t)SIG_GetPC(scp);
+
+#ifdef SIG_IS_OVERFLOW_TRAP
+  /* verify that the signal actually comes from an overflow */
+    if (! SIG_IS_OVERFLOW_TRAP(signal,pc)) {
+	Die ("bogus overflow fault: pc = %p, sig = %d\n", (void*)pc, signal);
     }
-    else
-	Die ("unexpected fault, signal = %d, code = %#x", signal, code);
+#endif
+
+   /* Map the signal to Overflow */
+    msp->ml_faultExn = OverflowId;
+    msp->ml_faultPC = pc;
 
     SIG_SetPC (scp, request_fault);
 
+  /* I don't think that this call is still necessary, since we are only
+   * dealing with integer overflow here! -- JHR (2019-10-10)
     SIG_ResetFPE (scp);
+   */
 
 } /* end of FaultHandler */
 
@@ -101,7 +112,7 @@ PVT SigReturn_t FaultHandler (int signal, siginfo_t *si, void *c)
 
 PVT SigReturn_t FaultHandler (
     int		    signal,
-#if (defined(TARGET_PPC) && defined(OPSYS_LINUX))
+#if (defined(ARCH_PPC) && defined(OPSYS_LINUX))
     SigContext_t    *scp)
 #else
     SigInfo_t	    info,
@@ -109,7 +120,7 @@ PVT SigReturn_t FaultHandler (
 #endif
 {
     ml_state_t	    *msp = SELF_VPROC->vp_state;
-    extern Word_t   request_fault[]; 
+    extern Word_t   request_fault[];
     int		    code = SIG_GetCode(info, scp);
 
 #ifdef SIGNAL_DEBUG
@@ -117,21 +128,14 @@ PVT SigReturn_t FaultHandler (
 	signal, SELF_VPROC->vp_inMLFlag);
 #endif
 
-    if (! SELF_VPROC->vp_inMLFlag) 
+    if (! SELF_VPROC->vp_inMLFlag)
 	Die ("bogus fault not in ML: sig = %d, code = %#x, pc = %#x)\n",
 	    signal, SIG_GetCode(info, scp), SIG_GetPC(scp));
 
    /* Map the signal to the appropriate ML exception. */
-    if (INT_OVFLW(signal, code)) {
-	msp->ml_faultExn = OverflowId;
-	msp->ml_faultPC = (Word_t)SIG_GetPC(scp);
-    }
-    else if (INT_DIVZERO(signal, code)) {
-	msp->ml_faultExn = DivId;
-	msp->ml_faultPC = (Word_t)SIG_GetPC(scp);
-    }
-    else
-	Die ("unexpected fault, signal = %d, code = %#x", signal, code);
+   /* Map the signal to Overflow */
+    msp->ml_faultExn = OverflowId;
+    msp->ml_faultPC = (Word_t)SIG_GetPC(scp);
 
     SIG_SetPC (scp, request_fault);
 
@@ -141,7 +145,7 @@ PVT SigReturn_t FaultHandler (
 
 #endif
 
-#if ((defined(TARGET_RS6000) || defined(TARGET_PPC)) && defined(OPSYS_AIX))
+#if ((defined(ARCH_RS6000) || defined(ARCH_PPC)) && defined(OPSYS_AIX))
 
 /* SIG_GetCode:
  *

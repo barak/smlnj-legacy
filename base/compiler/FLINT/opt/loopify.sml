@@ -1,5 +1,8 @@
-(* copyright 1998 YALE FLINT PROJECT *)
-(* monnier@cs.yale.edu *)
+(* loopify.sml
+ *
+ * COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *)
 
 signature LOOPIFY =
 sig
@@ -12,8 +15,8 @@ struct
 local
     structure F  = FLINT
     structure O  = Option
-    structure M  = IntRedBlackMap
-    structure S  = IntRedBlackSet
+    structure M  = LambdaVar.Map
+    structure S  = LambdaVar.Set
     structure OU = OptUtils
     structure LT = Lty
     structure LK = LtyKernel
@@ -31,7 +34,7 @@ exception NotFound
 
 fun loopify (prog as (progkind,progname,progargs,progbody)) = let
 
-    val m : info IntHashTable.hash_table = IntHashTable.mkTable(128, NotFound)
+    val m : info LambdaVar.Tbl.hash_table = LambdaVar.Tbl.mkTable(128, NotFound)
 
     (* tails: number of tail-recursive calls
      * calls: number of other calls
@@ -41,9 +44,9 @@ fun loopify (prog as (progkind,progname,progargs,progbody)) = let
     fun new (f,known,parent) =
 	let val i = I{tails=ref [], calls=ref [], icalls=ref [],
 		      tcp=ref known, parent=parent}
-	in IntHashTable.insert m (f,i); i end
+	in LambdaVar.Tbl.insert m (f,i); i end
 
-    fun get f = IntHashTable.lookup m f
+    fun get f = LambdaVar.Tbl.lookup m f
 
 (* collect tries to determine what calls are tail recursive.
  * If a function f is always called in tail position in a function g,
@@ -102,10 +105,11 @@ end
  * `call' is the list of arguments for the APP
  * `free' is the list of resulting free variables *)
 fun drop_invariant ((v,t),actuals,(filt,func,call,free)) =
-    if !CTRL.dropinvariant andalso List.all (fn a => F.VAR v = a) actuals then
+    if !CTRL.dropinvariant andalso List.all (FlintUtil.valueIsVar v) actuals
+      then
 	(* drop the argument: the free list is unchanged *)
 	(false::filt, func, call, (v,t)::free)
-    else
+      else
 	(* keep the argument: create a new var (used in the call)
 	 * which will replace the old in the free vars *)
 	let val nv = cplv v
@@ -128,7 +132,7 @@ in case le
 		   val tfs = (if tcp then tfs else [])
 	       (* cpsopt uses the following condition:
 		*     escape = 0 andalso !unroll_call > 0
-		*    	    andalso (!call - !unroll_call > 1 
+		*    	    andalso (!call - !unroll_call > 1
 		*    		     orelse List.exists (fn t=>t) inv)
 		* `escape = 0': I don't quite see the need for it, though it
 		*     probably won't change much since etasplit should have
@@ -219,8 +223,8 @@ in case le
      | F.APP(F.VAR f,vs) =>
        (case List.find (fn (ft,ft',filt) => ft = f) tfs
 	 of SOME(ft, ft', filt) => F.APP(F.VAR ft', OU.filter filt vs)
-	  | NONE => 
-	    (case M.find(m,f) 
+	  | NONE =>
+	    (case M.find(m,f)
 	      of SOME(fl, filt) =>
 		   F.APP(F.VAR fl, OU.filter filt vs)
                | NONE => le

@@ -3,6 +3,20 @@
 # the following is a list of the targets (in addition to sml) that
 # this shell script can install.  Comment out those that you do not
 # want.  Note that cml-lib requires cml.
+#
+# The syntax of requests is as follows:
+#
+#    <file> ::= <req>*
+#    <req>  ::= 'request' <module> NL
+#            |  'if' SYMBOL NL <req>* <elif>* 'endif' NL
+#    <elif> ::= 'elif' SYMBOL NL <req>*
+#
+# where NL represents end-of-line and SYMBOL is one of
+#
+#	SIZE_32		-- true for 32-bit systems
+#	SIZE_64		-- true for 64-bit systems
+#	WINDOWS		-- true for Microsoft Windows
+#	UNIX		-- true for Unix systems (including macOS and Linux)
 
 #
 # The install script will move all libraries out of the source tree
@@ -93,14 +107,18 @@ request ml-lpt-lib
 
 # Always: install the pre-compiled SML/NJ Library (necessary to bootstrap).
 
-# build ML-Burg
-#
-request ml-burg
-
 # pre-compile and install the remaining components of the SML/NJ library
 # (everything except smlnj-lib.cm, aka Util, itself)
 #
 request smlnj-lib
+
+# build asdlgen and install ASDL libraries
+#
+# NOTE: currently asdlgen does not build on Windows
+#
+if UNIX
+  request asdl
+endif
 
 # pre-compile and install CM "portable graph" utility library
 #
@@ -144,7 +162,12 @@ request ckit
 # This preview release currently works under X86/Linux, Sparc/Solaris,
 # PPC/MacOSX, and X86/Win32.
 #
-request ml-nlffi-lib
+#
+# NOTE: currently NLFFI is not supported on 64-bit machines
+#
+if SIZE_32
+  request ml-nlffi-lib
+endif
 
 # build ML-NLFFI-Gen, a program generator tool used in conjunction with
 # the new "NLFFI" foreign function interface.  The tool generates ML
@@ -153,7 +176,12 @@ request ml-nlffi-lib
 # This preview release currently works under X86/Linux, Sparc/Solaris,
 # PPC/MacOSX, and X86/Win32.
 #
-request ml-nlffigen
+#
+# NOTE: currently NLFFI is not supported on 64-bit machines
+#
+if SIZE_32
+  request ml-nlffigen
+endif
 
 # pre-compile and install the MLRISC Tools library.
 # This library is for parsing and pretty printing SML code.
@@ -161,18 +189,25 @@ request ml-nlffigen
 #
 #request mlrisc-tools
 
+# build ML-Burg
+#
+request ml-burg
+
 # Build and install the 'nowhere' program translator.
-# This tool translates programs with conditional patterns (where clauses) 
+# This tool translates programs with conditional patterns (where clauses)
 # into legal SML code.  See MLRISC/Tools/Doc/nowhere.tex for its
 # (bad) documentation.
 # (Requires the mlrisc-tools library!)
 #
 #request nowhere
 
-# Build and install 'heap2asm' - an experimental component of
-# a new facility for producing true stand-alone executables.
+# Build and install 'heap2asm', which is used by 'heap2exec'
+# for producing self-contained (aka stand-alone) executables.
+# This facility is currently only supported on Linux and macOS
 #
-#request heap2asm
+if UNIX
+#  request heap2asm
+endif
 
 # Download the documentation directory.
 #

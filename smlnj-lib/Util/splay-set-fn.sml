@@ -1,44 +1,45 @@
 (* splay-set-fn.sml
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.  See COPYRIGHT file for details.
+ * COPYRIGHT (c) 2015 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Functor implementing ordered sets using splay trees.
  *
  *)
 
-functor SplaySetFn (K : ORD_KEY) : ORD_SET =
+functor SplaySetFn (K : ORD_KEY) :> ORD_SET where type Key.ord_key = K.ord_key =
   struct
     structure Key = K
     open SplayTree
 
     type item = K.ord_key
-  
-    datatype set = 
-        EMPTY
+
+    datatype set
+      = EMPTY
       | SET of {
-        root : item splay ref,
-        nobj : int
-      }
+	  root : item splay ref,
+	  nobj : int
+	}
 
     fun cmpf k = fn k' => K.compare(k',k)
 
     val empty = EMPTY
 
     fun singleton v = SET{root = ref(SplayObj{value=v,left=SplayNil,right=SplayNil}),nobj=1}
-    
+
 	(* Primitive insertion.
 	 *)
     fun insert (v,(nobj,root)) =
           case splay (cmpf v, root) of
-            (EQUAL,SplayObj{value,left,right}) => 
+            (EQUAL,SplayObj{value,left,right}) =>
               (nobj,SplayObj{value=v,left=left,right=right})
-          | (LESS,SplayObj{value,left,right}) => 
+          | (LESS,SplayObj{value,left,right}) =>
               (nobj+1,
                SplayObj{
                  value=v,
                  left=SplayObj{value=value,left=left,right=SplayNil},
                  right=right})
-          | (GREATER,SplayObj{value,left,right}) => 
+          | (GREATER,SplayObj{value,left,right}) =>
               (nobj+1,
                SplayObj{
                   value=v,
@@ -46,7 +47,7 @@ functor SplaySetFn (K : ORD_KEY) : ORD_SET =
                   right=SplayObj{value=value,left=SplayNil,right=right}})
           | (_,SplayNil) => (1,SplayObj{value=v,left=SplayNil,right=SplayNil})
 
-	(* Add an item.  
+	(* Add an item.
 	 *)
     fun add (EMPTY,v) = singleton v
       | add (SET{root,nobj},v) = let
@@ -60,7 +61,7 @@ functor SplaySetFn (K : ORD_KEY) : ORD_SET =
 	 *)
     fun addList (set,[]) = set
       | addList (set,l) = let
-          val arg = case set of EMPTY => (0,SplayNil) 
+          val arg = case set of EMPTY => (0,SplayNil)
                               | SET{root,nobj} => (nobj,!root)
           val (cnt,t) = List.foldl insert arg l
           in
@@ -75,7 +76,7 @@ functor SplaySetFn (K : ORD_KEY) : ORD_SET =
     fun delete (EMPTY,_) = raise LibBase.NotFound
       | delete (SET{root,nobj},key) =
           case splay (cmpf key, !root) of
-            (EQUAL,SplayObj{value,left,right}) => 
+            (EQUAL,SplayObj{value,left,right}) =>
               if nobj = 1 then EMPTY
               else SET{root=ref(join(left,right)),nobj=nobj-1}
           | (_,r) => (root := r; raise LibBase.NotFound)
@@ -89,6 +90,24 @@ functor SplaySetFn (K : ORD_KEY) : ORD_SET =
 
     fun isEmpty EMPTY = true
       | isEmpty _ = false
+
+    fun minItem EMPTY = raise Empty
+      | minItem (SET{root, ...}) = let
+	  fun min (SplayObj{value, left=SplayNil, ...}) = value
+	    | min (SplayObj{left, ...}) = min left
+	    | min SplayNil = raise Fail "impossible"
+	  in
+	    min (!root)
+	  end
+
+    fun maxItem EMPTY = raise Empty
+      | maxItem (SET{root, ...}) = let
+	  fun max (SplayObj{value, right=SplayNil, ...}) = value
+	    | max (SplayObj{right, ...}) = max right
+	    | max SplayNil = raise Fail "impossible"
+	  in
+	    max (!root)
+	  end
 
     local
       fun member (x,tree) = let
@@ -149,14 +168,31 @@ functor SplaySetFn (K : ORD_KEY) : ORD_SET =
 	  in
 	    cmp (left(!s1, []), left(!s2, []))
 	  end
+
+    fun disjoint (EMPTY, _) = true
+      | disjoint (_, EMPTY) = true
+      | disjoint (SET{root=rt, ...}, SET{root=rt', ...}) = let
+	  fun walk (t1, t2) = (case (next t1, next t2)
+		 of ((SplayNil, _), _) => true
+		  | (_, (SplayNil, _)) => true
+		  | ((SplayObj{value=e1, ...}, r1), (SplayObj{value=e2, ...}, r2)) => (
+		      case Key.compare(e1, e2)
+		       of LESS => walk(r1, t2)
+			| EQUAL => false
+			| GREATER => walk(t1, r2)
+		      (* end case *))
+		(* end case *))
+	  in
+	    walk (left(!rt, []), left(!rt', []))
+	  end
     end (* local *)
 
 	(* Return the number of items in the table *)
     fun numItems EMPTY = 0
       | numItems (SET{nobj,...}) = nobj
 
-    fun listItems EMPTY = []
-      | listItems (SET{root,...}) =
+    fun toList EMPTY = []
+      | toList (SET{root,...}) =
         let fun apply (SplayNil,l) = l
               | apply (SplayObj{value,left,right},l) =
                   apply(left, value::(apply (right,l)))
@@ -256,6 +292,21 @@ functor SplaySetFn (K : ORD_KEY) : ORD_SET =
 	    mapf (EMPTY, !root)
 	  end
 
+    fun mapPartial f EMPTY = EMPTY
+      | mapPartial f (SET{root, ...}) = let
+	  fun mapf (acc, SplayNil) = acc
+	    | mapf (acc, SplayObj{value,left,right}) = let
+		val acc = mapf (acc, left)
+		in
+		  case f value
+		   of SOME value' => mapf (add(acc, value'), right)
+		    | NONE => mapf (acc, right)
+		  (* end case *)
+		end
+	  in
+	    mapf (EMPTY, !root)
+	  end
+
     fun app af EMPTY = ()
       | app af (SET{root,...}) =
           let fun apply SplayNil = ()
@@ -265,7 +316,7 @@ functor SplaySetFn (K : ORD_KEY) : ORD_SET =
 (*
     fun revapp af (SET{root,...}) =
           let fun apply SplayNil = ()
-                | apply (SplayObj{value,left,right}) = 
+                | apply (SplayObj{value,left,right}) =
                     (apply right; af value; apply left)
           in apply (!root) end
 *)
@@ -323,15 +374,15 @@ functor SplaySetFn (K : ORD_KEY) : ORD_SET =
     fun exists p EMPTY = false
       | exists p (SET{root,...}) = let
           fun ex SplayNil = false
-            | ex (SplayObj{value=v,left=l,right=r}) = ex l orelse p v orelse ex r
+            | ex (SplayObj{value=v, left=l, right=r}) = p v orelse ex l orelse ex r
           in
             ex (!root)
           end
 
-    fun all p EMPTY = false
+    fun all p EMPTY = true
       | all p (SET{root,...}) = let
-          fun all' SplayNil = false
-            | all' (SplayObj{value=v,left=l,right=r}) = all' l andalso p v andalso all' r
+          fun all' SplayNil = true
+            | all' (SplayObj{value=v, left=l, right=r}) = p v andalso all' l andalso all' r
           in
             all' (!root)
           end
@@ -341,11 +392,15 @@ functor SplaySetFn (K : ORD_KEY) : ORD_SET =
           fun ex SplayNil = NONE
             | ex (SplayObj{value=v,left=l,right=r}) =
                 if p v then SOME v
-                else case ex l of
-                       NONE => ex r
-                     | a => a 
+                else (case ex l
+		    of NONE => ex r
+		     | a => a
+		  (* end case *))
           in
             ex (!root)
           end
+
+  (* deprecated *)
+    val listItems = toList
 
   end (* SplaySet *)

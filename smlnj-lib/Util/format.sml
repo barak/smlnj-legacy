@@ -55,9 +55,7 @@ structure Format : FORMAT =
       | intToStr (PosInt i) = LargeInt.toString i
     fun intToHex MaxInt = maxInt16
       | intToHex (PosInt i) = LargeInt.fmt SC.HEX i
-    fun intToHeX i =
-	  String.implode (
-	    CharVector.foldr (fn (c, l) => Char.toUpper c :: l) [] (intToHex i))
+    fun intToHeX i = String.map Char.toUpper (intToHex i)
     end (* local *)
 
   (* word to string conversions *)
@@ -87,16 +85,23 @@ structure Format : FORMAT =
 
     fun format s = let
 	  val fmts = compileFormat s
-	  fun doField (flags, wid, ty, arg) = let
-		fun padFn s = (case (#ljust flags, wid)
-		       of (_, NoPad) => s
-			| (false, Wid i) => padLeft(s, i)
-			| (true, Wid i) => padRight(s, i)
+	  fun doField (flags : field_flags, wid, ty, arg) = let
+		fun padFn s = (case wid
+		       of NoPad => s
+			| Wid i => padLeft(s, i)
 		      (* end case *))
 		fun zeroPadFn (sign, s) = (case wid
 		       of NoPad => raise BadFormat
 			| (Wid i) => zeroLPad(s, i - (String.size sign))
 		      (* end case *))
+		fun trimFn (NONE, s) = padFn s
+		  | trimFn (SOME maxWid, s) = let
+		      val s = if (size s > maxWid)
+			    then String.substring(s, 0, maxWid)
+			    else s
+		      in
+			padFn s
+		      end
 		fun negate i = ((PosInt(~i)) handle _ => MaxInt)
 		fun doSign i = (case (i < 0, #sign flags, #neg_char flags)
 		       of (false, AlwaysSign, _) => ("+", PosInt i)
@@ -142,7 +147,7 @@ structure Format : FORMAT =
 		fun hexidecimal i = let
 		      val (sign, i) = doSign i
 		      val sign = if (#base flags) then sign^"0x" else sign
-		      val s = intToHex i 
+		      val s = intToHex i
 		      in
 		        if (#zero_pad flags)
 			  then sign ^ zeroPadFn(sign, s)
@@ -151,7 +156,7 @@ structure Format : FORMAT =
 	        fun capHexidecimal i = let
 		      val (sign, i) = doSign i
 		      val sign = if (#base flags) then sign^"0X" else sign
-		      val s = intToHeX i 
+		      val s = intToHeX i
 		      in
 		        if (#zero_pad flags)
 			  then sign ^ zeroPadFn(sign, s)
@@ -183,7 +188,7 @@ structure Format : FORMAT =
 		fun hexidecimalW i = let
 		      val sign = doWordSign ()
 		      val sign = if (#base flags) then sign^"0x" else sign
-		      val s = wordToHex i 
+		      val s = wordToHex i
 		      in
 		        if (#zero_pad flags)
 			  then sign ^ zeroPadFn(sign, s)
@@ -192,7 +197,7 @@ structure Format : FORMAT =
 	        fun capHexidecimalW i = let
 		      val sign = doWordSign ()
 		      val sign = if (#base flags) then sign^"0X" else sign
-		      val s = wordToHeX i 
+		      val s = wordToHeX i
 		      in
 		        if (#zero_pad flags)
 			  then sign ^ zeroPadFn(sign, s)
@@ -223,8 +228,8 @@ structure Format : FORMAT =
 		    | (CharField, CHR c) => padFn(String.str c)
 		    | (BoolField, BOOL false) => padFn "false"
 		    | (BoolField, BOOL true) => padFn "true"
-		    | (StrField, ATOM s) => padFn(Atom.toString s)
-		    | (StrField, STR s) => padFn s
+		    | (StrField prec, ATOM s) => trimFn(prec, Atom.toString s)
+		    | (StrField prec, STR s) => trimFn(prec, s)
 		    | (RealField{prec, format}, REAL r) =>
 			if (Real.isFinite r)
 			  then (case format
@@ -278,16 +283,10 @@ structure Format : FORMAT =
 			else if Real.==(Real.posInf, r)
 			  then doRealSign false ^ "inf"
 			  else "nan"
-		    | (_, LEFT(w, arg)) => let
-		        val flags = {
-			        sign = (#sign flags), neg_char = (#neg_char flags),
-			        zero_pad = (#zero_pad flags), base = (#base flags),
-			        ljust = true, large = false
-			      }
-		        in
-			  doField (flags, Wid w, ty, arg)
-		        end
-		    | (_, RIGHT(w, arg)) => doField (flags, Wid w, ty, arg)
+		    | (_, LEFT(w, arg)) =>
+			StringCvt.padLeft #" " w (doField (flags, wid, ty, arg))
+		    | (_, RIGHT(w, arg)) =>
+			StringCvt.padRight #" " w (doField (flags, Wid w, ty, arg))
 		    | _ => raise BadFmtList
 		  (* end case *)
 		end

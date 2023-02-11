@@ -1,110 +1,97 @@
 '\" t
 .\"     Title: ml-makedepend
-.\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 10/04/2015
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-04-02
 .\"    Manual: \ \&
-.\"    Source: SML/NJ 110.79
+.\"    Source: SML/NJ
 .\"  Language: English
 .\"
-.TH "ML\-MAKEDEPEND" "1" "10/04/2015" "SML/NJ 110\&.79" "\ \&"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.TH "ML\-MAKEDEPEND" "1" "2020-04-02" "SML/NJ" "\ \&"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
-.\" -----------------------------------------------------------------
-.\" * set default formatting
-.\" -----------------------------------------------------------------
-.\" disable hyphenation
+.ss \n[.ss] 0
 .nh
-.\" disable justification (adjust text to left margin only)
 .ad l
-.\" -----------------------------------------------------------------
-.\" * MAIN CONTENT STARTS HERE *
-.\" -----------------------------------------------------------------
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
 .SH "NAME"
-ml-makedepend \- makefile dependency generator for SML/NJ programs
+ml\-makedepend \- makefile dependency generator for SML/NJ programs
 .SH "SYNOPSIS"
 .sp
-\fBml\-makedepend\fR [\fIOPTIONS\fR] \fIproject\&.cm\fR \fItarget\fR
+\fBml\-makedepend\fP [\fIOPTIONS\fP] \fIproject.cm\fP \fItarget\fP
 .SH "DESCRIPTION"
 .sp
-\fBml\-makedepend\fR is a tool for generating dependency information to allow the Unix \fBmake\fR(1) program to be used to build SML/NJ programs\&.
+\fBML\-Makedepend\fP is a tool for generating dependency information to allow the
+Unix \fBmake\fP(1) program to be used to build SML/NJ programs.
 .SH "OPTIONS"
-.PP
-\fB\-f\fR \fImakefile\fR
+.sp
+\fB\-f\fP \fImakefile\fP
 .RS 4
-Specify the name of the makefile to which the dependency information is appended\&. If this option is
-\fInot\fR
-given, then the output is appended to the end of the file
-makefile
-(or
-Makefile)\&. It is an error if neither file exists and the
-\fB\-f\fR
-option is not specified\&.
+Specify the name of the makefile to which the dependency information is appended.  If this
+option is \fInot\fP given, then the output is appended to the end of the file \f(CRmakefile\fP
+(or \f(CRMakefile\fP).  It is an error if neither file exists and the \fB\-f\fP option is not specified.
 .RE
-.PP
-\fB\-a\fR \fIarch\fR
+.sp
+\fB\-a\fP \fIarch\fP
 .RS 4
-specifies the name a make variable for architecture\-specific filenames and paths (the default is
-ARCH)\&.
+specifies the name a make variable for architecture\-specific filenames and paths
+(the default is \f(CRARCH\fP).
 .RE
-.PP
-\fB\-o\fR \fIos\fR
+.sp
+\fB\-o\fP \fIos\fP
 .RS 4
-specifies the name a make variable for operating\-system\-specific filenames and paths (the default is
-OPSYS)\&.
+specifies the name a make variable for operating\-system\-specific filenames and paths
+(the default is \f(CROPSYS\fP).
 .RE
-.PP
-\fB\-n\fR
+.sp
+\fB\-n\fP
 .RS 4
-generates full filenames and paths with any architecture or operating\-system\-specific parts expanded out to their definition for the host system\&. If this option is specified, then any
-\fB\-a\fR
-and
-\fB\-o\fR
-options are ignored\&.
+generates full filenames and paths with any architecture or operating\-system\-specific
+parts expanded out to their definition for the host system.  If this option is specified,
+then any \fB\-a\fP and \fB\-o\fP options are ignored.
 .RE
-.PP
-\fB\-C\fR\fIctl\fR=\fIvalue\fR
+.sp
+\fB\-C\fP\(cqctl\(aq=\fIvalue\fP
 .RS 4
-set the control
-\fIctl\fR
-to
-\fIvalue\fR\&.
+set the control \fIctl\fP to \fIvalue\fP.
 .RE
-.PP
-\fB\-D\fR\fIname\fR=\fIvalue\fR
+.sp
+\fB\-D\fP\(cqname\(aq=\fIvalue\fP
 .RS 4
-define the CM variable
-\fIname\fR
-to have the given value\&.
+define the CM variable \fIname\fP to have the given value.
 .RE
-.PP
-\fB\-D\fR\*(Aqname
+.sp
+\fB\-D\fP\(cqname
 .RS 4
-define the CM variable
-\fIname\fR
-to have the value 1\&.
+define the CM variable \fIname\fP to have the value 1.
 .RE
-.PP
-\fB\-U\fR\fIname\fR
+.sp
+\fB\-U\fP\(cqname\(aq
 .RS 4
-remove any definition of the CM variable
-\fIname\fR\&.
+remove any definition of the CM variable \fIname\fP.
 .RE
 .SH "AUTHOR"
 .sp
-\fBml\-makedepend\fR(1) was written by Matthias Blume\&.
+\fBML\-Makedepend\fP was written by Matthias Blume.
+.SH "SEE\-ALSO"
+.sp
+\fBml\-build\fP(1), \fBsml\fP(1), \fBsmlnj\fP(7)
 .SH "COPYING"
 .sp
-Copyright \(co 2014 The Fellowship of SML/NJ
+Copyright \(co 2020 The Fellowship of SML/NJ
 .sp
-This is free software; see the source for copying conditions\&. There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE\&.
-.SH "SEE-ALSO"
-.sp
-\fBml\-build\fR(1), \fBsml\fR(1), \fBsmlnj\fR(7)
+This is free software; see the source for copying  conditions.   There  is  NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

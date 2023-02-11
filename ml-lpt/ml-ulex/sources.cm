@@ -1,6 +1,6 @@
 (* sources.cm
  *
- * COPYRIGHT (c) 2005 
+ * COPYRIGHT (c) 2005
  * John Reppy (http://www.cs.uchicago.edu/~jhr)
  * Aaron Turon (adrassi@gmail.com)
  * All rights reserved.
@@ -16,14 +16,15 @@ is
   $/pp-lib.cm
   $/ml-yacc-lib.cm
 
-  ../lib/ml-lpt-lib.cm 
+  ../lib/ml-lpt-lib.cm
   ../common/lpt-common.cm
 
-  FrontEnds/lex-spec.sml
+  FrontEnds/common/lex-spec.sml
+  FrontEnds/common/input-sig.sml
 
 (* During installation we rely on pre-generated files
  * to avoid certain chicken-and-egg problems. *)
-#if defined(NO_ML_LEX)
+#if defined(NO_ML_LEX) orelse defined(NO_PLUGINS)
   FrontEnds/ml-lex/ml-lex.lex.sml
 #else
   FrontEnds/ml-lex/ml-lex.lex : MLLex
@@ -31,7 +32,7 @@ is
 
 (* During installation we rely on pre-generated files
  * to avoid certain chicken-and-egg problems. *)
-#if defined(NO_ML_YACC)
+#if defined(NO_ML_YACC) orelse defined(NO_PLUGINS)
   FrontEnds/ml-lex/ml-lex.yacc.sig
   FrontEnds/ml-lex/ml-lex.yacc.sml
 #else
@@ -50,7 +51,7 @@ is
 
 (* During installation we rely on pre-generated files
  * to avoid certain chicken-and-egg problems. *)
-# if defined(NO_ML_ANTLR)
+# if defined(NO_ML_ANTLR) orelse defined(NO_PLUGINS)
   FrontEnds/ml-ulex/ml-ulex.grm.sml
 # else
   FrontEnds/ml-ulex/ml-ulex.grm : ml-antlr

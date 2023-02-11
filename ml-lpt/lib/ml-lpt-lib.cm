@@ -36,7 +36,7 @@ is
 *)
   wrapped-strm.sml
 
-  stream-pos.sml
+  antlr-stream-pos.sml
   antlr-tokens-sig.sml
 
   ulex-buffer.sml

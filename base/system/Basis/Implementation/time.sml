@@ -7,8 +7,8 @@
 structure TimeImp : sig
 
     include TIME
-  (* export these for the benefit of, e.g., Posix.ProcEnv.times: *)
 
+  (* export these for the benefit of, e.g., Posix.ProcEnv.times: *)
     val fractionsPerSecond : LargeInt.int
     val toFractions   : time -> LargeInt.int
     val fromFractions : LargeInt.int -> time
@@ -50,14 +50,10 @@ structure TimeImp : sig
     fun toReal (PB.TIME{usec}) = Real.fromLargeInt usec * 1.0e~6
 
     local
-	val gettimeofday : unit -> (Int32.int * int) =
+      val gettimeofday : unit -> Word64.word =
 	    CInterface.c_function "SMLNJ-Time" "timeofday"
     in
-        fun now () = let
-	    val (ts, tu) = gettimeofday ()
-	in
-	    fromMicroseconds (1000000 * Int32.toLarge ts + Int.toLarge tu)
-	end
+    fun now () = fromNanoseconds (Word64Imp.toLargeInt (gettimeofday ()))
     end (* local *)
 
     val rndv : LInt.int vector =  #[50000, 5000, 500, 50, 5]

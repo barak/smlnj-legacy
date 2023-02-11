@@ -1,10 +1,13 @@
-(*
- * Library exporting "visible" compilers for all architectures.
+(* all.cm
  *
- *  (C) 2001, Lucent Technologies, Bell Labs
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
+ * Library exporting "visible" compilers for all architectures.
  *
  * author: Matthias Blume (blume@research.bell-labs.com)
  *)
+
 Library
 	(* signatures *)
 	signature STATS
@@ -19,7 +22,7 @@ Library
 	signature DYNAMICENV
 	signature SYMENV
 	signature ENVIRONMENT
-	signature ENVREF	
+	signature ENVREF
 	signature MODULE_ID
 	signature PICKMOD
 	signature UNPICKMOD
@@ -43,7 +46,7 @@ Library
 	structure DynamicEnv
 	structure SymbolicEnv
 	structure Environment
-	structure EnvRef	
+	structure EnvRef
 	structure ModuleId
 	structure GenModIdMap
 	structure PickMod
@@ -65,54 +68,27 @@ Library
 	structure FLINT
 
 	(* backends *)
-	structure Alpha32Backend
-	structure HppaBackend
+	structure AMD64StdCallBackend
+	structure AMD64CCallBackend
 	structure PPCBackend
 	structure SparcBackend
 	structure X86StdCallBackend
 	structure X86CCallBackend
-(*
-	structure X86IntelMacBackend
-*)
-(*
-	structure MipsLittleBackend
-	structure MipsBigBackend
-	structure RS6000Backend
-*)
 
 	(* bootstrap (cross-)compilers *)
-	structure Alpha32UnixCMB
-	structure HppaUnixCMB
-	structure PPCMacOSCMB
+	structure AMD64UnixCMB
 	structure PPCUnixCMB
 	structure SparcUnixCMB
 	structure X86UnixCMB
 	structure X86Win32CMB
-(*
-	structure X86IntelMacCMB
-*)
-(*
-	structure MipsLittleUnixCMB
-	structure MipsBigUnixCMB
-	structure RS6000UnixCMB
-
-*)
 is
-	$smlnj/compiler/alpha32.cm
-	$smlnj/compiler/hppa.cm
 	$smlnj/compiler/ppc.cm
 	$smlnj/compiler/sparc.cm
 	$smlnj/compiler/x86.cm
 	$smlnj/compiler/amd64.cm
 
-	$smlnj/cmb/alpha32-unix.cm
-	$smlnj/cmb/hppa-unix.cm
-	$smlnj/cmb/ppc-macos.cm
 	$smlnj/cmb/ppc-unix.cm
 	$smlnj/cmb/sparc-unix.cm
 	$smlnj/cmb/x86-unix.cm
 	$smlnj/cmb/x86-win32.cm
 	$smlnj/cmb/amd64-unix.cm
-(*
-	$smlnj/cmb/x86-intelmac.cm
-*)

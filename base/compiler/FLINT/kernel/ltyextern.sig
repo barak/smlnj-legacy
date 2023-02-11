@@ -1,28 +1,29 @@
-(* Copyright (c) 1998 YALE FLINT PROJECT *)
-(* ltyextern.sig *)
-
-(*
- * This interface hides the implementation details of FLINT tkind, tyc, and 
- * lty defined inside Lty. For each entity, we provide a series of 
+(* ltyextern.sig
+ *
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
+ * This interface hides the implementation details of FLINT tkind, tyc, and
+ * lty defined inside Lty. For each entity, we provide a series of
  * constructor funtions, deconstructor functions, predicate functions,
  * and other utility functions. We divide these functions into three files:
  * LtyDef contains the set of abstract constructor, deconstructor, and
- * predicate functions for tkind, tyc, and lty; LtyBasic includes all 
+ * predicate functions for tkind, tyc, and lty; LtyBasic includes all
  * functions in LtyDef plus all commonly used primitive tycs and ltys, and
  * utility functions; finally, the current LtyExtern structure includes all
  * functions in LtyBasic plus a set of rather specialized utility functions.
  *
- * We design this hierarchy in a way so that LtyDef as a stable interface, 
+ * We design this hierarchy in a way so that LtyDef as a stable interface,
  * so one can refer to types such as tkind, tyc, lty as LtyDef.tkind, etc;
- * LtyBasic is a medium-stable interface, only commonly used functions 
- * should be left here; LtyExtern is a least-stable interface, any new 
+ * LtyBasic is a medium-stable interface, only commonly used functions
+ * should be left here; LtyExtern is a least-stable interface, any new
  * utility function that manipulates types should go here.
  *
  * The conventions are (1) types should be referenced as "LtyDef.foo"
  * (2) functions should all be accessed as "LtyExtern.foo". The client
  * in general should never need to access LtyKernel.
  *
- * This interface should only refer to structures such as DebIndex, Lty, 
+ * This interface should only refer to structures such as DebIndex, Lty,
  * PrimTyc, Symbol, and LtyBasic (indirectly LtyDef).
  *)
 
@@ -73,7 +74,7 @@ val tkc_arg : int -> tkind list
 exception KindChk of string (* kind checker exception *)
 exception LtyAppChk
 
-exception TeUnbound  
+exception TeUnbound
 exception TCENV
 
 (* kind checking functions (re-exported here from Lty) *)
@@ -86,9 +87,9 @@ val lt_inst_chk_gen : unit -> lty * tyc list * tkindEnv -> lty list
 
 (* substitution of named type variables *)
 (*** CLEAN THIS UP ***)
-val tc_nvar_elim_gen : unit -> (tvar * DebIndex.depth -> tyc option) 
+val tc_nvar_elim_gen : unit -> (tvar * DebIndex.depth -> tyc option)
                             -> DebIndex.depth -> tyc -> tyc
-val lt_nvar_elim_gen : unit -> (tvar * DebIndex.depth -> tyc option) 
+val lt_nvar_elim_gen : unit -> (tvar * DebIndex.depth -> tyc option)
                             -> DebIndex.depth -> lty -> lty
 
 (* !! BEWARE !!
@@ -96,9 +97,9 @@ val lt_nvar_elim_gen : unit -> (tvar * DebIndex.depth -> tyc option)
 val tc_nvar_subst_gen : unit -> (tvar * tyc) list -> tyc -> tyc
 val lt_nvar_subst_gen : unit -> (tvar * tyc) list -> lty -> lty
 
-val tc_nvar_cvt_gen : unit -> (tvar * int) list 
+val tc_nvar_cvt_gen : unit -> (tvar * int) list
                            -> DebIndex.depth -> tyc -> tyc
-val lt_nvar_cvt_gen : unit -> (tvar * int) list 
+val lt_nvar_cvt_gen : unit -> (tvar * int) list
                            -> DebIndex.depth -> lty -> lty
 (* The equivalent to ltc_poly for the nvar case *)
 val lt_nvpoly : (tvar * tkind) list * lty list -> lty
@@ -125,7 +126,7 @@ val ltc_rkind   : FLINT.rkind * lty list -> lty
 val ltd_rkind   : lty * int -> lty
 
 (** given a tyc, select the appropriate update primop *)
-val tc_upd_prim : tyc -> PrimOp.primop
+val tc_upd_prim : tyc -> Primop.primop
 
 (** translating the tkind into the corresponding type *)
 val tk_lty      : tkind -> lty

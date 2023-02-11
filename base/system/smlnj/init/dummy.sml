@@ -1,19 +1,27 @@
-(* Copyright 1996 by Bell Laboratories *)
-(* dummy.sml *)
+(* dummy.sml
+ *
+ * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
+ * Dummy implementation of the Assembly structure.  The actual
+ * implementation of Assembly.A is in assembly code.  The records
+ * that represent the Assembly and Assembly.A structures are allocated
+ * in the runtime system (runtime/kernel/globals.c).
+ *)
 
 structure Assembly :> ASSEMBLYBOXED =
   struct
     type object = object
     datatype 'a option = NONE | SOME of 'a
 
-   (* 
-    * Declarations whose right handside is a primOp do not 
+   (*
+    * Declarations whose right handside is a primOp do not
     * generate any code. This is a hack, and should be cleaned
     * in the future. (ZHONG)
     *)
-    val cast : 'a -> 'b = InLine.cast  
+    val cast : 'a -> 'b = InLine.cast
 
-    structure A = 
+    structure A =
       struct
 	type c_function = c_function
 	type word8array = word8array
@@ -28,7 +36,7 @@ structure Assembly :> ASSEMBLYBOXED =
 	fun create_s (x: object): string = cast x
 	fun create_v (x: object): object = cast x
 	fun floor (x: object): object = cast x
-	fun logb (x: object): object = cast x
+	fun logb (x: object): object = cast x			(* DEPRECATED *)
 	fun scalb (x: object): object = cast x
 	fun try_lock (x: spin_lock): object = cast x
 	fun unlock (x: spin_lock): object = cast x

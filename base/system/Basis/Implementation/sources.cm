@@ -1,13 +1,15 @@
 (* sources.cm
  *
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
  * The implementation of the Basis.  Also see the file
  *
  *	base/system/Basis/basis.cm
  *
  * which controls the external visibility of the basis library.
- *
- * Copyright (c) 2004 by The Fellowship of SML/NJ
  *)
+
 Group
 	signature ARRAY
 	signature ARRAY_SLICE
@@ -60,17 +62,24 @@ Group
 	signature EITHER	(* proposal 2015-002 *)
 	signature FN		(* proposal 2015-005 *)
 	signature REF		(* proposal 2015-007 *)
+	signature MONO_BUFFER	(* proposal 2018-001 *)
+	signature UNIVERSAL	(* proposal 2020-001 *)
 
       (* old versions of basis signatures from the 2004 published spec *)
 	signature ARRAY_2004
+	signature ARRAY_SLICE_2004
 	signature LIST_2004
 	signature LIST_PAIR_2004
 	signature MONO_ARRAY_2004
+	signature MONO_ARRAY_SLICE_2004
 	signature MONO_VECTOR_2004
+	signature MONO_VECTOR_SLICE_2004
 	signature OPTION_2004
 	signature STRING_2004
 	signature TEXT_2004
 	signature VECTOR_2004
+	signature VECTOR_SLICE_2004
+	signature WORD_2004
 
       (* basis signatures with extensions from proposal 2015-003 added *)
 	signature ARRAY_2015
@@ -80,8 +89,18 @@ Group
 	signature MONO_VECTOR_2015
 	signature OPTION_2015
 	signature STRING_2015
-	signature TEXT_2015
+	(* signature TEXT_2015 *) (* superseded by TEXT_2018 *)
 	signature VECTOR_2015
+
+      (* basis signatures with extensions from proposal 2016-001 added *)
+	signature WORD_2016
+
+      (* basis signatures with extensions from proposal 2018-002 added *)
+	signature ARRAY_SLICE_2018
+	signature MONO_ARRAY_SLICE_2018
+	signature MONO_VECTOR_SLICE_2018
+	signature TEXT_2018
+	signature VECTOR_SLICE_2018
 
       (* backward compatibility with the SML'90 version of the basis *)
 	signature SML90
@@ -122,10 +141,9 @@ Group
 	structure FixedIntImp
 	structure General
 	structure IEEEReal
-	structure Int31Imp
-	structure Int32Imp
-	structure Int64
 	structure IntImp
+	structure Int32Imp
+	structure Int64Imp
 	structure IntInfImp
 	structure IO
 	structure LargeIntImp
@@ -142,6 +160,8 @@ Group
 	structure PackWord16Little
 	structure PackWord32Big
 	structure PackWord32Little
+	structure PackWord64Big
+	structure PackWord64Little
 	structure PositionImp
 	structure Real64Array
 	structure Real64ArraySlice
@@ -158,19 +178,21 @@ Group
 	structure Timer
 	structure Vector
 	structure VectorSlice
-	structure Word31Imp
+	structure WordImp
+	structure Word8Imp
 	structure Word32Imp
-	structure Word64
+	structure Word64Imp
 	structure Word8Array
 	structure Word8ArraySlice
-	structure Word8Imp
 	structure Word8Vector
 	structure Word8VectorSlice
-	structure WordImp
 
 	structure Either	(* proposal 2015-002 *)
 	structure Fn		(* proposal 2015-005 *)
 	structure Ref		(* proposal 2015-007 *)
+	structure CharBuffer	(* proposal 2018-001 *)
+	structure Word8Buffer	(* proposal 2018-001 *)
+	structure Universal	(* proposal 2020-001 *)
 
 	functor PrimIO
 
@@ -293,7 +315,6 @@ is
 	Unsafe/poll.sig
 	Unsafe/poll.sml
 	Unsafe/object.sig
-	Unsafe/object.sml
 	Unsafe/unsafe-array.sig
 	Unsafe/unsafe-vector.sig
 	Unsafe/unsafe-mono-array.sig
@@ -302,9 +323,15 @@ is
 	Unsafe/unsafe-pack-word-b32.sml
 	Unsafe/unsafe-pack-word-l16.sml
 	Unsafe/unsafe-pack-word-l32.sml
+	Unsafe/pointer.sig
+	Unsafe/pointer.sml
 	Unsafe/unsafe.sig
 	Unsafe/unsafe.sml
-
+#if defined(SIZE_32)
+	Unsafe/target32-object.sml
+#else
+	Unsafe/target64-object.sml
+#endif
 	OS/os.sig
 	OS/os-filesys.sig
 	OS/os-path.sig
@@ -352,8 +379,14 @@ is
 	string.sml
 	char.sml
 	list.sml
-	num-scan.sml
-	num-format.sml
+	real64-values.sml
+	scan-util.sml
+	num-scan32.sml
+	num-format32.sml
+	num-scan64.sml
+	num-format64.sml
+	real-format.sml
+	real-scan.sml
 	bool.sml
 	date.sml
 
@@ -362,6 +395,7 @@ is
 	mono-array.sig
 	mono-array-slice.sig
 	mono-array2.sig
+	mono-buffer.sig
 
 	real64-vector.sml
 	real64-vector-slice.sml
@@ -372,34 +406,29 @@ is
 	char-array-slice.sml
 	char-vector.sml
 	char-vector-slice.sml
+	char-buffer.sml
 	array.sml
 	array-slice.sml
 	array2.sml
 	ieee-real.sml
-	int31.sml
 	int32.sml
-	int64.sml
 	int-inf-sig.sml
 	int-inf.sml
-	word31.sml
+	w32-popcount.sml
 	word32.sml
-	word64.sml
 	real64.sml
-#if defined(ARCH_X86)
-	math64-x86.sml
-#elif defined(ARCH_ALPHA)
-	math64-none.sml
-#elif defined(ARCH_PPC)
+	math64-common.sml
+#if defined(ARCH_PPC)
 	math64-none.sml
 #else
 	math64-sqrt.sml
 #endif
-	real-format.sml
 	word8.sml
 	word8-vector.sml
 	word8-vector-slice.sml
 	word8-array.sml
 	word8-array-slice.sml
+	word8-buffer.sml
 	time.sml
 	internal-timer.sml
 	timer.sml
@@ -420,6 +449,30 @@ is
 	pack-word-b32.sml
 	pack-word-l32.sml
 
+#if defined(SIZE_32)
+	Target32Bit/bind-structs.sml
+	Target32Bit/int.sml
+	Target32Bit/int64.sml
+	Target32Bit/intinf-to-real64.sml
+	Target32Bit/pack-word-b64.sml
+	Target32Bit/pack-word-l64.sml
+	Target32Bit/pointer.sml
+	Target32Bit/word.sml
+	Target32Bit/word64.sml
+#else
+	Target64Bit/bind-structs.sml
+	Target64Bit/int.sml
+	Target64Bit/int64.sml
+	Target64Bit/intinf-to-real64.sml
+	Target64Bit/pack-word-b64.sml
+	Target64Bit/pack-word-l64.sml
+	Target64Bit/pointer.sml
+	Target64Bit/word.sml
+	Target64Bit/word64.sml
+	Target64Bit/w64-popcount.sml
+#endif
+
+	bind-structs.sml
 #if defined(BIG_ENDIAN)
 	bind-pack-big.sml
 #else
@@ -435,22 +488,9 @@ is
       (* basis proposal 2015-007 *)
 	ref.sig
 	ref.sml
-
-	bind-int-32.sml
-	bind-word-32.sml
-	bind-largeint-32.sml
-	bind-fixedint-32.sml
-	bind-largeword-32.sml
-	bind-sysword-32.sml
-	bind-real-32.sml
-	bind-math-32.sml
-	bind-largereal-32.sml
-
-#if defined(USE_64_BIT_POSITIONS)
-	bind-position-64.sml
-#else
-	bind-position-31.sml
-#endif
+      (* basis proposl 2020-001 *)
+	universal.sig
+	universal.sml
 
 	bit-flags.sig
 	bit-flags-fn.sml
@@ -466,13 +506,8 @@ is
 	Posix/posix-process.sml
 	Posix/posix-filesys.sig
 	Posix/posix-io.sig
-#if defined(USE_64_BIT_POSITIONS)
-	Posix/posix-filesys-64.sml
-	Posix/posix-io-64.sml
-#else
 	Posix/posix-filesys.sml
 	Posix/posix-io.sml
-#endif
 	Posix/posix-procenv.sig
 	Posix/posix-procenv.sml
 	Posix/posix-sysdb.sig
@@ -497,6 +532,13 @@ is
 	Unix/unix.sig
 	Unix/unix.sml
 #elif defined(OPSYS_WIN32)
+
+#if defined(SIZE_32)
+	Win32/win32-handle.sml
+#else (* 64-bits *)
+	Win32/win64-handle.sml
+#endif
+
 	Win32/pre-os.sml
 	Win32/win32-general.sig
 	Win32/win32-general.sml

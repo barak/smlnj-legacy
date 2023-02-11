@@ -1,8 +1,9 @@
 (* prim-io.sig
  *
- * COPYRIGHT (c) 1995 AT&T Bell Laboratories.
- *
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *)
+
 signature PRIM_IO =
   sig
     type elem
@@ -16,7 +17,7 @@ signature PRIM_IO =
     val compare : (pos * pos) -> order
 
     datatype reader = RD of {
-	name      : string, 
+	name      : string,
 	chunkSize : int,
 	readVec   : (int -> vector) option,
         readArr   : (array_slice -> int) option,
@@ -24,7 +25,7 @@ signature PRIM_IO =
 	readArrNB : (array_slice -> int option) option,
 	block     : (unit -> unit) option,
 	canInput  : (unit -> bool) option,
-	avail     : unit -> int option,
+	avail     : unit -> Position.int option,
 	getPos    : (unit -> pos) option,
 	setPos    : (pos -> unit) option,
         endPos    : (unit -> pos) option,

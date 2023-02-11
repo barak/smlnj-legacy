@@ -1,6 +1,7 @@
 (* object.sig
  *
- * COPYRIGHT (c) 1997 Bell Labs, Lucent Technologies.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *)
 
 signature UNSAFE_OBJECT =
@@ -13,8 +14,8 @@ signature UNSAFE_OBJECT =
    *)
     datatype representation
       = Unboxed
-      | Word32
-      | Real
+      | Raw		(* packed raw data *)
+      | Raw64		(* 64-byte aligned raw data (used for Real64.real) *)
       | Pair
       | Record
       | Ref
@@ -50,16 +51,16 @@ signature UNSAFE_OBJECT =
     val toVector : object -> object vector
     val toByteVector : object -> Word8Vector.vector
     val toExn    : object -> exn
-    val toReal   : object -> real
+    val toReal64 : object -> Real64.real
     val toInt    : object -> int
     val toInt32  : object -> Int32.int
+    val toInt64  : object -> Int64.int
     val toWord   : object -> Word.word
     val toWord8  : object -> Word8.word
     val toWord32 : object -> Word32.word
+    val toWord64 : object -> Word64.word
 
   (* fetch nth element of tuple *)
     val nth	 : (object * int) -> object
 
   end;
-
-

@@ -1,6 +1,7 @@
-/* sysinfo.c
+/*! \file sysinfo.c
  *
- * COPYRIGHT (c) 1994 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * General interface to query system properties.
  */
@@ -28,12 +29,13 @@
  *
  * Current queries:
  *   "OS_NAME"
- *   "OS_VERSION"
- *   "HOST_ARCH"   
- *   "TARGET_ARCH"
+ *   "OS_VERSION"	(not supported)
+ *   "ARCH"
+ *   "ARCH_ARCH"	(deprecated; use "ARCH")
+ *   "TARGET_ARCH"	(deprecated; use "ARCH")
  *   "HAS_SOFT_POLL"
  *   "HAS_MP"
- *   "HEAP_SUFFIX"      -- added by Blume (7/2000)
+ *   "HEAP_SUFFIX"
  */
 ml_val_t _ml_RunT_sysinfo (ml_state_t *msp, ml_val_t arg)
 {
@@ -46,47 +48,17 @@ ml_val_t _ml_RunT_sysinfo (ml_state_t *msp, ml_val_t arg)
 	res = ML_CString(msp, "<unknown>");
     else if (STREQ("HEAP_SUFFIX", name))
         res = ML_CString(msp, MACHINE_ID "-" OPSYS_ID);
-    else if (STREQ("HOST_ARCH", name))
-#if   defined(HOST_ALPHA32)
-	res = ML_CString(msp, "ALPHA32");
-#elif defined(HOST_HPPA)
-	res = ML_CString(msp, "HPPA");
-#elif defined(HOST_MIPS)
-	res = ML_CString(msp, "MIPS");
-#elif defined(HOST_M68)
-	res = ML_CString(msp, "M68");
-#elif defined(HOST_PPC)
+    else if (STREQ("ARCH_NAME", name)
+    || STREQ("HOST_ARCH", name)		/* DEPRECATED; remove in 110.97 */
+    || STREQ("TARGET_ARCH", name))	/* DEPRECATED; remove in 110.97 */
+#if   defined(ARCH_AMD64)
+	res = ML_CString(msp, "AMD64");
+#elif defined(ARCH_PPC)
 	res = ML_CString(msp, "PPC");
-#elif defined(HOST_RS6000)
-	res = ML_CString(msp, "RS6000");
-#elif defined(HOST_SPARC)
+#elif defined(ARCH_SPARC)
 	res = ML_CString(msp, "SPARC");
-#elif defined(HOST_X86)
+#elif defined(ARCH_X86)
 	res = ML_CString(msp, "X86");
-#else
-	res = ML_CString(msp, "<unknown>");
-#endif
-    else if (STREQ("TARGET_ARCH", name))
-#if   defined(TARGET_ALPHA32)
-	res = ML_CString(msp, "ALPHA32");
-#elif defined(TARGET_HPPA)
-	res = ML_CString(msp, "HPPA");
-#elif defined(TARGET_MIPS)
-	res = ML_CString(msp, "MIPS");
-#elif defined(TARGET_M68)
-	res = ML_CString(msp, "M68");
-#elif defined(TARGET_PPC)
-	res = ML_CString(msp, "PPC");
-#elif defined(TARGET_RS6000)
-	res = ML_CString(msp, "RS6000");
-#elif defined(TARGET_SPARC)
-	res = ML_CString(msp, "SPARC");
-#elif defined(TARGET_X86)
-	res = ML_CString(msp, "X86");
-#elif defined(TARGET_C)
-	res = ML_CString(msp, "C");
-#elif defined(TARGET_BYTECODE)
-	res = ML_CString(msp, "BYTECODE");
 #else
 	res = ML_CString(msp, "<unknown>");
 #endif
@@ -110,4 +82,3 @@ ml_val_t _ml_RunT_sysinfo (ml_state_t *msp, ml_val_t arg)
     return res;
 
 } /* end of _ml_RunT_sysinfo */
-

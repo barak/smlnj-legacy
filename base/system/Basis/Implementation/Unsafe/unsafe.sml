@@ -1,6 +1,7 @@
 (* unsafe.sml
  *
- * Copyright (c) 1997 Bell Labs, Lucent Technologies.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Unsafe operations on ML values.
  *)
@@ -9,7 +10,8 @@ structure Unsafe :> UNSAFE =
   struct
 
     structure CInterface = CInterface
-    structure Object = Object
+    structure Object = UnsafeObject
+    structure Pointer = UnsafePointer
     structure Poll = Poll
 
     structure Vector =
@@ -82,15 +84,27 @@ structure Unsafe :> UNSAFE =
     structure PackWord16Little = UnsafePackWord16Little
     structure PackWord32Big = UnsafePackWord32Big
     structure PackWord32Little = UnsafePackWord32Little
+(* TODO: add 64-bit structures *)
+
+  (* access to internal representation of the IntInf.int type *)
+    structure IntInf =
+      struct
+	datatype rep = datatype CoreIntInf.rep
+	val concrete = CoreIntInf.concrete
+	val abstract = CoreIntInf.abstract
+	val baseBits = WordImp.toIntX CoreIntInf.baseBits
+      end
+
+  (* convert real to bits (experimental) *)
+    val realToBits = InlineT.Real64.toBits
+  (* assembly-code function for scaling reals *)
+    val scalb = Core.Assembly.A.scalb
 
     val getVar = InlineT.getvar
     val setVar = InlineT.setvar
 
     val getHdlr = InlineT.gethdlr
     val setHdlr = InlineT.sethdlr
-
-    val getPseudo = InlineT.getpseudo
-    val setPseudo = InlineT.setpseudo
 
     val blastRead : Word8Vector.vector -> 'a =
 	(fn x => CInterface.c_function "SMLNJ-RunT" "blastIn" x)
@@ -113,5 +127,3 @@ structure Unsafe :> UNSAFE =
     val sigHandler = Assembly.sighandler
 
   end;
-
-

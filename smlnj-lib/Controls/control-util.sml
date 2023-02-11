@@ -1,6 +1,7 @@
 (* control-util.sml
  *
- * COPYRIGHT (c) 2002 Bell Labs, Lucent Technologies
+ * COPYRIGHT (c) 2015 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *)
 
 structure ControlUtil : CONTROL_UTIL =
@@ -11,7 +12,13 @@ structure ControlUtil : CONTROL_UTIL =
 		    fromString = Int.fromString,
 		    toString = Int.toString }
         val bool = { tyName = "bool",
-		     fromString = Bool.fromString,
+		     fromString = fn s => (case String.map Char.toUpper s
+			 of "FALSE" => SOME false
+			  | "TRUE" => SOME true
+			  | "NO" => SOME false
+			  | "YES" => SOME true
+			  | _ => NONE
+			(* end case *)),
 		     toString = Bool.toString }
         val real = { tyName = "real",
 		     fromString = Real.fromString,

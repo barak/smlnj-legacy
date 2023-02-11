@@ -1,5 +1,8 @@
 #!@SHELL@
 #
+# Copyright 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+# All rights reserved.
+#
 # The standard driver for SML/NJ under the new runtime system
 #
 
@@ -22,7 +25,7 @@ unset ENV
 
 # On cygwin, make sure SMLNJ_HOME is given a POSIX-style pathname.
 if [ x"$SMLNJ_HOME" != x ] ; then
-   if [ x"$SMLNJ_CYGWIN_RUNTIME" != x ] ; then 
+   if [ x"$SMLNJ_CYGWIN_RUNTIME" != x ] ; then
       if [ "`uname -o`" = "Cygwin" ] ; then
          # Convert to Unix style, absolute pathname.
          SMLNJ_HOME=`cygpath -u -a "$SMLNJ_HOME"`
@@ -54,16 +57,6 @@ RUN_DIR=$BIN_DIR/.run
 # the path of the directory in which the heap images are kept.
 HEAP_DIR=$BIN_DIR/.heap
 
-#
-# the following could be replaced with some site specific code
-#
-ARCH_N_OPSYS=`"$BIN_DIR/.arch-n-opsys"`
-if [ "$?" != "0" ]; then
-  echo "$CMD: unable to determine architecture/operating system"
-  exit 1
-fi
-eval $ARCH_N_OPSYS
-
 #############################################################################
 #
 # END SITE SPECIFIC STUFF
@@ -88,12 +81,22 @@ fi
 
 ALLOC=""
 
+# the default size; this is set by the config/install.sh script
+#
+SIZE_OPT="-"@SIZE@
+
+# if "yes" then we report the heap suffix and quit
+#
+REPORT_SUFFIX=no
+
 #
 # Process command line arguments
 #
 while [ "$#" != "0" ]; do
   arg=$1
   case "$arg" in
+    -32) shift; SIZE_OPT=$arg ;;
+    -64) shift; SIZE_OPT=$arg ;;
     @SMLrun=*)
       shift
       RUN=`echo $arg | sed 's/@SMLrun=//'`
@@ -115,9 +118,16 @@ while [ "$#" != "0" ]; do
       echo "$CMD @VERSION@"
       exit 0
       ;;
-    @SMLsuffix)
-      echo "$HEAP_SUFFIX"
+    @SMLwordsize)
+      case $SIZE_OPT in
+	-32) echo "32" ;;
+	-64) echo "64" ;;
+      esac
       exit 0
+      ;;
+    @SMLsuffix)
+      shift
+      REPORT_SUFFIX=yes
       ;;
     @SMLalloc=*)
       shift
@@ -128,6 +138,23 @@ while [ "$#" != "0" ]; do
       ;;
   esac
 done
+
+#
+# the following could be replaced with some site specific code
+#
+ARCH_N_OPSYS=`"$BIN_DIR/.arch-n-opsys" $SIZE_OPT`
+if [ "$?" != "0" ]; then
+  echo "$CMD: unable to determine architecture/operating system"
+  exit 1
+fi
+eval $ARCH_N_OPSYS
+
+# if the `@SMLsuffix` option was specified, then report the suffix and quit
+#
+if [ $REPORT_SUFFIX = yes ] ; then
+    echo $HEAP_SUFFIX
+    exit 0
+fi
 
 #
 # Try to figure out the CPU's cache size and set the allocation area
@@ -156,7 +183,7 @@ if [ "$ALLOC" = "" ] ; then
 	    esac
 	else
 	    kb=`echo $cache | sed -e 's/^[^0-9]*\([0-9]*\).*$/\1/'`
-	    case $kb in 
+	    case $kb in
 		128)
 		    # This is the Celeron case.
 		    # ALLOC="@SMLalloc=32k"

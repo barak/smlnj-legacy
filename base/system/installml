@@ -11,6 +11,29 @@ cd ../..
 twoup=`pwd`
 cd $here
 
+#
+# Parse command line
+#
+SIZE_OPT="-64"
+CLEAN=false
+STEM=sml
+# Process command-line arguments
+#
+while [ "$#" != "0" ] ; do
+    arg=$1; shift
+    case $arg in
+    -32) SIZE_OPT=$arg ;;
+    -64) SIZE_OPT=$arg ;;
+    -clean)
+	CLEAN=true
+	;;
+    *)
+# TODO: check for excess arguments
+	STEM=$arg
+	;;
+    esac
+done
+
 MAIN_HEAP_DIR=$twoup/bin/.heap
 MAIN_LIB_DIR=$twoup/lib
 MAIN_CONFIG_DIR=$twoup/config
@@ -39,23 +62,8 @@ move() {
     fi
 }
 
-#
-# Parse command line
-#
-if test x"$1" = x-clean ; then
-  shift
-  CLEAN=true
-else
-  CLEAN=false
-fi
-if [ $# -gt 0 ] ; then
-    STEM=$1
-else
-    STEM=sml
-fi
-
 if [ -f $twoup/bin/.arch-n-opsys ]; then
-  ARCH_N_OPSYS=`$twoup/bin/.arch-n-opsys`
+  ARCH_N_OPSYS=`$twoup/bin/.arch-n-opsys $SIZE_OPT`
   if [ "$?" = "0" ]; then
     eval $ARCH_N_OPSYS
   else
@@ -78,8 +86,8 @@ if [ ! -d $LIB_DIR ] ; then
 fi
 
 if $CLEAN ; then
-    echo "cleaning $twoup/lib and $MAIN_HEAP_DIR"
-    rm -rf $twoup/lib/* $MAIN_HEAP_DIR/*
+    echo "cleaning $MAIN_LIB_DIR and $MAIN_HEAP_DIR"
+    rm -rf $MAIN_LIB_DIR/* $MAIN_HEAP_DIR/*
 fi
 
 #

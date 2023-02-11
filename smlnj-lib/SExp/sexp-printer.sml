@@ -5,7 +5,8 @@
  *
  * Author: Damon Wang (with modifications by John Reppy)
  *
- * A printer for SExp values.
+ * A printer for SExp values.  This printer does not introduce any line
+ * breaks.  For output that is more readable, use the SExpPP module.
  *)
 
 structure SExpPrinter : sig
@@ -23,12 +24,13 @@ structure SExpPrinter : sig
 	    | prList [v] = (pr "("; prVal v; pr ")")
 	    | prList (v::vs) = (
 		pr "("; prVal v; List.app (fn v => (pr " "; prVal v)) vs; pr ")")
-	  and prVal (S.LIST value) = prList (value)
-	    | prVal (S.SYMBOL value) = pr (Atom.toString value)
+	  and prVal (S.SYMBOL value) = pr (Atom.toString value)
 	    | prVal (S.BOOL value) = pr (if value then "#t" else "#f")
 	    | prVal (S.INT value) = pr (F.format "%d" [F.LINT value])
 	    | prVal (S.FLOAT value) = pr (F.format "%g" [F.REAL value])
 	    | prVal (S.STRING value) = pr (concat ["\"", String.toString value, "\""])
+	    | prVal (S.QUOTE value) = (pr "'"; prVal value)
+	    | prVal (S.LIST values) = prList values
 	  in
 	    prVal sexp
 	  end

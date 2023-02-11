@@ -1,6 +1,6 @@
 (* pervasive.sml
  *
- * COPYRIGHT (c) 2009 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
  * All rights reserved.
  *
  * These are the pervasive bindings as defined by the SML'97
@@ -25,30 +25,24 @@ datatype bool = datatype PrimTypes.bool
 val op o : ('b -> 'c) * ('a -> 'b) -> ('a -> 'c) = InlineT.compose
 
 local
-    structure I31 = InlineT.Int31
+    structure Int = InlineT.Int
     structure I32 = InlineT.Int32
+    structure I64 = InlineT.Int64
     structure W8 = InlineT.Word8
-    structure W31 = InlineT.Word31
+    structure Word = InlineT.Word
     structure W32 = InlineT.Word32
-    structure CW64 = CoreWord64
-    structure CI64 = CoreInt64
+    structure W64 = InlineT.Word64
+(* REAL32: add R32 *)
     structure R64 = InlineT.Real64
     structure CV = InlineT.CharVector
     structure PV = InlineT.PolyVector
-    structure DI = InlineT.DfltInt
 
     structure CII = CoreIntInf
-
-    fun w8adapt oper args = W8.andb (oper args, 0wxFF)
-    val w8plus = w8adapt W8.+
-    val w8minus = w8adapt W8.-
-    val w8times = w8adapt W8.*
-    val w8neg = w8adapt W8.~
 
     fun stringlt (a, b) = let
 	val al = CV.length a
 	val bl = CV.length b
-	val ashort = DI.< (al, bl)
+	val ashort = Int.< (al, bl)
 	val n = if ashort then al else bl
 	fun cmp i =
 	    if InlineT.= (i, n) then ashort
@@ -57,7 +51,7 @@ local
 		val bi = CV.sub (b, i)
 		in
 		  InlineT.Char.< (ai, bi) orelse
-		  (InlineT.= (ai, bi) andalso cmp (DI.+ (i, 1)))
+		  (InlineT.= (ai, bi) andalso cmp (Int.+ (i, 1)))
 		end
 	in
 	  cmp 0
@@ -67,20 +61,20 @@ local
     fun stringge (a, b) = stringle (b, a)
 in
 overload ~ :   ('a -> 'a)
-   as  I31.~ and I32.~ and CI64.~ and CII.~
-   and W31.~ and w8neg and W32.~ and CW64.~
+   as  Int.~ and I32.~ and I64.~ and CII.~
+   and Word.~ and W8.~ and W32.~ and W64.~
    and R64.~
 overload + :   ('a * 'a -> 'a)
-  as  I31.+ and I32.+ and CI64.+ and CII.+
-  and W31.+ and w8plus and W32.+ and CW64.+
+  as  Int.+ and I32.+ and I64.+ and CII.+
+  and Word.+ and W8.+ and W32.+ and W64.+
   and R64.+
 overload - :   ('a * 'a -> 'a)
-  as  I31.- and I32.- and CI64.- and CII.-
-  and W31.- and w8minus and W32.- and CW64.-
+  as  Int.- and I32.- and I64.- and CII.-
+  and Word.- and W8.- and W32.- and W64.-
   and R64.-
 overload * :   ('a * 'a -> 'a)
-  as  I31.* and I32.* and CI64.* and CII.*
-  and W31.* and w8times and W32.* and CW64.*
+  as  Int.* and I32.* and I64.* and CII.*
+  and Word.* and W8.* and W32.* and W64.*
   and R64.*
 (*
 overload / : ('a * 'a -> 'a)
@@ -88,37 +82,37 @@ overload / : ('a * 'a -> 'a)
 *)
 val op / = R64./		(* temporary hack around overloading bug *)
 overload div : ('a * 'a -> 'a)
-  as  I31.div and I32.div and CI64.div and CII.div
-  and W31.div and W8.div and W32.div and CW64.div
+  as  Int.div and I32.div and I64.div and CII.div
+  and Word.div and W8.div and W32.div and W64.div
 overload mod : ('a * 'a -> 'a)
-  as  I31.mod and I32.mod and CI64.mod and CII.mod
-  and W31.mod and W8.mod and W32.mod and CW64.mod
+  as  Int.mod and I32.mod and I64.mod and CII.mod
+  and Word.mod and W8.mod and W32.mod and W64.mod
 overload < :   ('a * 'a -> bool)
-  as  I31.< and I32.< and CI64.< and CII.<
-  and W31.< and W8.< and W32.< and CW64.<
+  as  Int.< and I32.< and I64.< and CII.<
+  and Word.< and W8.< and W32.< and W64.<
   and R64.<
   and InlineT.Char.<
   and stringlt
 overload <= :   ('a * 'a -> bool)
-  as  I31.<= and I32.<= and CI64.<= and CII.<=
-  and W31.<= and W8.<= and W32.<= and CW64.<=
+  as  Int.<= and I32.<= and I64.<= and CII.<=
+  and Word.<= and W8.<= and W32.<= and W64.<=
   and R64.<=
   and InlineT.Char.<=
   and stringle
 overload > :   ('a * 'a -> bool)
-  as  I31.> and I32.> and CI64.> and CII.>
-  and W31.> and W8.> and W32.> and CW64.>
+  as  Int.> and I32.> and I64.> and CII.>
+  and Word.> and W8.> and W32.> and W64.>
   and R64.>
   and InlineT.Char.>
   and stringgt
 overload >= :   ('a * 'a -> bool)
-  as  I31.>= and I32.>= and CI64.>= and CII.>=
-  and W31.>= and W8.>= and W32.>= and CW64.>=
+  as  Int.>= and I32.>= and I64.>= and CII.>=
+  and Word.>= and W8.>= and W32.>= and W64.>=
   and R64.>=
   and InlineT.Char.>=
   and stringge
 overload abs : ('a -> 'a)
-  as I31.abs and I32.abs and CI64.abs and CII.abs and R64.abs
+  as Int.abs and I32.abs and I64.abs and CII.abs and R64.abs
 
 type unit = PrimTypes.unit
 type exn = PrimTypes.exn
@@ -130,7 +124,7 @@ exception Size = Core.Size
 exception Overflow = Assembly.Overflow
 exception Chr = InlineT.Char.Chr
 exception Div = Assembly.Div
-exception Domain
+exception Domain = Core.Domain
 
 type string = PrimTypes.string
 
@@ -171,21 +165,13 @@ type int = PrimTypes.int
 type word = PrimTypes.word
 
 (* Real *)
-local
-  val w31_r = R64.from_int32 o I32.copy_word31
-  val intbound = w31_r 0wx40000000	(* not necessarily the same as rbase *)
-  val negintbound = R64.~ intbound
-in
 type real = PrimTypes.real
 
-val real = R64.from_int31
+val real = R64.from_int
 
-fun floor x =
-      if x < intbound andalso x >= negintbound then Assembly.A.floor x
-      else if R64.==(x, x) then raise Overflow (* not a NaN *)
-      else raise Domain
+val floor = R64.floor
 
-fun ceil x = DI.- (~1, floor (R64.~ (x + 1.0)))
+fun ceil x = Int.- (~1, floor (R64.~ (x + 1.0)))
 
 fun trunc x = if R64.< (x, 0.0) then ceil x else floor x
 
@@ -195,11 +181,9 @@ fun round x = let
       val cl = ceil(x-0.5)
       in
 	if fl=cl then fl
-	else if W31.andb(W31.fromInt fl,0w1) = 0w1 then cl
+	else if Word.andb(Word.fromInt fl, 0w1) = 0w1 then cl
 	else fl
       end
-
-end (* local *)
 
 (* List *)
 exception Empty
@@ -217,7 +201,7 @@ fun foldl f b l = let
       end
 fun length l = let
     (* fast add that avoids the overflow test *)
-      fun a + b = W31.copyt_int31 (W31.+(W31.copyf_int31 a, W31.copyf_int31 b))
+      val op + = Int.fast_add
       fun loop (n, []) = n
 	| loop (n, [_]) = n + 1
 	| loop (n, _ :: _ :: l) = loop (n + 2, l)
@@ -254,7 +238,7 @@ type 'a vector = 'a PrimTypes.vector
 fun vector l = let
       val n = length l
       in
-	if DI.ltu (Core.max_length, n) then raise Size
+	if Int.ltu (Core.max_length, n) then raise Size
 	else if (n = 0) then Assembly.vector0
 	else Assembly.A.create_v(n, l)
       end
@@ -268,7 +252,7 @@ val chr = InlineT.Char.chr
 local
     (* allocate an uninitialized string of given length *)
     fun create n =
-	if (DI.ltu (Core.max_length, n)) then raise Size
+	if (Int.ltu (Core.max_length, n)) then raise Size
 	else Assembly.A.create_s n
 
     val unsafeSub = CV.sub
@@ -334,7 +318,7 @@ fun explode s = let
  * raising overflow.
  *)
 local
-    structure W = InlineT.DfltWord
+    structure W = InlineT.Word
 in
     fun substring (s, i, n) =
 	if ((i < 0) orelse (n < 0)

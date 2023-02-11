@@ -1,9 +1,10 @@
-(* Copyright 1997 (c) by YALE FLINT PROJECT *)
-(* flintutil.sml *)
+(* flintutil.sml
+ *
+ * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *)
 
-structure FLINTIntMap = IntRedBlackMap (* IntBinaryMap *)
-
-signature FLINTUTIL = 
+signature FLINTUTIL =
 sig
   val rk_tuple : FLINT.rkind
 
@@ -11,9 +12,9 @@ sig
   val wrap   : FLINT.tyc -> FLINT.primop
   val unwrap : FLINT.tyc -> FLINT.primop
 
-  val WRAP   : FLINT.tyc * FLINT.value list 
+  val WRAP   : FLINT.tyc * FLINT.value list
                          * FLINT.lvar * FLINT.lexp -> FLINT.lexp
-  val UNWRAP : FLINT.tyc * FLINT.value list 
+  val UNWRAP : FLINT.tyc * FLINT.value list
                          * FLINT.lvar * FLINT.lexp -> FLINT.lexp
 
   val getEtagTyc   : FLINT.primop -> FLINT.tyc
@@ -24,31 +25,37 @@ sig
    * free variables remain unchanged except for the renaming specified
    * in the first (types) and second (values) argument *)
   val copy : (FLINT.tvar * FLINT.tyc) list ->
-             FLINT.lvar FLINTIntMap.map ->
+             FLINT.lvar LambdaVar.Map.map ->
              FLINT.lexp -> FLINT.lexp
   val copyfdec : FLINT.fundec -> FLINT.fundec
 
-  val freevars : FLINT.lexp -> IntRedBlackSet.set
+  val freevars : FLINT.lexp -> LambdaVar.Set.set
 
   val dcon_eq : FLINT.dcon * FLINT.dcon -> bool
 
-end (* signature FLINTUTIL *) 
+(* are two FLINT values equal? *)
+  val sameValue : FLINT.value * FLINT.value -> bool
+
+(* is a value a specific variable? *)
+  val valueIsVar : FLINT.lvar -> FLINT.value -> bool
+
+end (* signature FLINTUTIL *)
 
 
-structure FlintUtil : FLINTUTIL = 
+structure FlintUtil : FLINTUTIL =
 struct
 
 local structure EM = ErrorMsg
       structure LT = LtyExtern
-      structure PO = PrimOp
+      structure PO = Primop
       structure DA = Access
-      structure M  = FLINTIntMap
+      structure M  = LambdaVar.Map
       structure A  = Access
       structure O  = Option
-      structure S  = IntRedBlackSet
+      structure S  = LambdaVar.Set
       structure F  = FLINT
       open FLINT
-in 
+in
 
 fun bug msg = EM.impossible("FlintUtil: "^msg)
 
@@ -57,9 +64,9 @@ val rk_tuple : rkind = RK_TUPLE (LT.rfc_tmp)
 (* a set of useful primops used by FLINT *)
 val tv0 = LT.ltc_tv 0
 val btv0 = LT.ltc_tyc(LT.tcc_box (LT.tcc_tv 0))
-val etag_lty = 
-  LT.ltc_ppoly ([LT.tkc_mono], 
-                 LT.ltc_arrow(LT.ffc_rrflint, [LT.ltc_string], 
+val etag_lty =
+  LT.ltc_ppoly ([LT.tkc_mono],
+                 LT.ltc_arrow(LT.ffc_rrflint, [LT.ltc_string],
                                               [LT.ltc_etag tv0]))
 fun wrap_lty tc =
   LT.ltc_tyc(LT.tcc_arrow(LT.ffc_fixed, [tc], [LT.tcc_wrap tc]))
@@ -75,10 +82,10 @@ fun UNWRAP(tc, vs, v, e) = PRIMOP(unwrap tc, vs, v, e)
 
 (* the corresponding utility functions to recover the tyc *)
 fun getEtagTyc (_, _, lt, [tc]) = tc
-  | getEtagTyc (_, _, lt, []) = 
+  | getEtagTyc (_, _, lt, []) =
       let val nt = LT.ltd_tyc (#2(LT.ltd_parrow lt))
 		   handle LT.DeconExn => bug "getEtagTyc"
-       in if LT.tcp_app nt then 
+       in if LT.tcp_app nt then
             (case #2 (LT.tcd_app nt)
               of [x] => x
                | _ => bug "unexpected case 1 in getEtagTyc")
@@ -98,7 +105,7 @@ fun dcon_eq ((s1,c1,t1):FLINT.dcon,(s2,c2,t2)) =
     Symbol.eq (s1,s2) andalso (c1 = c2) andalso LtyBasic.lt_eqv(t1, t2)
 
 val cplv = LambdaVar.dupLvar
-(* 
+(*
  * general alpha-conversion on lexp free variables remain unchanged
  * except for the renaming specified in the first argument.
  *   val copy: lvar M.intmap -> fundec -> fundec
@@ -108,8 +115,7 @@ fun copy ta alpha le = let
     val tc_subst = LT.tc_nvar_subst_gen()
     val lt_subst = LT.lt_nvar_subst_gen()
 
-    val tmap_sort = ListMergeSort.sort (fn ((v1,_),(v2,_)) => v1 > v2)
-
+    val tmap_sort = ListMergeSort.sort (fn ((v1,_),(v2,_)) => LambdaVar.>(v1, v2))
     fun substvar alpha lv = case M.find(alpha,lv) of SOME(lv) => lv | NOE => lv
     fun substval alpha (VAR lv) = VAR(substvar alpha lv)
       | substval alpha v = v
@@ -192,11 +198,11 @@ fun copy ta alpha le = let
        let val (nlv,nalpha) = newv(lv, alpha)
        in CON(cdcon dc, map (tc_subst ta) tycs, substval v, nlv, copy nalpha le)
        end
-     | RECORD (rk,vs,lv,le) => 
+     | RECORD (rk,vs,lv,le) =>
        let val (nlv,nalpha) = newv(lv, alpha)
        in RECORD(crk ta rk, map substval vs, nlv, copy nalpha le)
        end
-     | SELECT (v,i,lv,le) => 
+     | SELECT (v,i,lv,le) =>
        let val (nlv,nalpha) = newv(lv, alpha)
        in SELECT(substval v, i, nlv, copy nalpha le)
        end
@@ -227,14 +233,14 @@ fun freevars lexp = let
     fun rmvs (s,lvs) = foldl (fn (l,s) => S_rmv (l, s)) s lvs
     fun singleton (F.VAR v) = S.singleton v
       | singleton _ = S.empty
-			  
+
     fun fpo (fv,(NONE:F.dict option,po,lty,tycs)) = fv
       | fpo (fv,(SOME{default,table},po,lty,tycs)) =
 	addvs(addv(fv, F.VAR default), map (F.VAR o #2) table)
-	     
+
     fun fdcon (fv,(s,Access.EXN(Access.LVAR lv),lty)) = addv(fv, F.VAR lv)
       | fdcon (fv,_) = fv
-			   
+
 in case lexp
     of F.RET vs => addvs(S.empty, vs)
      | F.LET (lvs,body,le) => S.union(rmvs(loop le, lvs), loop body)
@@ -266,6 +272,20 @@ in case lexp
      | F.BRANCH (po,vs,le1,le2) => fpo(addvs(S.union(loop le1, loop le2), vs), po)
      | F.PRIMOP (po,vs,lv,le) => fpo(addvs(S_rmv(lv, loop le), vs),po)
 end
+
+(* are two FLINT values equal? *)
+  fun sameValue (v1, v2) = (case (v1, v2)
+	 of (VAR x, VAR y) => (x = y)
+	  | (INT n1, INT n2) => (#ty n1 = #ty n2) andalso (#ival n1 = #ival n2)
+	  | (WORD w1, WORD w2) => (#ty w1 = #ty w2) andalso (#ival w1 = #ival w2)
+	  | (REAL r1, REAL r2) => RealLit.same(#rval r1, #rval r2)
+	  | (STRING s1, STRING s2) => (s1 = s2)
+	  | _ => false
+	(* end case *))
+
+(* is a value a specific variable? *)
+  fun valueIsVar x (VAR y) = (x = y)
+    | valueIsVar _ _ = false
 
 end (* top-level local *)
 end (* structure FlintUtil *)

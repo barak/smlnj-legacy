@@ -1,6 +1,7 @@
 /* stat.c
  *
- * COPYRIGHT (c) 1995 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  */
 
 #include "ml-unixdep.h"
@@ -14,27 +15,36 @@
 
 #define MODE_BITS (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)
 
+#if defined(STAT_HAS_TIMESPEC)
+/* convert struct timespec to nanoseconds */
+STATIC_INLINE Unsigned64_t timespec_to_ns (struct timespec *ts)
+{
+    return NS_PER_SEC * (Unsigned64_t)ts->tv_sec + (Unsigned64_t)ts->tv_nsec;
+}
+#endif
+
 /* mkStatRep:
  *
  * This makes a representation of the struct stat to be returned
  * to the SML side. It is a tuple with the following fields:
  *
  *    file_type : int
- *    mode      : word
- *    ino       : word
- *    dev       : word
- *    nlink     : word
- *    uid       : word
- *    gid       : word
- *    size      : int
- *    atime     : Int32.int
- *    mtime     : Int32.int
- *    ctime     : Int32.int
+ *    mode      : SysWord.word
+ *    ino       : SysWord.word		-- should be Word64.word
+ *    dev       : SysWord.word
+ *    nlink     : SysWord.word
+ *    uid       : SysWord.word
+ *    gid       : SysWord.word
+ *    size      : Position.int (aka Int64.int)
+ *    atime     : Word64.word
+ *    mtime     : Word64.word
+ *    ctime     : Word64.word
  */
 PVT ml_val_t mkStatRep (ml_state_t *msp, struct stat *buf)
 {
-    int		    ftype;
-    ml_val_t        mode, ino, dev, uid, gid, nlink, sr, atime, mtime, ctime;
+    int			ftype;
+    Unsigned64_t	aTim, mTim, cTim;
+    ml_val_t		mode, ino, dev, uid, gid, nlink, sr, atime, mtime, ctime, size;
 
 #if ((S_IFDIR != 0x4000) || (S_IFCHR != 0x2000) || (S_IFBLK != 0x6000) || (S_IFREG != 0x8000) || (S_IFIFO != 0x1000) || (S_IFLNK != 0xA000) || (S_IFSOCK != 0xC000))
     if (S_ISDIR(buf->st_mode)) ftype = 0x4000;
@@ -53,15 +63,35 @@ PVT ml_val_t mkStatRep (ml_state_t *msp, struct stat *buf)
     ftype = buf->st_mode & 0xF000;
 #endif
 
-    WORD_ALLOC (msp, mode, (Word_t)((buf->st_mode) & MODE_BITS));
-    WORD_ALLOC (msp, ino, (Word_t)(buf->st_ino));
-    WORD_ALLOC (msp, dev, (Word_t)(buf->st_dev));
-    WORD_ALLOC (msp, nlink, (Word_t)(buf->st_nlink));
-    WORD_ALLOC (msp, uid, (Word_t)(buf->st_uid));
-    WORD_ALLOC (msp, gid, (Word_t)(buf->st_gid));
-    INT32_ALLOC (msp, atime, buf->st_atime);
-    INT32_ALLOC (msp, mtime, buf->st_mtime);
-    INT32_ALLOC (msp, ctime, buf->st_ctime);
+    SYSWORD_ALLOC (msp, mode, (Word_t)((buf->st_mode) & MODE_BITS));
+/*
+    WORD64_ALLOC (msp, ino, buf->st_ino);
+*/
+    SYSWORD_ALLOC (msp, ino, (Word_t)(buf->st_ino));
+    SYSWORD_ALLOC (msp, dev, (Word_t)(buf->st_dev));
+    SYSWORD_ALLOC (msp, nlink, (Word_t)(buf->st_nlink));
+    SYSWORD_ALLOC (msp, uid, (Word_t)(buf->st_uid));
+    SYSWORD_ALLOC (msp, gid, (Word_t)(buf->st_gid));
+    INT64_ALLOC (msp, size, buf->st_size);
+
+#if !defined(STAT_HAS_TIMESPEC)
+  /* the old API with second-level granularity */
+    aTim = NS_PER_SEC * (Unsigned64_t)buf->st_atime;
+    mTim = NS_PER_SEC * (Unsigned64_t)buf->st_mtime;
+    cTim = NS_PER_SEC * (Unsigned64_t)buf->st_ctime;
+#elif defined(OPSYS_DARWIN)
+  /* macOS uses non-standard names for the fields */
+    aTim = timespec_to_ns (&buf->st_atimespec);
+    mTim = timespec_to_ns (&buf->st_mtimespec);
+    cTim = timespec_to_ns (&buf->st_ctimespec);
+#else
+    aTim = timespec_to_ns (&buf->st_atim);
+    mTim = timespec_to_ns (&buf->st_mtim);
+    cTim = timespec_to_ns (&buf->st_ctim);
+#endif
+    WORD64_ALLOC (msp, atime, aTim);
+    WORD64_ALLOC (msp, mtime, mTim);
+    WORD64_ALLOC (msp, ctime, cTim);
 
   /* allocate the stat record */
     ML_AllocWrite(msp,  0, MAKE_DESC(11, DTAG_record));
@@ -72,7 +102,7 @@ PVT ml_val_t mkStatRep (ml_state_t *msp, struct stat *buf)
     ML_AllocWrite(msp,  5, nlink);
     ML_AllocWrite(msp,  6, uid);
     ML_AllocWrite(msp,  7, gid);
-    ML_AllocWrite(msp,  8, INT_CtoML((int)(buf->st_size)));
+    ML_AllocWrite(msp,  8, size);
     ML_AllocWrite(msp,  9, atime);
     ML_AllocWrite(msp, 10, mtime);
     ML_AllocWrite(msp, 11, ctime);
@@ -94,14 +124,15 @@ ml_val_t _ml_P_FileSys_stat (ml_state_t *msp, ml_val_t arg)
 
     sts = stat(path, &buf);
 
-    if (sts < 0)
+    if (sts < 0) {
 	return RAISE_SYSERR(msp, sts);
+    }
 
     return (mkStatRep(msp, &buf));
 
 } /* end of _ml_P_FileSys_stat */
 
-/* _ml_P_FileSys_fstat : word -> statrep
+/* _ml_P_FileSys_fstat : int -> statrep
  *
  * Query file status given file descriptor.
  */
@@ -113,10 +144,12 @@ ml_val_t _ml_P_FileSys_fstat (ml_state_t *msp, ml_val_t arg)
 
     sts = fstat(fd, &buf);
 
-    if (sts < 0)
+    if (sts < 0) {
 	return RAISE_SYSERR(msp, sts);
-
-    return (mkStatRep(msp, &buf));
+    }
+    else {
+	return mkStatRep(msp, &buf);
+    }
 
 } /* end of _ml_P_FileSys_fstat */
 
@@ -133,10 +166,11 @@ ml_val_t _ml_P_FileSys_lstat (ml_state_t *msp, ml_val_t arg)
 
     sts = lstat(path, &buf);
 
-    if (sts < 0)
+    if (sts < 0) {
 	return RAISE_SYSERR(msp, sts);
-
-    return (mkStatRep(msp, &buf));
+    }
+    else {
+	return mkStatRep(msp, &buf);
+    }
 
 } /* end of _ml_P_FileSys_lstat */
-

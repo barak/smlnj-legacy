@@ -7,6 +7,7 @@
 
 #include "ml-unixdep.h"
 #include "ml-osdep.h"
+#include INCLUDE_TYPES_H
 #include <sys/mman.h>
 #include INCLUDE_FCNTL_H
 #include "ml-base.h"
@@ -24,17 +25,6 @@
 #  define MMAP_FLGS	(MAP_ANONYMOUS|MAP_PRIVATE)
 #else
 #  define MMAP_FLGS	MAP_PRIVATE
-#endif
-
-#if (defined(HOST_ALPHA32) && (defined(OPSYS_OSF1) || defined(OPSYS_DUNIX)))
-  /* To insure that mmap returns a 32-bit address, we need to specify a non-zero
-   * address to mmap().  The address 0x2000000 is the location of the text segment,
-   * which is a good minimum value since the C stack lives just below this address
-   * and mmap will find regions above it.
-   */
-#  define MMAP_ADDR	(caddr_t)0x2000000
-#else
-#  define MMAP_ADDR	0
 #endif
 
 struct mem_obj {
@@ -91,7 +81,7 @@ PVT status_t MapMemory (mem_obj_t *obj, Addr_t szb)
 #endif
 
   /* we grab an extra BIBOP_PAGE_SZB bytes to give us some room for alignment */
-    addr = (Addr_t) mmap (MMAP_ADDR, szb+BIBOP_PAGE_SZB, PROT_ALL, MMAP_FLGS, fd, 0);
+    addr = (Addr_t) mmap (0, szb+BIBOP_PAGE_SZB, PROT_ALL, MMAP_FLGS, fd, 0);
     if (addr == -1) {
 	Error ("unable to map %d bytes, errno = %d\n", szb, errno);
 #ifndef HAS_ANON_MMAP

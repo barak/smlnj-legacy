@@ -1,6 +1,7 @@
 /* gen-regmask.c
  *
- * COPYRIGHT (c) 1995 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * This file generates default definitions of some compiler flags and
  * various register masks.  The masks define the registers that are
@@ -28,11 +29,7 @@
 
 #ifndef CALLEESAVE
 #  define GEN_CALLEESAVE
-#  if defined(TARGET_M68)
-#    define CALLEESAVE	0
-#  else
-#    define CALLEESAVE	3
-#  endif
+#  define CALLEESAVE	3
 #endif
 #ifndef FLOAT_CALLEESAVE
 #  define GEN_FLOAT_CALLEESAVE
@@ -65,13 +62,13 @@ main ()
     fprintf (f, "#define FLOAT_CALLEESAVE %d\n", FLOAT_CALLEESAVE);
 #endif
     fprintf (f, "\n");
-    fprintf (f, "#define FUN_MASK\t\t%d\t/*\t%#010x\t*/\n", 
+    fprintf (f, "#define FUN_MASK\t\t%d\t/*\t%#010x\t*/\n",
 	     FUN_MASK, FUN_MASK);
-    fprintf (f, "#define RET_MASK\t\t%d\t/*\t%#010x\t*/\n", 
+    fprintf (f, "#define RET_MASK\t\t%d\t/*\t%#010x\t*/\n",
 	     RET_MASK, RET_MASK);
     fprintf (f, "#define CONT_MASK\t\t%d\t/*\t%#010x\t*/\n",
 	     CONT_MASK, CONT_MASK);
-    fprintf (f, "#define EXN_MASK\t\t%d\t/*\t%#010x\t*/\n", 
+    fprintf (f, "#define EXN_MASK\t\t%d\t/*\t%#010x\t*/\n",
 	     EXN_MASK, EXN_MASK);
     fprintf (f, "\n");
     CloseFile (f, "_REG_MASK_");

@@ -1,9 +1,15 @@
-/* gen-offsets.c
+/*! \file gen-offsets.c
  *
- * COPYRIGHT (c) 1992 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * This C program generates a header file for the *.prim.asm files,
  * which gives the offset values in the VProc and ML state vectors.
+ *
+ * Note that we only generate offsets for three miscregs; this is because
+ * only the first three miscregs are marked as callee-save by the compiler
+ * and are thus live when saveregs is called.  See compiler/CodeGen/main/machspec.sig
+ * and compiler/CodeGen/cpscompile/invokegc.sml.
  */
 
 #include "ml-base.h"
@@ -34,9 +40,6 @@ int main (void)
 
     f = OpenFile ("mlstate-offsets.h", "_MLSTATE_OFFSETS_");
 
-#if TARGET_BYTECODE
-    fprintf (f, "/* TARGET_BYTECODE */\n");
-#else
     PMOFFSET("VProc", ml_vproc);
     PMOFFSET("AllocPtr", ml_allocPtr);
     PMOFFSET("LimitPtr", ml_limitPtr);
@@ -57,12 +60,11 @@ int main (void)
     PMOFFSET("InPollHandler", ml_inPollHandler);
 #endif
     PVOFFSET("InML", vp_inMLFlag);
-    PVOFFSET("LimitPtrMask", vp_limitPtrMask);
     PVOFFSET("HandlerPending", vp_handlerPending);
     PVOFFSET("InSigHandler", vp_inSigHandler);
     PVOFFSET("SigsRecv", vp_totalSigCount.nReceived);
     PVOFFSET("SigsHandled", vp_totalSigCount.nHandled);
-#endif /* !BYTECODE */
+    PVOFFSET("LimitPtrMask", vp_limitPtrMask);
 
     CloseFile (f, "_MLSTATE_OFFSETS_");
 

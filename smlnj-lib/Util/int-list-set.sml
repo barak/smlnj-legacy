@@ -138,6 +138,11 @@ structure IntListSet :> ORD_SET where type Key.ord_key = Int.int =
     fun isEmpty [] = true
       | isEmpty _ = false
 
+    fun minItem [] = raise Empty
+      | minItem (x::_) = x
+
+    fun maxItem xs = List.last xs
+
     fun equal (s1, s2) = let
 	  fun f ([], []) = true
 	    | f ((x : int)::r1, y::r2) = (x = y) andalso f (r1, r2)
@@ -158,23 +163,32 @@ structure IntListSet :> ORD_SET where type Key.ord_key = Int.int =
     fun isSubset (s1, s2) = let
 	  fun f ([], _) = true
 	    | f (_, []) = false
-	    | f (x::r1, y::r2) = (case Key.compare(x, y)
-		   of LESS => false
-		    | EQUAL => f (r1, r2)
-		    | GREATER => f (x::r1, r2)
-		  (* end case *))
+	    | f (x::r1, y::r2) =
+		((x = y) andalso f (r1, r2))
+		orelse ((x > y) andalso f (x::r1, r2))
 	  in
 	    f (s1, s2)
 	  end
+
+    fun disjoint ([], _) = true
+      | disjoint (_, []) = true
+      | disjoint (x::r1, y::r2) =
+	  ((x < y) andalso disjoint (r1, y::r2))
+	  orelse ((x > y) andalso disjoint (x::r1, r2))
 
   (* Return the number of items in the set *)
     fun numItems l = List.length l
 
   (* Return a list of the items in the set *)
-    fun listItems l = l
+    fun toList l = l
 
     val app = List.app
     fun map f s1 = List.foldl (fn (x, s) => add(s, f x)) [] s1
+    fun mapPartial f s = let
+	  fun f' (x, acc) = (case f x of SOME x' => add(acc, x') | NONE => acc)
+	  in
+	    List.foldl f' [] s
+	  end
     val foldr = List.foldr
     val foldl = List.foldl
     val filter = List.filter
@@ -183,5 +197,7 @@ structure IntListSet :> ORD_SET where type Key.ord_key = Int.int =
     val all = List.all
     val find = List.find
 
-  end (* IntListMap *)
+  (* deprecated *)
+    val listItems = toList
 
+  end (* IntListMap *)

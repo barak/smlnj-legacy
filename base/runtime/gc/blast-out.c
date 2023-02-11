@@ -1,6 +1,7 @@
-/* blast-out.c
+/*! \file blast-out.c
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  */
 
 #include "ml-osdep.h"
@@ -314,18 +315,18 @@ PVT ml_val_t AllocBlastData (ml_state_t *msp, Addr_t sizeB)
 {
     heap_t	    *heap = msp->ml_heap;
     int		    nWords = BYTES_TO_WORDS(sizeB);
-    ml_val_t	    desc = MAKE_DESC(nWords, DTAG_raw32);
+    ml_val_t	    desc = MAKE_DESC(nWords, DTAG_raw);
     ml_val_t	    res;
 
 /** we probably should allocate space in the big-object region for these objects **/
-    if (sizeB < heap->allocSzB-(8*ONE_K)) {
-	ML_AllocWrite (msp, 0, desc);
-	res = ML_Alloc (msp, nWords);
-	return res;
+    if (sizeB >= heap->allocSzB-(8*ONE_K)) {
+	Die ("blasting out of %d bytes not supported yet!  Increase allocation arena size.",
+	    sizeB);
     }
-    else {
-	Die ("blasting out of %d bytes not supported yet!  Increase allocation arena size.", sizeB);
-    }
+
+    ML_AllocWrite (msp, 0, desc);
+    res = ML_Alloc (msp, nWords);
+    return res;
 
 } /* end of AllocBlastData */
 

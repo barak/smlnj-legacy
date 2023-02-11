@@ -1,9 +1,13 @@
-(* COPYRIGHT (c) 1997 YALE FLINT PROJECT *)
-(* monnier@cs.yale.edu *)
+(* flintnm.sml
+ *
+ * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
+ * Converting the Standard PLambda.lexp into the FLINT IL
+ *)
 
-(* Converting the Standard PLambda.lexp into the FLINT IL *)
 signature FLINTNM =
-sig 
+sig
   val norm : PLambda.lexp -> FLINT.fundec
 end (* signature FLINTNM *)
 
@@ -14,14 +18,14 @@ local structure LT = PLambdaType
       structure FL = PFlatten		(* argument flattening *)
       structure DI = DebIndex
       structure PT = PrimTyc
-      structure PO = PrimOp
+      structure PO = Primop
       structure L  = PLambda
       structure F  = FLINT
       structure FU = FlintUtil
       structure DA = Access
       structure BT = BasicTypes
-      structure PP = PrettyPrintNew
-      structure PU = PPUtilNew
+      structure PP = PrettyPrint
+      structure PU = PPUtil
 in
 
 (* debugging *)
@@ -29,22 +33,22 @@ val say = Control_Print.say
 
 val debugging = FLINT_Control.nmdebugging
 
-fun debugmsg (msg : string) = 
+fun debugmsg (msg : string) =
     if !debugging then (say msg; say "\n") else ()
 val pd = 15  (* debugging print depth *)
 
-fun ppTycEnv (tenv: Lty.tycEnv) = 
+fun ppTycEnv (tenv: Lty.tycEnv) =
     PP.with_default_pp
       (fn ppstrm => (PPLty.ppTycEnv pd ppstrm tenv; PU.pps ppstrm "\n"))
 
-fun ppLty (lty: Lty.lty) = 
+fun ppLty (lty: Lty.lty) =
     PP.with_default_pp
       (fn ppstrm => (PPLty.ppLty pd ppstrm lty; PU.pps ppstrm "\n"))
 
 fun debugLty (lty: Lty.lty) =
     if !debugging then ppLty lty else ()
 
-fun debugLexp (lexp) = 
+fun debugLexp (lexp) =
     if !debugging then
        PP.with_default_pp(fn ppstrm => PPLexp.ppLexp pd ppstrm lexp)
     else ()
@@ -53,86 +57,81 @@ val mkv = LambdaVar.mkLvar
 val cplv = LambdaVar.dupLvar
 val ident = fn le : L.lexp => le
 
-val (iadd_prim, uadd_prim) = 
-  let val lt_int = LT.ltc_int
+val (iadd_prim, uadd_prim) = let
+      val lt_int = LT.ltc_int
       val intOpTy = LT.ltc_parrow(LT.ltc_tuple[lt_int,lt_int],lt_int)
-      val addu = PO.ARITH{oper=PO.+, overflow=false, kind=PO.UINT 31}
-   in (L.PRIM(PO.IADD,intOpTy,[]), L.PRIM(addu, intOpTy, []))
-  end
+      in
+        (L.PRIM(PrimopUtil.IADD, intOpTy, []), L.PRIM(PrimopUtil.UADD, intOpTy, []))
+      end
 
 fun bug msg = ErrorMsg.impossible("FlintNM: "^msg)
 
 
-local val (trueDcon', falseDcon') = 
+local val (trueDcon', falseDcon') =
         let val lt = LT.ltc_arrow(LT.ffc_rrflint, [LT.ltc_unit], [LT.ltc_bool])
             fun h (Types.DATACON{name, rep, ...}) = (name, rep, lt)
          in (h BT.trueDcon, h BT.falseDcon)
         end
 
-      fun boolLexp b = 
+      fun boolLexp b =
         let val v = mkv() and w = mkv()
             val dc = if b then trueDcon' else falseDcon'
-         in F.RECORD(FU.rk_tuple, [], v, 
+         in F.RECORD(FU.rk_tuple, [], v,
              F.CON(dc, [], F.VAR v, w, F.RET[F.VAR w]))
         end
-in 
+in
 
-fun flint_prim (po as (d, p, lt, ts), vs, v, e) = 
+fun flint_prim (po as (d, p, lt, ts), vs, v, e) =
   (case p
-    of (PO.BOXED  | PO.UNBOXED | PO.CMP _ | PO.PTREQL | 
+    of (PO.BOXED  | PO.UNBOXED | PO.CMP _ | PO.FSGN _ | PO.PTREQL |
         PO.PTRNEQ | PO.POLYEQL | PO.POLYNEQ) =>
           (*** branch primops get translated into F.BRANCH ***)
           F.LET([v], F.BRANCH(po, vs, boolLexp true, boolLexp false), e)
-     | (PO.GETRUNVEC | PO.GETHDLR | PO.GETVAR | PO.DEFLVAR) =>
+     | (PO.GETHDLR | PO.GETVAR) =>
           (*** primops that take zero arguments; argument types
                must be unit ***)
-          let fun fix t = 
-                LT.ltw_arrow(t, 
-		(fn (ff,[t1],ts2) => 
-		    (if LT.tc_eqv(t1, LT.tcc_unit) 
+          let fun fix t =
+                LT.ltw_arrow(t,
+		(fn (ff,[t1],ts2) =>
+		    (if LT.tc_eqv(t1, LT.tcc_unit)
 		     then LT.ltc_tyc(LT.tcc_arrow(ff, [], ts2))
 		     else bug "unexpected zero-args prims 1 in flint_prim")
 		  | _ => bug "flint_prim:t1"),
                 fn _ => bug "unexpected zero-args prims 2 in flint_prim")
-              val nlt = 
-                LT.ltw_ppoly(lt, 
+              val nlt =
+                LT.ltw_ppoly(lt,
                    fn (ks, t) => LT.ltc_ppoly(ks, fix t),
                    fn _ => fix lt)
            in F.PRIMOP((d,p,nlt,ts), [], v, e)
           end
-     | _ => 
+     | _ =>
           F.PRIMOP(po, vs, v, e))
 
 end (* local flint_prim *)
 
 (* force_raw freezes the calling conventions of a data constructor;
-   strictly used by the CON and DATAcon only 
+   strictly used by the CON and DATAcon only
  *)
-fun force_raw (pty) = 
+fun force_raw (pty) =
   if LT.ltp_ppoly pty then
     let val (ks, body) = LT.ltd_ppoly pty
         val (aty, rty) = LT.ltd_parrow body
      in LT.ltc_ppoly(ks,
            LT.ltc_arrow(LT.ffc_rrflint, [FL.ltc_raw aty], [FL.ltc_raw rty]))
     end
-  else 
+  else
     let val (aty, rty) = LT.ltd_parrow pty
      in LT.ltc_arrow(LT.ffc_rrflint, [FL.ltc_raw aty], [FL.ltc_raw rty])
     end (* function force_raw *)
 
-fun tocon con =
-    let val _ = 1
-    in case con of
-	L.INTcon x    => F.INTcon x
-      | L.INT32con x  => F.INT32con x
-      | L.INTINFcon _ => bug "INTINFcon"
-      | L.WORDcon x   => F.WORDcon x
-      | L.WORD32con x => F.WORD32con x
-      | L.REALcon x   => F.REALcon x
-      | L.STRINGcon x => F.STRINGcon x
-      | L.VLENcon x   => F.VLENcon x
-      | L.DATAcon x => bug "unexpected case in tocon"
-    end
+fun tocon con = (case con
+       of L.INTcon{ty=0, ...} => bug "IntInf"
+        | L.INTcon x    => F.INTcon x
+	| L.WORDcon x   => F.WORDcon x
+	| L.STRINGcon x => F.STRINGcon x
+	| L.VLENcon x   => F.VLENcon x
+	| L.DATAcon x => bug "unexpected case in tocon"
+      (* end case *))
 
 fun tofundec (venv,d,f_lv,arg_lv,arg_lty,body,isrec) =
     let val _ = (debugmsg "tofundec normalize argument:\n";
@@ -145,7 +144,7 @@ fun tofundec (venv,d,f_lv,arg_lv,arg_lty,body,isrec) =
 	val _ =  debugmsg ">>tofundec detuple arg type"
         (* detuple the arg type *)
 	val ((arg_raw, arg_ltys, _), unflatten) = FL.v_punflatten arg_lty
-        val _ = debugmsg ">>unflatten body"    
+        val _ = debugmsg ">>unflatten body"
         (* now, we add tupling code at the beginning of the body *)
         val (arg_lvs, body'') = unflatten(arg_lv, body')
 	val _ = debugmsg ">>construct return type"
@@ -160,7 +159,7 @@ fun tofundec (venv,d,f_lv,arg_lv,arg_lty,body,isrec) =
 		(LT.ltc_parrow(arg_lty, body_lty),
 		 {isrec=rettype, known=false, inline=F.IH_SAFE,
 		  cconv=F.CC_FUN(LT.ffc_var(arg_raw, body_raw))})
-	    else 
+	    else
 		(* a functor *)
 		(LT.ltc_pfct(arg_lty, body_lty),
 		 {isrec=rettype, known=false, inline=F.IH_SAFE,
@@ -194,7 +193,7 @@ and tolexp (venv,d) lexp =
                     tovalues(venv, d, arg,
 			     fn (arg_vals, arg_lty) =>
 			     (* now find the return type *)
-			     let val (_, r_lty) = 
+			     let val (_, r_lty) =
                                    if LT.ltp_pfct f_lty then LT.ltd_pfct f_lty
                                    else LT.ltd_parrow f_lty
 			     (* and finally do the call *)
@@ -215,7 +214,7 @@ and tolexp (venv,d) lexp =
 
                 (* then translate each function in turn *)
                 val funs = map3 (fn (f_lv,f_lty,L.FN(arg_lv,arg_lty,body)) =>
-                                #1(tofundec(venv', d, 
+                                #1(tofundec(venv', d,
 					    f_lv, arg_lv, arg_lty, body, true))
 				 | _ => bug "non-function in L.FIX")
 				(lvs, ltys, lexps)
@@ -230,7 +229,7 @@ and tolexp (venv,d) lexp =
                    fn lty1 =>
                    tolexp (LT.ltInsert(venv,lvar,lty1,d), d) lexp2)
 
-      | L.RAISE (le, r_lty) => 
+      | L.RAISE (le, r_lty) =>
             tovalue(venv, d, le,
                     fn (le_val,le_lty) =>
                     let val (_, r_ltys, _) = FL.t_pflatten r_lty
@@ -271,69 +270,53 @@ and tolexp (venv,d) lexp =
 		       in (F.SWITCH(v, acs, map #1 conlexps, default), lty)
 		       end)
 	    end
-	    
+
       (* for mere values, use tovalues *)
       | _ => default_tovalues ()
     val _ = debugmsg "<<tolexp"
-    in v 
+    in v
     end
 
 (*
  * tovalue: turns a PLambda lexp into a value+type and then calls
  * the continuation that will turn it into an Flint lexp+type
  * (ltyenv * DebIndex * L.lexp * ((value * lty) -> (F.lexp * lty list))) -> (F.lexp * lty)
- * 
+ *
  * - venv is the type environment for values
  * - conts is the continuation
  *)
-and tovalue (venv,d,lexp,cont) =
-    let val _ = debugmsg ">>tovalue"
-	val _ = debugLexp lexp
-	val _ = 1
-    val v = case lexp of
-        (* for simple values, it's trivial *)
-        L.VAR v => cont(F.VAR v, LT.ltLookup(venv, v, d))
-      | L.INT i => 
-         ((i+i+2; cont(F.INT i, LT.ltc_int)) handle Overflow => 
-            (let val _ = debugmsg "toValue INT Overflow"
-		 val z = i div 2
-                 val ne = L.APP(iadd_prim, L.RECORD [L.INT z, L.INT (i-z)])
-              in tovalue(venv, d, ne, cont)
-             end))
-      | L.WORD i => 
-         let val maxWord = 0wx20000000
-          in if Word.<(i, maxWord) then cont(F.WORD i, LT.ltc_int)
-             else let val x1 = Word.div(i, 0w2)
-                      val x2 = Word.-(i, x1)
-                      val ne = L.APP(uadd_prim, 
-                                     L.RECORD [L.WORD x1, L.WORD x2])
-                   in tovalue(venv, d, ne, cont)
-                  end
-         end
-      | L.INT32 n => cont(F.INT32 n, LT.ltc_int32)
-      | L.WORD32 n => cont(F.WORD32 n, LT.ltc_int32)
-      | L.REAL x => cont(F.REAL x, LT.ltc_real)
-      | L.STRING s => cont(F.STRING s, LT.ltc_string)
-
-      (* for cases where tolvar is more convenient *)
-      | _ => 
-            let val lv = mkv()
-            in tolvar(venv, d, lv, lexp, 
-		      fn lty => (debugmsg ">>tovalue tolvar cont"; 
+and tovalue (venv,d,lexp,cont) = let
+      val _ = debugmsg ">>tovalue"
+      val _ = debugLexp lexp
+      val v = (case lexp
+            (* for simple values, it's trivial *)
+	     of L.VAR v => cont(F.VAR v, LT.ltLookup(venv, v, d))
+	      | L.INT i => cont(F.INT i, LT.ltc_num(#ty i))
+	      | L.WORD w => cont(F.WORD w, LT.ltc_num(#ty w))
+(* REAL32: *)
+	      | L.REAL x => cont(F.REAL x, LT.ltc_real)
+	      | L.STRING s => cont(F.STRING s, LT.ltc_string)
+	    (* for cases where tolvar is more convenient *)
+	      | _ => let
+                  val lv = mkv()
+                  in
+		    tolvar(venv, d, lv, lexp,
+		      fn lty => (debugmsg ">>tovalue tolvar cont";
 				 debugLexp lexp;
 				 cont(F.VAR lv, lty)))
-            end
-    val _ = debugmsg "<<tovalue"
-    in v
-    end
-		    
-		    
+                  end
+	    (* end case *))
+      val _ = debugmsg "<<tovalue"
+      in
+	v
+      end (* tovalue *)
+
 (*
  * tovalues: turns a PLambda lexp into a list of values and a list of types
  * and then calls the continuation that will turn it into an Flint lexp+type
  *
  * (ltyenv * DebIndex * L.lexp * ((value list * lty list) -> (F.lexp * lty list))) -> (F.lexp * lty)
- * 
+ *
  * - venv is the type environment for values
  * - cont is the continuation
  *)
@@ -346,10 +329,10 @@ and tovalues (venv,d,lexp,cont) =
 	    lexps2values(venv,d,lexps,
 			 fn (vals,ltys) =>
 			 let val _ = debugmsg ">>tovalues continuation"
-			     val _ = 
+			     val _ =
 			 if length ltys = 0 then
 			     debugmsg ("tovalues cont ltys null")
-			 else if length ltys = 1 
+			 else if length ltys = 1
 			 then (debugmsg ("tovalues cont ltys singleton:\n");
 			       debugLty (hd ltys))
 			 else (debugmsg ("tovalues cont ltys > 1\n \
@@ -360,19 +343,19 @@ and tovalues (venv,d,lexp,cont) =
 			      fun scan [] = debugmsg "tovalues end of ltys"
 				| scan (lts) =
 				    let fun scan' ([], [], n) = ()
-					  | scan' (x::xs, l::ls, n) = 
+					  | scan' (x::xs, l::ls, n) =
 					    (debugmsg ("tovalues cont ltys ["^
 						      Int.toString n ^"]:");
 					     debugLexp l;
 					     debugLty x;
 					     scan' (xs, ls, n + 1))
-					  | scan' _ = 
+					  | scan' _ =
 					    raise Fail "flintnm.sml:\
 							\ tovalues::scan'"
 
 				    in scan'(lts, lexps, 0)
 				    end
-                             val _ = scan ltys 
+                             val _ = scan ltys
 			     val lty = LT.ltc_tuple ltys
 			     val _ = (debugmsg ("<<tovalues cont tupled");
 				      debugLty lty)
@@ -388,11 +371,11 @@ and tovalues (venv,d,lexp,cont) =
 			     val _ = debugmsg "<<tovalues cont lt_eqv"
 			 in
 			     (* detect the case where flattening is trivial *)
-			     if eqvLty then 
+			     if eqvLty then
 				 cont(vals,lty)
 			     else
 				 let val lv = mkv()
-                                     val (_, pflatten) = FL.v_pflatten lty 
+                                     val (_, pflatten) = FL.v_pflatten lty
 				     val (vs,wrap) = pflatten (F.VAR lv)
 				     val (c_lexp,c_lty) = cont(vs, lty)
 				     val _ = debugmsg "<<tovalues continuation"
@@ -402,7 +385,7 @@ and tovalues (venv,d,lexp,cont) =
 				      c_lty)
 				 end
 			 end)
-			    
+
       | _ => tovalue(venv,d,lexp,
 		     fn (v, lty) =>
 		     let val (vs,wrap) = (#2(FL.v_pflatten lty)) v
@@ -419,10 +402,10 @@ and lexps2values (venv,d,lexps,cont) =
 	val _ = map debugLexp lexps
 	val _ = 1
 
-fun ppTycEnv tenv = 
-    PrettyPrintNew.with_default_pp (fn ppstrm => PPLty.ppTycEnv 20 ppstrm tenv)
+fun ppTycEnv tenv =
+    PrettyPrint.with_default_pp (fn ppstrm => PPLty.ppTycEnv 20 ppstrm tenv)
 fun ppTyc tyc =
-    PrettyPrintNew.with_default_pp (fn ppstrm => PPLty.ppTyc 20 ppstrm tyc)
+    PrettyPrint.with_default_pp (fn ppstrm => PPLty.ppTyc 20 ppstrm tyc)
 
 	fun f [] (vals,ltys) = cont (rev vals, rev ltys)
 	  | f (lexp::lexps) (vals,ltys) =
@@ -435,10 +418,10 @@ fun ppTyc tyc =
 			 debugLexp lexp;
 			 debugmsg "lty:"; debugLty lty *)
 		        f lexps (v::vals, lty::ltys))))
-	    (* handle LtyKernel.tcUnbound (tenv,tyc) => 
+	    (* handle LtyKernel.tcUnbound (tenv,tyc) =>
 		   (with_pp(fn s =>
                       (PU.pps s "*** lexps2values ***; PP.newline s;
-                       lexp: \n"; 
+                       lexp: \n";
 		       PPLexp.printLexp lexp;
 		       print "\ntype: \n";
 		       ppTyc 20 s tyc; PP.newline s;
@@ -486,19 +469,19 @@ and tolvar (venv,d,lvar,lexp,cont) =
                    or not. The results of primops are never flattened.
                  *)
 		val _ = debugmsg ">>tolvar PO_helper"
-                val (pty, r_lty, flat) = 
-                  (case (LT.ltp_ppoly f_lty, tycs) 
-                    of (true, _) => 
+                val (pty, r_lty, flat) =
+                  (case (LT.ltp_ppoly f_lty, tycs)
+                    of (true, _) =>
                          let val (ks, lt) = LT.ltd_ppoly f_lty
                              val (aty, rty) = LT.ltd_parrow lt
-                             val r_lty = 
+                             val r_lty =
                                LT.lt_pinst(LT.ltc_ppoly(ks, rty), tycs)
 
-                             val (_, atys, flat) = FL.t_pflatten aty 
+                             val (_, atys, flat) = FL.t_pflatten aty
                              (*** you really want to have a simpler
                                   flattening heuristics here; in fact,
                                   primop can have its own flattening
-                                  strategy. The key is that primop's 
+                                  strategy. The key is that primop's
                                   type never escape outside.
                               ***)
 
@@ -527,9 +510,9 @@ and tolvar (venv,d,lvar,lexp,cont) =
 		     	   (* put the filling inbetween *)
 		     	   val r' = (filler(arg_vals, pty, c_lexp), c_lty)
 			   val _ = debugmsg "<<tolvar PO_helper cont"
-			   in r' 
-		     	   end)  
-                else 
+			   in r'
+		     	   end)
+                else
                    tovalue(venv, d, arg,
 		     	   fn (arg_val, arg_lty) =>
 		     	   let val (c_lexp, c_lty) = cont(r_lty)
@@ -537,13 +520,13 @@ and tolvar (venv,d,lvar,lexp,cont) =
 		     	   in (filler([arg_val], pty, c_lexp), c_lty)
 		     	   end)
 	     val _ = debugmsg "<<tolvar PO_helper"
-	    in r 
+	    in r
             end (* function PO_helper *)
 
         fun default_tolexp () =
             let val (lexp', lty) = tolexp (venv, d) lexp
                 val (c_lexp, c_lty) = cont(lty)
-                val (_, punflatten) = FL.v_punflatten lty 
+                val (_, punflatten) = FL.v_punflatten lty
                 val (lvs,c_lexp') = punflatten (lvar, c_lexp)
             in (F.LET(lvs, lexp', c_lexp'), c_lty)
             end
@@ -572,7 +555,7 @@ and tolvar (venv,d,lvar,lexp,cont) =
       (* this is were we really deal with primops *)
       | L.APP (L.PRIM ((po,f_lty,tycs)),arg) =>
 	let val _ = debugmsg ">>tolvar L.APP"
-	    val (lexp', lty') = 
+	    val (lexp', lty') =
             PO_helper(arg, f_lty, tycs,
                        fn (arg_vals,pty, c_lexp) =>
                        flint_prim((NONE, po, pty, map FL.tcc_raw tycs),
@@ -596,9 +579,9 @@ and tolvar (venv,d,lvar,lexp,cont) =
                              fn table' =>
                              PO_helper(arg, f_lty, tycs,
                                         fn (arg_vals,pty,c_lexp) =>
-                                        flint_prim((SOME {default=dflt_lv, 
+                                        flint_prim((SOME {default=dflt_lv,
                                                           table=table'},
-                                                    po, pty, 
+                                                    po, pty,
                                                     map FL.tcc_raw tycs),
 						   arg_vals, lvar, c_lexp))))
             end
@@ -607,7 +590,7 @@ and tolvar (venv,d,lvar,lexp,cont) =
       (*  | L.TFN ([], body) => bug "TFN[]" *)
       | L.TFN (tks, body) =>
             let val (body', body_lty) =
-                  tovalue(venv, DI.next d, body, 
+                  tovalue(venv, DI.next d, body,
                           fn (le_val, le_lty) => (F.RET [le_val], le_lty))
                 val lty = LT.ltc_ppoly(tks, body_lty)
                 val (lexp', lty) = cont(lty)
@@ -706,7 +689,7 @@ and tolvar (venv,d,lvar,lexp,cont) =
     end (* function tolvar *)
 
 fun norm (lexp as L.FN(arg_lv,arg_lty,e)) =
-    let val r = 
+    let val r =
 	    (#1(tofundec(LT.initLtyEnv, DI.top, mkv(), arg_lv, arg_lty, e, false))
 	     handle x => raise x)
     in (debugmsg "<<norm" (*; PPFlint.printFundec r *); r)

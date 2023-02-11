@@ -1,12 +1,13 @@
 (* splaytree.sml
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.  See COPYRIGHT file for details.
+ * COPYRIGHT (c) 2015 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Splay tree structure.
  *
  *)
 
-structure SplayTree : SPLAY_TREE = 
+structure SplayTree : SPLAY_TREE =
   struct
 
     datatype 'a splay
@@ -32,9 +33,9 @@ structure SplayTree : SPLAY_TREE =
                         EQUAL => (Eq value',left',
                                     SplayObj{value=value,left=right',right=right})
                       | GREATER =>
-                          (case left' of 
+                          (case left' of
                             SplayNil => (Gt value',left',SplayObj{value=value,left=right',right=right})
-                          | _ => 
+                          | _ =>
                             let val (V,L,R) = adj left'
                                 val rchild = SplayObj{value=value,left=right',right=right}
                             in
@@ -42,7 +43,7 @@ structure SplayTree : SPLAY_TREE =
                             end
                           ) (* end case *)
                       | _ =>
-                          (case right' of 
+                          (case right' of
                             SplayNil => (Lt value',left',SplayObj{value=value,left=right',right=right})
                           | _ =>
                             let val (V,L,R) = adj right'
@@ -86,16 +87,16 @@ structure SplayTree : SPLAY_TREE =
                  ) (* end case *)
               ) (* end case *)
       in
-        case adj root of
-          (No,_,_) => (GREATER,SplayNil)
-        | (Eq v,l,r) => (EQUAL,SplayObj{value=v,left=l,right=r})
-        | (Lt v,l,r) => (LESS,SplayObj{value=v,left=l,right=r})
-        | (Gt v,l,r) => (GREATER,SplayObj{value=v,left=l,right=r})
+        case adj root
+	 of (No,_,_) => (GREATER,SplayNil)
+	  | (Eq v,l,r) => (EQUAL,SplayObj{value=v,left=l,right=r})
+	  | (Lt v,l,r) => (LESS,SplayObj{value=v,left=l,right=r})
+	  | (Gt v,l,r) => (GREATER,SplayObj{value=v,left=l,right=r})
       end
 
     fun lrotate SplayNil = SplayNil
       | lrotate (arg as SplayObj{value,left,right=SplayNil}) = arg
-      | lrotate (SplayObj{value,left,right=SplayObj{value=v,left=l,right=r}}) = 
+      | lrotate (SplayObj{value,left,right=SplayObj{value=v,left=l,right=r}}) =
           lrotate (SplayObj{value=v,left=SplayObj{value=value,left=left,right=l},right=r})
 
     fun join (SplayNil,SplayNil) = SplayNil

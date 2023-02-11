@@ -1,10 +1,15 @@
-(* copyright 1998 YALE FLINT PROJECT *)
+(* collect.sml
+ *
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *)
+
 (* monnier@cs.yale.edu *)
 
 signature COLLECT =
 sig
     type info
-    
+
     (* Collect information about variables and function uses.
      * The info is accumulated in the map `m' *)
     val collect : FLINT.fundec -> FLINT.fundec
@@ -46,7 +51,7 @@ sig
     (* function to collect info about a newly created lexp *)
     val uselexp : FLINT.lexp -> unit
     (* function to copy (and collect info) a lexp *)
-    val copylexp : FLINT.lvar FLINTIntMap.map  -> FLINT.lexp -> FLINT.lexp
+    val copylexp : FLINT.lvar LambdaVar.Map.map  -> FLINT.lexp -> FLINT.lexp
 
     (* mostly useful for PPFlint *)
     val LVarString : FLINT.lvar -> string
@@ -84,11 +89,11 @@ structure Collect :> COLLECT =
 struct
 local
     structure F  = FLINT
-    structure M  = IntHashTable
+    structure M  = LambdaVar.Tbl
     structure FU = FlintUtil
     structure LV = LambdaVar
     structure PP = PPFlint
-    structure PO = PrimOp
+    structure PO = Primop
 in
 
 val say = Control_Print.say
@@ -99,9 +104,9 @@ fun bugval (msg,v) = (say "\n"; PP.printSval v; say " "; bug msg)
 datatype info
   (* we keep track of calls and escaping uses *)
   = Info of {calls: int ref, uses: int ref, int: (int * int) ref}
-    
+
 exception NotFound
-	      
+
 val m : info M.hash_table = M.mkTable(128, NotFound)
 
 fun new args lv =
@@ -124,11 +129,11 @@ fun LVarString lv =
 	"{"^(Int.toString uses)^
 	(if calls > 0 then ","^(Int.toString calls) else "")^"}"
     end
-	
+
 (* adds the counts of lv1 to those of lv2 *)
 fun addto (Info{uses=uses1,calls=calls1,...},Info{uses=uses2,calls=calls2,...}) =
     (uses2 := !uses2 + !uses1; calls2 := !calls2 + !calls1)
-	    
+
 fun transfer (lv1,lv2) =
     let val i1 = get lv1
 	val i2 = get lv2
@@ -136,18 +141,20 @@ fun transfer (lv1,lv2) =
 	(* note the transfer by redirecting the map *)
 	M.insert m (lv1, i2)
     end
-	       
+
 fun inc ri = (ri := !ri + 1)
 fun dec ri = (ri := !ri - 1)
 
 (* - first list is list of formal args
  * - second is list of `up to know known arg'
  * - third is args of the current call. *)
-fun mergearg (NONE,a) = NONE
-  | mergearg (SOME(fv,NONE),a) =
-    if a = F.VAR fv then SOME(fv,NONE) else SOME(fv,SOME a)
-  | mergearg (SOME(fv,SOME b),a) =
-    if a = b orelse a = F.VAR fv then SOME(fv,SOME b) else NONE
+fun mergearg (NONE, _) = NONE
+  | mergearg (SOME(fv, NONE), a) =
+      if FU.valueIsVar fv a then SOME(fv, NONE) else SOME(fv, SOME a)
+  | mergearg (SOME(fv, SOME b), a) =
+      if FU.sameValue(a, b) orelse FU.valueIsVar fv a
+	then SOME(fv, SOME b)
+	else NONE
 
 fun use call (Info{uses,calls,...}) = (inc uses; if call then inc calls else ())
 
@@ -197,7 +204,7 @@ fun usage bs =
 	 | [] => None
     end
 
-fun impurePO (po:F.primop) = PO.effect (#2 po)
+fun impurePO (po:F.primop) = PrimopUtil.effect (#2 po)
 
 val census = let
     (* val use = if inc then use else unuse *)
@@ -215,7 +222,7 @@ val census = let
       | cdcon _ = ()
 
     (* the actual function:
-     * `uvs' is an optional list of booleans representing which of 
+     * `uvs' is an optional list of booleans representing which of
      * the return values are actually used *)
     fun cexp lexp =
 	case lexp
@@ -247,7 +254,7 @@ val census = let
 		    end
 	    in cexp le; cfix fs
 	    end
-	       
+
 	  | F.APP (F.VAR f,vs) =>
 	    (call f; app use vs)
 
@@ -263,7 +270,7 @@ val census = let
 	     app (fn (F.DATAcon(dc,_,lv),le) => (cdcon dc; newv lv; cexp le)
 		   | (_,le) => cexp le)
 		 arms)
-		
+
 	  | F.CON (dc,_,v,lv,le) =>
 	    let val lvi = newv lv
 	    in cdcon dc; cexp le; if used lvi then use v else ()
@@ -281,16 +288,16 @@ val census = let
 
 	  | F.RAISE (v,_) => use v
 	  | F.HANDLE (le,v) => (use v; cexp le)
-	  
+
 	  | F.BRANCH (po,vs,le1,le2) =>
 	    (app use vs; cpo po; cexp le1; cexp le2)
-	  
+
 	  | F.PRIMOP (po,vs,lv,le) =>
 	    let val lvi = newv lv
 	    in  cexp le;
 		if used lvi orelse impurePO po then (cpo po; app use vs) else ()
 	    end
-	  
+
 	  | le => buglexp("unexpected lexp", le)
 in
     cexp
@@ -336,7 +343,7 @@ fun unuselexp undertaker = let
 		app (fn (_,_,args,le) => cfun(map #1 args, le)) usedfs;
 		app (kill o #2) fs
 	    end
-	       
+
 	  | F.APP (F.VAR f,vs) =>
 	    (uncall f; app unuse vs)
 
@@ -356,7 +363,7 @@ fun unuselexp undertaker = let
 		  (cdcon dc; def(get lv); cexp le; kill lv)
 		   | (_,le) => cexp le)
 		 arms)
-		
+
 	  | F.CON (dc,_,v,lv,le) =>
 	    let val lvi = get lv
 	    in cdcon dc; if used lvi then unuse v else ();
@@ -377,10 +384,10 @@ fun unuselexp undertaker = let
 
 	  | F.RAISE (v,_) => unuse v
 	  | F.HANDLE (le,v) => (unuse v; cexp le)
-	  
+
 	  | F.BRANCH (po,vs,le1,le2) =>
 	    (app unuse vs; cpo po; cexp le1; cexp le2)
-	  
+
 	  | F.PRIMOP (po,vs,lv,le) =>
 	    let val lvi = get lv
 	    in if used lvi orelse impurePO po

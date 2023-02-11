@@ -19,12 +19,12 @@ LIBRARY =	libsmlnj-date.a
 VERSION =	v-dummy
 
 OBJS =		smlnj-date-lib.o \
-		asctime.o \
 		gmtime.o \
 		localoffset.o \
 		localtime.o \
 		mktime.o \
-		strftime.o
+		strftime.o \
+		unix-date.o
 
 $(LIBRARY)	: $(VERSION) $(OBJS)
 	rm -rf $(LIBRARY)

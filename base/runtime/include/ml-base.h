@@ -1,7 +1,11 @@
-/* ml-base.h
+/*! \file ml-base.h
  *
- * COPYRIGHT (c) 1992 AT&T Bell Laboratories
- *
+ * \author John Reppy
+ */
+
+/*
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  */
 
 #ifndef _ML_BASE_
@@ -9,23 +13,33 @@
 
 /* macro concatenation (ANSI CPP) */
 #ifndef CONCAT /* assyntax.h also defines CONCAT */
-#  define CONCAT(a,b)	a ## b
+#  if defined(__STDC__) || defined(OPSYS_WIN32)
+#    define CONCAT(x, y)	x ## y
+#    define CONCAT3(a,b,c)	a ## b ## c
+#  else
+#    define CONCAT(x, y)	x/**/y
+#    define CONCAT3(a,b,c)	a/**/b/**/c
+#  endif
 #endif
-#define CONCAT3(a,b,c)	a ## b ## c
 
 #define ONE_K		1024
 #define ONE_MEG 	(ONE_K*ONE_K)
+
+/* constants for converting between different amounts of seconds */
+#define MS_PER_SEC	1000
+#define US_PER_SEC	1000000
+#define NS_PER_SEC	1000000000
 
 /* The generated file ml-sizes.h defines various size macros, and
  * the following types:
  *
  * Int16_t	-- 16-bit signed integer
  * Int32_t	-- 32-bit signed integer
- * Int64_t	-- 64-bit signed integer (64-bit machines only)
+ * Int64_t	-- 64-bit signed integer
  * Unsigned16_t	-- 16-bit unsigned integer
  * Unsigned32_t	-- 32-bit unsigned integer
- * Unsigned64_t	-- 64-bit unsigned integer (64-bit machines only)
- * Byte_t	-- unsigned 8-bit integer.
+ * Unsigned64_t	-- 64-bit unsigned integer
+ * Byte_t	-- unsigned 8-bit integer
  * Word_t	-- unsigned integer that is large enough to hold an ML value.
  * Int_t	-- signed integer that is large enough to hold an ML value.
  * Addr_t	-- an unsigned integer that is large enough to hold an address.
@@ -42,6 +56,8 @@
 #define PAIR_SZW	2
 /* the number of Word_t's per special object */
 #define SPECIAL_SZW	2
+/* the number of Word_t's per 64-bit word */
+#define WORD64_SZW	(8 / WORD_SZB)
 
 /* convert a number of bytes to an even number of words */
 #define BYTES_TO_WORDS(N)	(((N)+(WORD_SZB-1)) >> LOG_BYTES_PER_WORD)
@@ -49,8 +65,8 @@
 /* convert a number of doubles to an even number of words */
 #define DOUBLES_TO_WORDS(N)	((N) * REALD_SZW)
 
-/* on 32-bit machines it is useful to align doubles on 8-byte boundries */
-#ifndef SIZES_C64_ML64
+/* when ML values are 32-bits, it is useful to align doubles on 8-byte boundries */
+#ifndef SIZE_64
 #  define ALIGN_REALDS
 #endif
 
@@ -59,7 +75,13 @@
 
 #include <stdlib.h>
 
+#ifdef OPSYS_WIN32
+typedef long off_t;	/* Windows does not define a file offset type */
+#endif
+
 #define PVT	static
+
+#define STATIC_INLINE	static inline
 
 typedef Int32_t bool_t;
 #ifndef TRUE		/* Some systems already define TRUE and FALSE */
@@ -78,24 +100,23 @@ typedef Int32_t status_t;
 #ifdef ASSERT_ON
 extern void AssertFail (const char *a, const char *file, int line);
 /* #define ASSERT(A)	((A) ? ((void)0) : AssertFail(#A, __FILE__, __LINE__)) */
-#define ASSERT(A)	{ if (!(A)) AssertFail(#A, __FILE__, __LINE__); }
+#define ASSERT(A)	do { if (!(A)) AssertFail(#A, __FILE__, __LINE__); } while(0)
 #else
-#define ASSERT(A)	{ }
+#define ASSERT(A)	do { } while(0)
 #endif
 
 /* Convert a bigendian 32-bit quantity into the host machine's representation. */
 #if defined(BYTE_ORDER_BIG)
-#  define BIGENDIAN_TO_HOST(x)	(x)
+#  define BIGENDIAN_TO_HOST32(x)	(x)
 #elif defined(BYTE_ORDER_LITTLE)
-   extern Unsigned32_t SwapBytes (Unsigned32_t x);
-#  define BIGENDIAN_TO_HOST(x)	SwapBytes(x)
+   extern Unsigned32_t SwapBytes32 (Unsigned32_t x);
+#  define BIGENDIAN_TO_HOST32(x)	SwapBytes32(x)
 #else
 #  error must define endianess
 #endif
 
 /* round i up to the nearest multiple of n, where n is a power of 2 */
 #define ROUNDUP(i, n)		(((i)+((n)-1)) & ~((n)-1))
-
 
 /* extract the bitfield of width WID starting at position POS from I */
 #define XBITFIELD(I,POS,WID)		(((I) >> (POS)) & ((1<<(WID))-1))
@@ -113,14 +134,20 @@ extern void AssertFail (const char *a, const char *file, int line);
 /* clear memory */
 #define CLEAR_MEM(m, sz)	(memset((m), 0, (sz)))
 
-/* The size of a page in the BIBOP memory map (in bytes) */
-#define BIBOP_PAGE_SZB		((Addr_t)(64*ONE_K))
+/* The size of a page in the BIBOP memory map (in bytes).  Note that this
+ * must agree with the size defined in `runtime/gc/bibop.h`.
+ */
+#ifdef SIZE_64
+#define BIBOP_PAGE_SZB		(256*ONE_K)
+#else /* SIZE_32 */
+#define BIBOP_PAGE_SZB		(64*ONE_K)
+#endif
 #define RND_MEMOBJ_SZB(SZ)	ROUNDUP(SZ,BIBOP_PAGE_SZB)
 
 /** C types used in the run-time system **/
 #ifdef SIZES_C64_ML32
 typedef Unsigned32_t ml_val_t;
-#else
+#else /* ML values and pointers have the same size */
 typedef struct { Word_t v[1]; } ml_object_t; /* something for an ml_val_t to point to */
 typedef ml_object_t *ml_val_t;
 #endif
@@ -193,6 +220,12 @@ extern bool_t	UnlimitedHeap;
 /* The table of virtual processor ML states */
 extern vproc_state_t	*VProc[];
 extern int		NumVProcs;
+
+#ifdef NDEBUG
+#  define STATIC_INLINE	static
+#else
+#  define STATIC_INLINE static inline
+#endif
 
 #endif /* !_ASM_ */
 

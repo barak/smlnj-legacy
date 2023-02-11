@@ -1,5 +1,5 @@
 (* pplty.sml
- * 
+ *
  * (c) 2006 SML/NJ Fellowship
  *
  * Pretty Printer for PLambda types using the new SMLNJ-lib new pretty printer
@@ -12,46 +12,44 @@ sig
   val dtPrintNames : bool ref
   val printIND : bool ref
 
-  val ppList : PrettyPrintNew.stream -> 
-               {sep: string, pp : PrettyPrintNew.stream -> 'a -> unit} ->
+  val ppList : PrettyPrint.stream ->
+               {sep: string, pp : PrettyPrint.stream -> 'a -> unit} ->
                'a list -> unit
-  val ppTKind : int -> PrettyPrintNew.stream -> Lty.tkind -> unit
-  val ppTyc : int -> PrettyPrintNew.stream -> Lty.tyc -> unit
-  val ppLty : int -> PrettyPrintNew.stream -> Lty.lty -> unit
+  val ppTKind : int -> PrettyPrint.stream -> Lty.tkind -> unit
+  val ppTyc : int -> PrettyPrint.stream -> Lty.tyc -> unit
+  val ppLty : int -> PrettyPrint.stream -> Lty.lty -> unit
 end
 
 structure PPLty (* : PPLTY *) =
 struct
 
-local 
+local
     structure PT = PrimTyc
-    structure PP = PrettyPrintNew
-    open PPUtilNew
+    structure PP = PrettyPrint
+    open PPUtil
 in
 
 val dtPrintNames : bool ref = ref true
 val printIND : bool ref = ref false
 
 fun ppSeq ppstrm {sep: string, pp : PP.stream -> 'a -> unit} (list: 'a list) =
-    let val {openHOVBox, closeBox, pps, ...} = en_pp ppstrm
-     in	ppSequence ppstrm
-	   {sep = fn ppstrm => (PP.string ppstrm sep;
-			        PP.break ppstrm {nsp=1, offset=0}),
-	    style = INCONSISTENT,
-            pr = pp}
-           list
-    end (* ppSeq *)
+    ppSequence ppstrm
+      {sep = fn ppstrm => (PP.string ppstrm sep;
+			   PP.break ppstrm {nsp=1, offset=0}),
+       style = INCONSISTENT,
+       pr = pp}
+      list
 
 fun ppList ppstrm {sep: string, pp : PP.stream -> 'a -> unit} (list: 'a list) =
     ppClosedSequence ppstrm
       {front = fn ppstrm => (PP.string ppstrm "["),
        back = fn ppstrm => (PP.string ppstrm "]"),
-       sep = fn ppstrm => (PP.string ppstrm sep),
+       sep = PPUtil.sepWithCut sep,
        style = INCONSISTENT,
        pr = pp}
       list
 
-(* ppTKind : tkind -> unit 
+(* ppTKind : tkind -> unit
  * Print a hashconsed representation of the kind *)
 fun ppTKind pd ppstrm (tk : Lty.tkind) =
     if pd < 1 then pps ppstrm "<tk>" else
@@ -60,9 +58,9 @@ fun ppTKind pd ppstrm (tk : Lty.tkind) =
 	val ppList' = ppList ppstrm
 	fun ppTKindI(Lty.TK_MONO) = pps "M"
 	  | ppTKindI(Lty.TK_BOX) = pps "B"
-	  | ppTKindI(Lty.TK_FUN (argTkinds, resTkind)) = 
-	      (* resTkind may be a TK_SEQ wrapping some tkinds 
-	       * These are produced by Elaborate/modules/instantiate.sml 
+	  | ppTKindI(Lty.TK_FUN (argTkinds, resTkind)) =
+	      (* resTkind may be a TK_SEQ wrapping some tkinds
+	       * These are produced by Elaborate/modules/instantiate.sml
 	       *)
 	     (openHOVBox 1;
 	       pps "(";
@@ -78,7 +76,7 @@ fun ppTKind pd ppstrm (tk : Lty.tkind) =
      in ppTKindI (Lty.tk_outX tk)
     end (* ppTKind *)
 
-fun tycEnvFlatten(tycenv) = 
+fun tycEnvFlatten(tycenv) =
     (case Lty.teDest(tycenv)
        of NONE => []
         | SOME(elem, rest) => elem::tycEnvFlatten(rest))
@@ -102,7 +100,7 @@ fun ppTEBinder pd ppstrm (binder: Lty.teBinder) =
          of Lty.Lamb (level, ks) =>
             (pps "L"; ppi level;
              pps ": ";
-             ppKeFrame (pd-1) ppstrm ks) 
+             ppKeFrame (pd-1) ppstrm ks)
           | Lty.Beta (level, args, ks) =>
             (pps "B"; ppi level; pps "(";
              ppList ppstrm {sep=",", pp=ppTyc (pd-1)} args;
@@ -117,12 +115,12 @@ and ppTyc pd ppstrm (tycon : Lty.tyc) =
     if pd < 1 then pps ppstrm "<tyc>" else
     let val {openHOVBox, openHVBox, closeBox, pps, ppi, break, ...} =
             en_pp ppstrm
-        
+
         (* partially applied versions of functions *)
 	val ppList' : {pp: PP.stream -> 'a -> unit, sep: string}
                       -> 'a list -> unit =
               fn x => ppList ppstrm x
-            (* eta-expand (ppList ppstrm) to avoid value restriction *) 
+            (* eta-expand (ppList ppstrm) to avoid value restriction *)
 
 	val ppTKind' = ppTKind (pd-1) ppstrm
 	val ppTyc' = ppTyc (pd-1) ppstrm
@@ -132,13 +130,13 @@ and ppTyc pd ppstrm (tycon : Lty.tyc) =
 	     (* depth is a deBruijn index set in elabmod.sml/instantiate.sml *)
 	     pps (DebIndex.di_print depth);
 	     pps ",";
-	     (* cnt is computed in instantiate.sml sigToInst or 
+	     (* cnt is computed in instantiate.sml sigToInst or
 	        alternatively may be simply the IBOUND index *)
 	     ppi cnt;
 	     pps ")")
 	  (* Named tyc VAR; is actually an lvar *)
 	  | ppTycI (Lty.TC_NVAR tvar) =
-	    (pps "NTV(v"; ppi tvar; pps ")")
+	    (pps "NTV(v"; pps(LambdaVar.prLvar tvar); pps ")")
 	  | ppTycI (Lty.TC_PRIM primtycon) =
 	    (pps "PRIM(";
 	     pps (PT.pt_print primtycon);
@@ -181,7 +179,7 @@ and ppTyc pd ppstrm (tycon : Lty.tyc) =
 	    (pps "SUM(";
 	     ppList' {sep=",", pp=ppTyc (pd-1)} tycs;
 	     pps ")")
-	    (* TC_FIX is a recursive datatype constructor 
+	    (* TC_FIX is a recursive datatype constructor
 	       from a (mutually-)recursive family *)
 	  | ppTycI (Lty.TC_FIX{family={size,names,gen,params},index}) =
             if !dtPrintNames then pps (Vector.sub(names,index))
@@ -215,7 +213,7 @@ and ppTyc pd ppstrm (tycon : Lty.tyc) =
 	  | ppTycI (Lty.TC_TUPLE(rflag, tycs)) =
 	    (ppClosedSequence ppstrm
                 {front = (fn s => PP.string s "{"),
-                 sep = (fn s => PP.string s ","),
+                 sep = PPUtil.sepWithCut ",",
                  back = (fn s => PP.string s "}"),
                  pr = ppTyc (pd-1),
                  style = INCONSISTENT}
@@ -253,7 +251,7 @@ and ppTyc pd ppstrm (tycon : Lty.tyc) =
 	     break {nsp=1,offset=0};
 	     ppTyc' tyc;
 	     pps ")")
-	  | ppTycI (Lty.TC_CONT tycs) = 
+	  | ppTycI (Lty.TC_CONT tycs) =
 	    (pps "CONT(";
 	     ppList' {sep=", ", pp=ppTyc (pd-1)} tycs;
 	     pps ")")
@@ -300,14 +298,14 @@ fun ppTycEnv pd ppstrm (tycEnv : Lty.tycEnv) =
 	closeBox()
     end (* ppTycEnv *)
 
-	     
+
 fun ppLty pd ppstrm (lty: Lty.lty) =
     if pd < 1 then pps ppstrm "<tyc>" else
-    let val {openHOVBox, openHVBox, closeBox, pps, ppi, break, newline} =
+    let val {openHOVBox, openHVBox, openVBox, closeBox, pps, ppi, break, newline} =
             en_pp ppstrm
 	val ppList' : {pp:PP.stream -> 'a -> unit, sep: string} -> 'a list -> unit =
               fn x => ppList ppstrm x
-	       (* eta-expansion of ppList to avoid value restriction *) 
+	       (* eta-expansion of ppList to avoid value restriction *)
 
 	val ppTKind' = ppTKind (pd-1) ppstrm
 	val ppLty' = ppLty (pd-1) ppstrm
@@ -360,6 +358,6 @@ fun ppLty pd ppstrm (lty: Lty.lty) =
     in ppLtyI (Lty.lt_outX lty)
     end (* ppLty *)
 
-end (* local *)	    
+end (* local *)
 
 end (* structure PPLty *)

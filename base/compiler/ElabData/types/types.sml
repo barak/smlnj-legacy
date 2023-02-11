@@ -1,7 +1,9 @@
 (* types.sml
  *
- * (C) 2001 Lucent Technologies, Bell Labs
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *)
+
 structure Types : TYPES =
 struct
 
@@ -19,55 +21,59 @@ type polysign = bool list
 
 datatype eqprop = YES | NO | IND | OBJ | DATA | ABS | UNDEF
 
-datatype litKind = INT | WORD | REAL | CHAR | STRING 
-(* currently only INT and WORD literal overloading are implemented *)
+type varSource = S.symbol * SourceMap.region (* the "occurrence" of an overloaded identifier *)
+type litSource = IntInf.int * SourceMap.region (* the "occurrence" of an overloaded literal *)
 
-datatype openTvKind 	
-  = META                          (* metavariables: 
+datatype openTvKind
+  = META                          (* metavariables:
                                      depth = infinity for meta-args
                                      depth < infinity for lambda bound *)
   | FLEX of (label * ty) list     (* flex record variables *)
 
-and ovldSource
-  = OVAR of S.symbol * SourceMap.region   (* overloaded variable *)
-  | OLIT of litKind * IntInf.int * SourceMap.region
-     (* overloaded int or word literal *)
-  (* in future, may need to add real, char, string literals as sources *)
-
-and tvKind		  
+and tvKind
   = INSTANTIATED of ty (* instantiation of an OPEN *)
   | OPEN of
      {depth: int, eq: bool, kind: openTvKind}
   | UBOUND of (* explicit type variables *)
      {depth: int, eq: bool, name: S.symbol}
-  | OVLD of (* overloaded operator type scheme variable,
-	     * representing one of a finite set of ground type options *)
-     {sources: ovldSource list,   (* name of overloaded variable or literal value *)
-      options: ty list} (* potential resolution types *)
-  | LBOUND of {depth: int, eq: bool, index: int}
+  | OVLDV of
+    {eq: bool,  (* equality attribute, may be set by unification *)
+     sources: varSource list} (* names and locations of overloaded
+				  variables or literals *)
+     (* used to instantiate overloaded operator type scheme,
+      * representing one of a finite set of possible ground types used as
+      * "indicator" types to resolve the overloading *)
+  | OVLDI of litSource list  (* overloaded integer literal *)
+  | OVLDW of litSource list  (* overloaded word literal *)
+  | LBOUND of {depth: int, index: int, eq: bool}
      (* FLINT-style de Bruijn index for notional "lambda"-bound type variables
       * associated with polymorphic bindings (including val bindings and
       * functor parameter bindings). The depth is depth of type lambda bindings,
-      * (1-based), and the index is the index within a sequence of 
-      * type variables bound at a given binding site. LBOUNDs must carry 
+      * (1-based), and the index is the index within a sequence of
+      * type variables bound at a given binding site. LBOUNDs must carry
       * equality type information for signature matching because the OPENs
-      * are turned into LBOUNDs before equality type information is matched. *)
+      * are turned into LBOUNDs before equality type information is matched.
+      * The "index" is called the "count" in ElabData/basics/debindex.sml. *)
 
-and tycpath (* FLINT!!! *)
-  = TP_VAR of exn   (* exn carries some hidden FLINT data *)
-  | TP_TYC of tycon
-  | TP_FCT of tycpath list * tycpath list
-  | TP_APP of tycpath * tycpath list
-  | TP_SEL of tycpath * int
+(* FLINT!!! -- reconstruct it at translate time (presumed redundant info)? *)
+and tycpath
+    = TP_VAR of
+        { tdepth: DebIndex.depth,
+	  num: int, kind: TKind.tkind }
+    | TP_TYC of tycon
+    | TP_FCT of tycpath list * tycpath list
+    | TP_APP of tycpath * tycpath list
+    | TP_SEL of tycpath * int
 
 and tyckind
-  = PRIMITIVE of int
+  = PRIMITIVE		          (* primitive tycons *)
   | DATATYPE of
      {index: int,
       stamps: ST.stamp vector,
       root : EP.entVar option,    (* the root field used by type spec only *)
       freetycs: tycon list,       (* tycs derived from functor params *)
-      family : dtypeFamily}
+      family : dtypeFamily,
+      stripped : bool}            (* true if datatype has matched a simple type spec *)
   | ABSTRACT of tycon
   | FLEXTYC of tycpath            (* instantiated formal type constructor *)
   | FORMAL                        (* used only inside signatures *)
@@ -76,9 +82,9 @@ and tyckind
 and tycon
   = GENtyc of gtrec
   | DEFtyc of
-      {stamp : ST.stamp, 
-       tyfun : tyfun, 
-       strict: bool list, 
+      {stamp : ST.stamp,
+       tyfun : tyfun,
+       strict: bool list,
        path  : IP.path}
   | PATHtyc of                    (* used only inside signatures *)
       {arity : int,
@@ -90,7 +96,7 @@ and tycon
   | ERRORtyc                      (* for error recovery, and used as a dummy
                                      tycon in ElabMod.extractSig *)
 
-and ty 
+and ty
   = VARty of tyvar
   | IBOUND of int
   | CONty of tycon * ty list
@@ -99,7 +105,7 @@ and ty
   | UNDEFty
   | MARKty of ty * SourceMap.region
 
-and tyfun 
+and tyfun
   = TYFUN of {arity: int, body: ty}
 
 withtype tyvar = tvKind ref
@@ -119,7 +125,7 @@ and dtmember =
      dcons: dconDesc list,
      sign: A.consig}
 
-and dtypeFamily = 
+and dtypeFamily =
   {mkey: ST.stamp,
    members: dtmember vector,
    properties: PropList.holder}
@@ -129,8 +135,8 @@ and stubinfo =
      lib   : bool}
 
 and gtrec =
-    {stamp : ST.stamp, 
-     arity : int, 
+    {stamp : ST.stamp,
+     arity : int,
      eq    : eqprop ref,
      kind  : tyckind,
      path  : IP.path,

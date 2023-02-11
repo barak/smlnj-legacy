@@ -1,6 +1,7 @@
-/* minor-gc.c
+/*! \file minor-gc.c
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * This is the code for doing minor collections (i.e., collecting the
  * allocation arena).
@@ -42,19 +43,19 @@ extern char	*ArenaName[];
 
 /* Check a word for a allocation space reference */
 #ifndef NO_GC_INLINE
-#define MinorGC_CheckWord(bibop, g1, p)	{					\
+#define MinorGC_CheckWord(allocBase, allocSz, g1, p)	{			\
 	ml_val_t	__w = *(p);						\
-	if (isBOXED(__w) && (ADDR_TO_PAGEID(bibop, __w) == AID_NEW))		\
+	if (isBOXED(__w) && (((Addr_t)__w - (allocBase)) < (allocSz))) {	\
 	    *(p) = MinorGC_ForwardObj(g1, __w);					\
+	}									\
     }
 #else
-PVT void MinorGC_CheckWord (bibop_t bibop, gen_t *g1, ml_val_t *p)
+PVT void MinorGC_CheckWord (Addr_t allocBase, Addr_t allocSz, gen_t *g1, ml_val_t *p)
 {
     ml_val_t	w = *(p);
-    if (isBOXED(w)) {
-	aid_t	aid = ADDR_TO_PAGEID(bibop, w);
-	if (aid == AID_NEW)
-	    *(p) = MinorGC_ForwardObj(g1, w);
+    if (isBOXED(w) && (((Addr_t)w - allocBase) < allocSz)) {
+	ASSERT(ADDR_TO_PAGEID(BIBOP, w) == AID_NEW);
+	*(p) = MinorGC_ForwardObj(g1, w);
     }
 }
 #endif
@@ -91,20 +92,25 @@ void MinorGC (ml_state_t *msp, ml_val_t **roots)
   int i;
   SayDebug ("Generation 1 before MinorGC:\n");
   for (i = 0;  i < NUM_ARENAS;  i++) {
-    SayDebug ("  %s: base = %#x, oldTop = %#x, nextw = %#x\n",
+    SayDebug ("  %s: base = %p, oldTop = %p, nextw = %p\n",
       ArenaName[i+1], gen1->arena[i]->tospBase,
       gen1->arena[i]->oldTop, gen1->arena[i]->nextw);
   }
 }
 #endif
 
+#ifdef CHECK_HEAP
+    CheckBIBOP (heap);
+#endif
+
   /* scan the standard roots */
     {
 	ml_val_t	*rp;
-	bibop_t		bibop = BIBOP;
+	Addr_t		allocBase = (Addr_t)heap->allocBase;
+	Addr_t		allocSz = heap->allocSzB;
 
 	while ((rp = *roots++) != NIL(ml_val_t *)) {
-	    MinorGC_CheckWord(bibop, gen1, rp);
+	    MinorGC_CheckWord(allocBase, allocSz, gen1, rp);
 	}
     }
 
@@ -149,7 +155,7 @@ void MinorGC (ml_state_t *msp, ml_val_t **roots)
   int i;
   SayDebug ("Generation 1 after MinorGC:\n");
   for (i = 0;  i < NUM_ARENAS;  i++) {
-    SayDebug ("  %s: base = %#x, oldTop = %#x, nextw = %#x\n",
+    SayDebug ("  %s: base = %p, oldTop = %p, nextw = %p\n",
       ArenaName[i+1], gen1->arena[i]->tospBase,
       gen1->arena[i]->oldTop, gen1->arena[i]->nextw);
   }
@@ -166,15 +172,6 @@ void MinorGC (ml_state_t *msp, ml_val_t **roots)
 	    nbytesCopied += nbytes;
 	    CNTR_INCR(&(heap->numCopied[0][i]), nbytes);
 	}
-
-numBytesAlloc += nbytesAlloc;
-numBytesCopied += nbytesCopied;
-#ifdef XXX
-SayDebug ("Minor GC: %d/%d (%5.2f%%) bytes copied; %d updates\n",
-nbytesCopied, nbytesAlloc,
-(nbytesAlloc ? (double)(100*nbytesCopied)/(double)nbytesAlloc : 0.0),
-numUpdates-nUpdates);
-#endif
     }
 #endif
 
@@ -226,8 +223,12 @@ PVT void MinorGC_ScanStoreList (heap_t *heap, ml_val_t stl)
 		    bigobj_desc_t   *dp;
 		    if (dstGen >= srcGen)
 			continue;
-		    for (i = BIBOP_ADDR_TO_INDEX(w);  !BO_IS_HDR(dstId);  dstId = BIBOP[--i])
-			continue;
+		  /* find the beginning of the region containing the code object */
+		    i = BIBOP_ADDR_TO_INDEX(w);
+		    while (! BO_IS_HDR(dstId)) {
+			--i;
+			dstId = INDEX_TO_PAGEID(bibop, i);
+		    }
 		    region = (bigobj_region_t *)BIBOP_INDEX_TO_ADDR(i);
 		    dp = ADDR_TO_BODESC(region, w);
 		    dstGen = dp->gen;
@@ -268,7 +269,8 @@ PVT void MinorGC_ScanStoreList (heap_t *heap, ml_val_t stl)
  */
 PVT void MinorGC_SweepToSpace (gen_t *gen1)
 {
-    bibop_t	bibop = BIBOP;
+    Addr_t	allocBase = (Addr_t)gen1->heap->allocBase;
+    Addr_t	allocSz = gen1->heap->allocSzB;
     bool_t	swept;
 
 #define MinorGC_SweepToSpArena(indx)	{				\
@@ -278,8 +280,9 @@ PVT void MinorGC_SweepToSpace (gen_t *gen1)
 	if (__p < __ap->nextw) {					\
 	    swept = TRUE;						\
 	    do {							\
-		for (__q = __ap->nextw;  __p < __q;  __p++)		\
-		    MinorGC_CheckWord(bibop, gen1, __p);		\
+		for (__q = __ap->nextw;  __p < __q;  __p++) {		\
+		    MinorGC_CheckWord(allocBase, allocSz, gen1, __p);	\
+		}							\
 	    } while (__q != __ap->nextw);				\
 	    __ap->sweep_nextw = __q;					\
 	}								\
@@ -339,7 +342,8 @@ PVT ml_val_t MinorGC_ForwardObj (gen_t *gen1, ml_val_t v)
 	len = GET_LEN(desc);
 	arena = gen1->arena[ARRAY_INDX];
 	break;
-      case DTAG_raw32:
+/* 64BIT: on 64-bit machines, we can treat DTAG_raw and DTAG_raw64 the same */
+      case DTAG_raw:
 	len = GET_LEN(desc);
 	arena = gen1->arena[STRING_INDX];
 	break;
@@ -362,7 +366,7 @@ PVT ml_val_t MinorGC_ForwardObj (gen_t *gen1, ml_val_t v)
       case DTAG_forward:
 	return PTR_CtoML(FOLLOW_FWDOBJ(obj));
       default:
-	Die ("bad object tag %d, obj = %#x, desc = %#x", GET_TAG(desc), obj, desc);
+	Die ("bad object tag %d, obj = %p, desc = %p", GET_TAG(desc), obj, desc);
     } /* end of switch */
 
   /* Allocate and initialize a to-space copy of the object */
@@ -402,7 +406,7 @@ PVT ml_val_t MinorGC_FwdSpecial (gen_t *gen1, ml_val_t *obj, ml_val_t desc)
       case SPCL_weak: {
 	    ml_val_t	v = *obj;
 #ifdef DEBUG_WEAK_PTRS
-SayDebug ("MinorGC: weak [%#x ==> %#x] --> %#x", obj, new_obj+1, v);
+SayDebug ("MinorGC: weak [%p ==> %p] --> %p", obj, new_obj+1, v);
 #endif
 	    if (! isBOXED(v)) {
 #ifdef DEBUG_WEAK_PTRS
@@ -425,7 +429,7 @@ SayDebug (" unboxed\n");
 		       * it never sees to-space pointers during sweeping.
 		       */
 #ifdef DEBUG_WEAK_PTRS
-SayDebug (" already forwarded to %#x\n", PTR_CtoML(FOLLOW_FWDOBJ(vp)));
+SayDebug (" already forwarded to %p\n", PTR_CtoML(FOLLOW_FWDOBJ(vp)));
 #endif
 			*new_obj++ = DESC_weak;
 			*new_obj = v;
@@ -457,7 +461,7 @@ SayDebug (" old object\n");
 	} break;
       case SPCL_null_weak: /* shouldn't happen in the allocation arena */
       default:
-	Die ("strange/unexpected special object @ %#x; desc = %#x\n", obj, desc);
+	Die ("strange/unexpected special object @ %p; desc = %p\n", obj, desc);
     } /* end of switch */
 
     obj[-1] = DESC_forwarded;

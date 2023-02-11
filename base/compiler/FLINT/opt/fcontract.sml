@@ -1,8 +1,6 @@
 (* fcontract.sml
  *
- * copyright 1998 YALE FLINT PROJECT
- *
- * COPYRIGHT (c) 2015 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
  * All rights reserved.
  *
  * Author: monnier@cs.yale.edu
@@ -12,7 +10,7 @@ signature FCONTRACT =
   sig
 
     type options = {etaSplit : bool, tfnInline : bool}
-    
+
     (* needs Collect to be setup properly *)
     val contract : options -> FLINT.prog -> FLINT.prog
 
@@ -186,8 +184,8 @@ structure FContract :> FCONTRACT =
   struct
 
     structure F  = FLINT
-    structure M  = FLINTIntMap
-    structure S  = IntRedBlackSet
+    structure M  = LambdaVar.Map
+    structure S  = LambdaVar.Set
     structure C  = Collect
     structure O  = Option
     structure DI = DebIndex
@@ -196,7 +194,7 @@ structure FContract :> FCONTRACT =
     structure LT = LtyExtern
     structure LK = LtyKernel
     structure OU = OptUtils
-    structure PO = PrimOp
+    structure PO = Primop
     structure CTRL = FLINT_Control
 
     fun say s = (Control_Print.say s; Control_Print.flush())
@@ -208,6 +206,8 @@ structure FContract :> FCONTRACT =
 
     val cplv = LambdaVar.dupLvar
     val mklv = LambdaVar.mkLvar
+
+    fun tagInt n = F.INT{ival = IntInf.fromInt n, ty = Target.defaultIntSz}
 
     type options = {etaSplit : bool, tfnInline : bool}
 
@@ -326,17 +326,14 @@ structure FContract :> FCONTRACT =
 			    (* handle x =>
 			    (say("while in FContract.used "^(C.LVarString lv)^"\n");
 			     raise x) *)
-    
-	  fun eqConV (F.INTcon i1,	F.INT i2)	= i1 = i2
-	    | eqConV (F.INT32con i1,	F.INT32 i2)	= i1 = i2
-	    | eqConV (F.WORDcon i1,	F.WORD i2)	= i1 = i2
-	    | eqConV (F.WORD32con i1,	F.WORD32 i2)	= i1 = i2
-	    | eqConV (F.REALcon r1,	F.REAL r2)	= r1 = r2
+
+	  fun eqConV (F.INTcon i1,	F.INT i2)	= (#ival i1 = #ival i2)
+	    | eqConV (F.WORDcon i1,	F.WORD i2)	= (#ival i1 = #ival i2)
 	    | eqConV (F.STRINGcon s1,	F.STRING s2)	= s1 = s2
-	    | eqConV (con,v) = bugval("unexpected comparison with val", v)
+	    | eqConV (con, v) = bugval("unexpected comparison with val", v)
 
 	  exception Lookup
-	  fun lookup m lv = (case M.find(m,lv) 
+	  fun lookup m lv = (case M.find(m,lv)
 		 of NONE => (
 		      say "\nlooking up unbound ";
 		      say (!PP.LVarString lv);
@@ -350,7 +347,7 @@ structure FContract :> FCONTRACT =
 		  | Val v => v
 		(*esac*))
 
-	  fun val2sval m (F.VAR ov) = 
+	  fun val2sval m (F.VAR ov) =
 	      ((lookup m ov) (* handle x =>
 	       (say("val2sval "^(C.LVarString ov)^"\n"); raise x) *) )
 	    | val2sval m v = Val v
@@ -374,7 +371,7 @@ structure FContract :> FCONTRACT =
 		     | Fun (lv,le,args,_,_) =>
 		       C.unuselexp undertake
 				   (F.LET(map #1 args,
-					  F.RET (map (fn _ => F.INT 0) args),
+					  F.RET (map (fn _ => tagInt 0) args),
 					  le))
 		     | TFun{1=lv,2=le,...} =>
 		       C.unuselexp undertake le
@@ -383,18 +380,18 @@ structure FContract :> FCONTRACT =
 		     (* decon's are implicit so we can't get rid of them *)
 		     | Decon _ => ()
 		end
-		    handle 
+		    handle
 			Lookup =>
 			  (say("Unable to undertake "^(C.LVarString lv)^"\n"))
 		      | x =>
-			  (say("while undertaking "^(C.LVarString lv)^"\n"); 
+			  (say("while undertaking "^(C.LVarString lv)^"\n");
 			   raise x)
 
 	  and unusesval m sv = unuseval m (sval2val sv)
 	  and unuseval m (F.VAR lv) =
 	      if (C.unuse false (C.get lv)) then undertake m lv else ()
 	    | unuseval f _ = ()
-	  fun unusecall m lv = 
+	  fun unusecall m lv =
 	      if (C.unuse true (C.get lv)) then undertake m lv else ()
 
 	  fun addbind (m,lv,sv) = M.insert(m, lv, sv)
@@ -444,8 +441,10 @@ structure FContract :> FCONTRACT =
 			    fun cbody () = let
 				  val nm = (foldl (fn (lv,m) => addbind(m, lv, Var(lv, NONE))) nm lvs)
 				  in case loop nm body cont
-				      of F.RET vs => if vs = (map F.VAR lvs) then nle
-						     else F.LET(lvs, nle, F.RET vs)
+				      of F.RET vs =>
+					  if ListPair.allEq (fn (v, lv) => FU.sameValue(v, F.VAR lv)) (vs, lvs)
+					    then nle
+					    else F.LET(lvs, nle, F.RET vs)
 				       | nbody => F.LET(lvs, nle, nbody)
 				  end
 			    in case nle
@@ -498,11 +497,11 @@ structure FContract :> FCONTRACT =
 			     cassoc(lv, body, fn x => x)
 			   | ([lv],(F.BRANCH _ | F.SWITCH _),F.LET(lvs,body as F.SWITCH _,rest)) =>
 			     cassoc(lv, body, fn le => F.LET(lvs,le,rest))
-			   | _ => 
+			   | _ =>
 			     loop m le fcbody
 		      end (* fcLet *)
 
-		fun fcFix (fs, le) = let 
+		fun fcFix (fs, le) = let
 		    (* merge actual arguments to extract the constant subpart *)
 		      fun merge_actuals ((lv,lty),[],m) = addbind(m, lv, Var(lv, SOME lty))
 			| merge_actuals ((lv,lty),a::bs,m) = addbind(m, lv, Var(lv, SOME lty))
@@ -525,7 +524,7 @@ structure FContract :> FCONTRACT =
 					     in substitute(m, lv, sv, v)
 					     end
 					 else (click "O" c_outofscope;
-			       
+
 					       addbind(m, lv, Var(lv, SOME lty)))
 				       | v => substitute(m, lv, a, v))
 			    in f bs
@@ -575,7 +574,7 @@ structure FContract :> FCONTRACT =
 				   (* before say (concat["Exiting ", C.LVarString f, "\n"]) *)
 				   end
 			    end (* fcFun *)
-		  
+
 		    (* check for eta redex *)
 		      fun fcEta (fdec as (f,F.APP(F.VAR g,vs),args,_,_), (m,fs,hs)) =
 			    if List.length args = List.length vs andalso
@@ -606,22 +605,23 @@ structure FContract :> FCONTRACT =
 					* to f, we have to be careful to update its
 					* binding to not refer to f any more since f
 					* will disappear *)
-				       val m = foldl (fn (h,m) =>
-							 if sval2val(lookup m h) = F.VAR f
-							 then addbind(m, h, svg) else m)
-						     m hs
-				   in
+				      fun add (h, m) =
+					    if FU.sameValue(sval2val(lookup m h), F.VAR f)
+					      then addbind(m, h, svg)
+					      else m
+				      val m = foldl add m hs
+				      in
 				       (* I could almost reuse `substitute' but the
 					* unuse in substitute assumes the val is escaping *)
-				       click_eta();
-				       C.transfer(f, g);
-				       unusecall m g;
-				       (addbind(m, f, svg), fs, f::hs)
-				   end
+				        click_eta();
+				        C.transfer(f, g);
+				        unusecall m g;
+				        (addbind(m, f, svg), fs, f::hs)
+				      end
 				end
 			    else (m, fdec::fs, hs)
 			| fcEta (fdec,(m,fs,hs)) = (m,fdec::fs,hs)
-				      
+
 		    (* add wrapper for various purposes *)
 		      fun wrap (f as (fk as {isrec,inline,...},g,args,body):F.fundec, fs) =
 			    let val gi = C.get g
@@ -633,7 +633,7 @@ structure FContract :> FCONTRACT =
 				      val nargs' = map #1 (filter nargs)
 				      val appargs = (map F.VAR nargs')
 				      val nf = (nfk, g, nargs, F.APP(F.VAR ng, appargs))
-				      val nf' = (nfk', ng, args', body)    
+				      val nf' = (nfk', ng, args', body)
 				      val ngi = C.new (SOME(map #1 args')) ng
 				      in
 					C.ireset gi;
@@ -657,12 +657,12 @@ structure FContract :> FCONTRACT =
 					if not (List.all (fn x => x) used) then
 					    (click_dropargs();
 					     dropargs (fn xs => OU.filter used xs))
-			      
+
 					(* eta-split: add a wrapper for escaping uses *)
 					else if etaSplit andalso C.escaping gi then
 					    (* like dropargs but keeping all args *)
 					    (click_etasplit(); dropargs (fn x => x))
-			  
+
 					else f::fs
 				       else f::fs
 				    end
@@ -882,7 +882,7 @@ structure FContract :> FCONTRACT =
 				C.unuselexp (undertake (addbind(m,lv,Var(lv,NONE)))) le
 			    fun killarm (F.DATAcon(_,_,lv),le) = kill lv le
 			      | killarm _ = buglexp("bad arm in switch(con)", le)
-				   
+
 			    fun carm ((F.DATAcon(dc2,tycs2,lv),le)::tl) =
 				(* sometimes lty1 <> lty2 :-( so this doesn't work:
 				 *  FU.dcon_eq(dc1, dc2) andalso tycs_eq(tycs1,tycs2) *)
@@ -910,7 +910,7 @@ structure FContract :> FCONTRACT =
 			      | carm [] = loop m (O.valOf def) cont
 			    in click_switch(); carm arms
 			    end
-		
+
 		      fun fcsDefault (sv,lvc) = (case (arms,def)
 			     of ([(F.DATAcon(dc,tycs,lv),le)],NONE) =>
 				(* this is a mere DECON, so we can push the let binding
@@ -929,7 +929,7 @@ structure FContract :> FCONTRACT =
 				end
 			      | (([(_,le)],NONE) | ([],SOME le)) =>
 				(* This should never happen, but we can optimize it away *)
-				(unuseval m (sval2val sv); loop m le cont) 
+				(unuseval m (sval2val sv); loop m le cont)
 			      | _ =>
 				let fun carm (F.DATAcon(dc,tycs,lv),le) =
 					let val ndc = cdcon dc
@@ -993,8 +993,10 @@ structure FContract :> FCONTRACT =
 		      in if C.dead lvi then (click_deadval(); loop m le cont) else
 			  let fun g (Select(_,sv,0)::ss) =
 				  let fun g' (n,Select(_,sv',i)::ss) =
-					  if n = i andalso (sval2val sv) = (sval2val sv')
-					  then g'(n+1,ss) else NONE
+					  if n = i
+					  andalso FU.sameValue(sval2val sv, sval2val sv')
+					    then g'(n+1,ss)
+					    else NONE
 					| g' (n,[]) =
 					  (case sval2lty sv
 					    of SOME lty =>
@@ -1016,7 +1018,7 @@ structure FContract :> FCONTRACT =
 			      val svs = map (val2sval m) vs
 			  in case g svs
 			      of SOME sv => (click_record();
-					     loop (substitute(m, lv, sv, F.INT 0)) le cont
+					     loop (substitute(m, lv, sv, tagInt 0)) le cont
 						  before app (unuseval m) vs)
 			       | _ =>
 				 let val nm = addbind(m, lv, Record(lv, svs))
@@ -1040,7 +1042,7 @@ structure FContract :> FCONTRACT =
 			       let val nm = addbind (m, lv, Select(lv, sv, i))
 				   val nle = loop nm le cont
 			       in if C.dead lvi then nle
-				  else F.SELECT(sval2val sv, i, lv, nle) 
+				  else F.SELECT(sval2val sv, i, lv, nle)
 			       end)
 		      end (* fcSelect *)
 
@@ -1054,7 +1056,7 @@ structure FContract :> FCONTRACT =
 
 		fun fcPrimop (po,vs,lv,le) = let
 		      val lvi = C.get lv
-		      val pure = not(PO.effect(#2 po))
+		      val pure = not(PrimopUtil.effect(#2 po))
 		      in if pure andalso C.dead lvi then (click_deadval();loop m le cont) else
 			  let val nvs = map substval vs
 			      val npo = cpo po
@@ -1083,12 +1085,12 @@ structure FContract :> FCONTRACT =
 		     | F.BRANCH x => fcBranch x
 		     | F.PRIMOP x => fcPrimop x
 		end (* fcexp *)
-		 
+
 	  in
 	  (*  C.collect fdec; *)
 	    case fcexp S.empty M.empty (F.FIX([fdec], F.RET[F.VAR f])) #2
 	     of F.FIX([fdec], F.RET[F.VAR f]) => fdec
 	      | fdec => bug "invalid return fundec"
 	  end (* contract *)
-	    
+
   end (* FContract *)

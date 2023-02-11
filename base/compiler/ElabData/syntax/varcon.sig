@@ -1,32 +1,33 @@
 (* varcon.sig
  *
- * (C) 2001 Lucent Technologies, Bell Labs
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *)
-signature VARCON = 
-sig
 
-  datatype var
-    = VALvar of				(* ordinary variables *)
-        {path : SymPath.path,
-	 typ : Types.ty ref,
-	 btvs : Types.tyvar list ref,
-         access : Access.access,
-         prim   : PrimOpId.primId}
-    | OVLDvar of			(* overloaded identifier *)
-        {name : Symbol.symbol,
-	 options: {indicator: Types.ty, variant: var} list,
-	 scheme: Types.tyfun}
-    | ERRORvar
+signature VARCON =
+  sig
 
-  type datacon = Types.datacon
+    datatype var
+      = VALvar of	                (* ordinary variables *)
+	  {path : SymPath.path,
+	   typ : Types.ty ref,
+	   btvs : Types.tyvar list ref,
+	   access : Access.access,
+	   prim   : PrimopId.prim_id}
+      | OVLDvar of       	        (* overloaded identifier *)
+	{name : Symbol.symbol,          (* name of the overloaded operator *)
+	 variants : var list}           (* variant variables (VALvars) *)
+      | ERRORvar
 
-  datatype value
-    = VAL of var
-    | CON of datacon
+    type datacon = Types.datacon
 
-  val mkVALvar : Symbol.symbol * Access.access ->  var
+    datatype value
+      = VAL of var
+      | CON of datacon
 
-  val bogusCON : datacon
-  val bogusEXN : datacon
+    val mkVALvar : Symbol.symbol * Access.access ->  var
 
-end (* signature VARCON *)
+    val bogusCON : datacon
+    val bogusEXN : datacon
+
+  end (* signature VARCON *)

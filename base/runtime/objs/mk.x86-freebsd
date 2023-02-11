@@ -1,23 +1,25 @@
 # mk.x86-freebsd
 #
-# makefile for "Free BSD", which is a BSD 4.4 clone.
+# makefile for "Free BSD" on the x86 architecture, which is a BSD 4.4 clone.
 #
 
 SHELL =		/bin/sh
 
-MAKE =		gmake
+MAKE =		make
 
-ARFLAGS =	Trcv
-CC =		gcc -ansi
-CFLAGS =	-O2
-CPP =		gcc -x assembler-with-cpp -E -P 
+AS =		as --32
+CC =		cc -std=gnu99
+CFLAGS =	-O2 -m32
+CPP =		cc -x assembler-with-cpp -E -P
 #CPP =		/usr/bin/cpp -P
+ARFLAGS =	Trcv
 
 XOBJS =
 XLIBS =		../c-libs/dl/libunix-dynload.a
-LD_LIBS =
+LD_LIBS =	-lm
 BASE_DEFS =
-DEFS =		$(BASE_DEFS) -DHOST_X86 -DTARGET_X86 -DOPSYS_UNIX -DOPSYS_FREEBSD -DDLOPEN
+DEFS =		$(BASE_DEFS) -DARCH_X86 -DDSIZE_32 -DOPSYS_UNIX -DOPSYS_FREEBSD \
+		-DGNU_ASSEMBLER -DDLOPEN -DINDIRECT_CFUNC
 TARGET =	X86
 VERSION =	v-x86-freebsd
 RUNTIME =	run.x86-freebsd
@@ -25,6 +27,6 @@ RUNTIME_SO =	run.x86-freebsd.so
 RUNTIME_A =	run.x86-freebsd.a
 
 all:
-	($(MAKE) RUNTIME="$(RUNTIME)" VERSION="$(VERSION)" MAKE="$(MAKE)" CC="$(CC)" CFLAGS="$(CFLAGS)" CPP="$(CPP)" TARGET=$(TARGET) DEFS="$(DEFS)" XOBJS="$(XOBJS)" XLIBS="$(XLIBS)" LD_LIBS="$(LD_LIBS)" $(RUNTIME))
-	($(MAKE) RUNTIME="$(RUNTIME_SO)" VERSION="$(VERSION)" MAKE="$(MAKE)" CC="$(CC)" CFLAGS="$(CFLAGS)" CPP="$(CPP)" TARGET=$(TARGET) DEFS="$(DEFS)" XOBJS="$(XOBJS)" XLIBS="$(XLIBS)" LD_LIBS="$(LD_LIBS)" LDFLAGS="-shared" $(RUNTIME_SO))
-	($(MAKE) RUNTIME_A="$(RUNTIME_A)" VERSION="$(VERSION)" MAKE="$(MAKE)" CC="$(CC)" CFLAGS="$(CFLAGS)" CPP="$(CPP)" TARGET=$(TARGET) DEFS="$(DEFS)" XOBJS="$(XOBJS)" XLIBS="$(XLIBS)" LD_LIBS="$(LD_LIBS)" LDFLAGS="" $(RUNTIME_A))
+	($(MAKE) RUNTIME="$(RUNTIME)" VERSION="$(VERSION)" MAKE="$(MAKE)" AS="$(AS)" CC="$(CC)" CFLAGS="$(CFLAGS)" CPP="$(CPP)" TARGET=$(TARGET) DEFS="$(DEFS)" XOBJS="$(XOBJS)" XLIBS="$(XLIBS)" LD_LIBS="$(LD_LIBS)" $(RUNTIME))
+#	($(MAKE) RUNTIME="$(RUNTIME_SO)" VERSION="$(VERSION)" MAKE="$(MAKE)" AS="$(AS)" CC="$(CC)" CFLAGS="$(CFLAGS)" CPP="$(CPP)" TARGET=$(TARGET) DEFS="$(DEFS)" XOBJS="$(XOBJS)" XLIBS="$(XLIBS)" LD_LIBS="$(LD_LIBS)" LDFLAGS="-shared" $(RUNTIME_SO))
+#	($(MAKE) RUNTIME_A="$(RUNTIME_A)" VERSION="$(VERSION)" MAKE="$(MAKE)" AS="$(AS)" CC="$(CC)" CFLAGS="$(CFLAGS)" CPP="$(CPP)" TARGET=$(TARGET) DEFS="$(DEFS)" XOBJS="$(XOBJS)" XLIBS="$(XLIBS)" LD_LIBS="$(LD_LIBS)" LDFLAGS="" $(RUNTIME_A))

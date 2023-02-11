@@ -1,4 +1,8 @@
-(*
+(* cps-c-calls.sml
+ *
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
  * This module now contains all the code which handles C-Calls.
  * I've moved Matthias' c-call code from MLRiscGen into here and added
  * my own hacks for handling reeentrant C calls.
@@ -6,22 +10,22 @@
  * On the implementation of reentrant C calls, or why it is a hack
  * ---------------------------------------------------------------
  *
- *   For reentrant C call, we need a way of flushing/restore the ML state 
+ *   For reentrant C call, we need a way of flushing/restore the ML state
  * to/from the msp_state data structure and preserving all live values.
  * Determining the set of live values is a bit tricky and I handle it
  * by doing a liveness analysis.  Ideally, the cps phases should be able
- * to do the liveness part for us, but after spending weeks 
+ * to do the liveness part for us, but after spending weeks
  * looking at the source and asking questions with no one answering,
- * I've decided that I've had enough: I need this working NOW 
- * so I going to do it the stupid way.  At least this way it is 
+ * I've decided that I've had enough: I need this working NOW
+ * so I going to do it the stupid way.  At least this way it is
  * completely self-contained and doesn't involve any cps hacking.
  * If in the future someone gets the right info it should be redone in the
  * right way.
- * 
+ *
  *  The code for saving/restore live values is quite similar to what
  * the InvokeGC stuff is doing, but I'm deathly afraid of merging it into the
- * InvokeGC code, because the GC handling code had taken me a long time to 
- * get right.  It is an angry slumbering power which will visit its 
+ * InvokeGC code, because the GC handling code had taken me a long time to
+ * get right.  It is an angry slumbering power which will visit its
  * horrible wraths on all who dares to disturb it.
  *
  * On saving/restoring ML state
@@ -30,30 +34,30 @@
  * The ml state must be threaded into a reentrant C call because the C call
  * may invoke ML code internally before it returns.   Saving the state means
  * two things:
- *   1. Making sure all the live values are properly saved and restored 
- *      (and properly tagged so that the gc can find them) 
+ *   1. Making sure all the live values are properly saved and restored
+ *      (and properly tagged so that the gc can find them)
  *   2. Making sure dedicated register such as ml_allocPtr are properly
  *      single threaded through the calls.
  *
  * The ml state is defined in the runtime struct ml_state.
  * For our purposes, the relevant fields are these:
- *                              
+ *
  *  ml_val_t    *ml_allocPtr;
  *  ml_val_t    *ml_limitPtr;
  *  ml_val_t    ml_arg;
  *  ml_val_t    ml_cont;
  *  ml_val_t    ml_closure;
  *  ml_val_t    ml_linkReg;
- *  ml_val_t    ml_pc;              
+ *  ml_val_t    ml_pc;
  *  ml_val_t    ml_exnCont;
  *  ml_val_t    ml_varReg;
  *  ml_val_t    ml_calleeSave[CALLEESAVE];
- *  ml_val_t    ml_storePtr;    
- *  ml_val_t    ml_faultExn;    
- *  Word_t      ml_faultPC;    
- *  ml_val_t    *ml_realLimit;     
- *  bool_t      ml_pollPending;     
- *  bool_t      ml_inPollHandler;    
+ *  ml_val_t    ml_storePtr;
+ *  ml_val_t    ml_faultExn;
+ *  Word_t      ml_faultPC;
+ *  ml_val_t    *ml_realLimit;
+ *  bool_t      ml_pollPending;
+ *  bool_t      ml_inPollHandler;
  *
  * To make a c-call reentrant we flush the following registers back into
  * the ml_state record:
@@ -67,59 +71,55 @@
  * All all untagged values are packed into a single record
  *     ml_arg       --
  *     ml_cont      --
- * 
+ *
  *
  * --- Allen
  *)
-functor CPSCCalls
-   (
+functor CPSCCalls (
     structure MS         : MACH_SPEC
     structure C          : CPSREGS where T.Region=CPSRegions
     structure Cells      : CELLS
     structure MLTreeComp : MLTREECOMP where TS.T = C.T
     structure CCalls     : C_CALLS where T = C.T
-   ) : sig 
-         val c_call : 
-              {stream   : MLTreeComp.mltreeStream, (* mltree stream *)
-               regbind  : CPS.value -> C.T.rexp,   (* lookup integer lvar *)
-               fregbind : CPS.value -> C.T.fexp,   (* lookup fp lvar *)
-               typmap   : CPS.lvar -> CPS.cty,     (* lvar -> cty *)
-               vfp      : bool,                    (* virtual frame pointer *)
-               hp       : int                      (* heap pointer *)
-              } -> 
-                (* arguments to RCC *)
-              CPS.rcc_kind * string * CTypes.c_proto * CPS.value list * 
-              (CPS.lvar * CPS.cty) list * CPS.cexp ->
-                (* return *)
-              { result : C.T.mlrisc list,  (* result(s) *)
-                hp     : int                 (* heap pointer *)
-              }
-       end =
-struct
+   ) : sig
+
+    val c_call : {
+	  stream   : MLTreeComp.mltreeStream, (* mltree stream *)
+	  regbind  : CPS.value -> C.T.rexp,   (* lookup integer lvar *)
+	  fregbind : CPS.value -> C.T.fexp,   (* lookup fp lvar *)
+	  typmap   : CPS.lvar -> CPS.cty,     (* lvar -> cty *)
+	  vfp      : bool,                    (* virtual frame pointer *)
+	  hp       : int                      (* heap pointer *)
+	} ->
+	   (* arguments to RCC *)
+	 bool * string * CTypes.c_proto * CPS.value list *
+	 (CPS.lvar * CPS.cty) list * CPS.cexp ->
+	   (* return *)
+	 { result : C.T.mlrisc list,  (* result(s) *)
+	   hp     : int                 (* heap pointer *)
+	 }
+
+  end = struct
 
    structure TS  = MLTreeComp.TS  (* Streams *)
    structure M   = TS.T           (* MLRISC trees *)
    structure CPS = CPS            (* CPS expressions *)
    structure R   = M.Region       (* Aliasing info *)
-   structure Set = IntRedBlackSet (* typed set for liveness *)
+   structure Set = LambdaVar.Set  (* typed set for liveness *)
    structure D   = MS.ObjDesc     (* ML Object Descriptors *)
-   structure CB  = CellsBasis 
-
+   structure CB  = CellsBasis
 
    fun error msg = MLRiscErrorMsg.error("CPSCalls", msg)
 
-   (*
-    * Needs to change these when we put in 64-bit support
-    *) 
-   val ity = 32  (* size of ml integer width *)
-   val pty = 32  (* size of ml pointer *)
-   val addrTy = C.addressWidth
+   val ity = MS.wordBitWidth		(* size of ml integer width *)
+   val pty = MS.wordBitWidth		(* size of ml pointer *)
+   val addrTy = MS.addressBitWidth	(* size of C pointer *)
 
    (*
     * Utilities
     *)
    (*
-    * A CPS register may be implemented as a physical 
+    * A CPS register may be implemented as a physical
     * register or a memory location.  The function assign moves a
     * value v into a register or a memory location.
     *)
@@ -131,7 +131,7 @@ struct
    fun LW w = M.LI (M.I.fromWord32(ity, w))
 
    (*
-    * convert object descriptor to int 
+    * convert object descriptor to int
     *)
    val dtoi = LargeWord.toInt
 
@@ -180,16 +180,16 @@ struct
    (*
     * Pack live values into records.
     *
-    * 1. Untagged stuff like INT32t or FLTt are packed into an unboxed record 
-    *    with record tag tag_raw32.  Small stuff goes first so that there 
+    * 1. Untagged stuff like INT32t or FLTt are packed into an unboxed record
+    *    with record tag tag_raw.  Small stuff goes first so that there
     *    will be at most one hole in the record due to alignment.
     * 2. Tagged stuff goes into a normal record with tag_record.
     *
     * NOTE: live values include only the lvars, not dedicated registers
     *       like the heap pointer, base pointer, current exception pointer,
-    *       etc.  
+    *       etc.
     *)
-   fun save_live_lvars {emit,typmap,regbind,fregbind} (w, exp, hp) = 
+   fun save_live_lvars {emit,typmap,regbind,fregbind} (w, exp, hp) =
    let val L = liveness exp    (* compute liveness *)
        val L = def(w, L)       (* remove the lvar that the RCC defines *)
        val L = Set.listItems L (* in list form *)
@@ -210,9 +210,9 @@ struct
        fun partition([], tagged, untagged) = (tagged, untagged)
          | partition(v::vl, tagged, untagged) =
            let val t       = typmap v
-               val sz      = CPS.sizeOf t
-               val tag     = CPS.isTagged t
-               val isFloat = CPS.isFloat t
+               val sz      = CPSUtil.sizeOf t
+               val tag     = CPSUtil.isTagged t
+               val isFloat = CPSUtil.isFloat t
                val store   = store(v,sz,isFloat)
                val load    = reload(sz,isFloat)
            in  if tag then partition(vl, (store,load,sz)::tagged, untagged)
@@ -221,17 +221,20 @@ struct
        val (tagged, untagged) = partition(L, [], [])
 
        (* Sort by non-decreasing size *)
-       val sortBySize = ListMergeSort.sort(fn ((_,_,x),(_,_,y)) => x>y) 
+       val sortBySize = ListMergeSort.sort(fn ((_,_,x),(_,_,y)) => x>y)
 
        (* Determine offset *)
-       fun assignOffset([], ls, hp) = (rev ls, hp)
-         | assignOffset((v as  (_,_,sz))::vl, ls, hp) = 
-           case sz of
-             32 => assignOffset(vl, (v,hp)::ls, hp+4)
-           | 64 => let val hp = if hp mod 8 = 4 then hp+4 else hp
-                   in  assignOffset(vl, (v,hp)::ls, hp+8)
-                   end
-           | _  => error "assignOffset"
+       fun assignOffset ([], ls, hp) = (rev ls, hp)
+         | assignOffset ((v as (_,_,sz))::vl, ls, hp) = (case sz
+	     of 32 => assignOffset(vl, (v,hp)::ls, hp+4)
+	      | 64 => let
+(* 64BIT: alignment adjustment is only required on 32-bit targets *)
+		  val hp = if hp mod 8 = 4 then hp+4 else hp
+		  in
+		    assignOffset(vl, (v,hp)::ls, hp+8)
+		  end
+              | _  => error "assignOffset"
+	    (* end case *))
 
        val tagged   = sortBySize tagged
        val untagged = sortBySize untagged
@@ -244,10 +247,10 @@ struct
     *)
    fun save_restore_ml_state () = ()
 
-   (* 
+   (*
     * This is the main entry point for C calls.
     * It takes the following things as arguments.
-    *   1. An mltree stream. 
+    *   1. An mltree stream.
     *   2. regbind  : lvar -> rexp
     *   3. fregbind : lvar -> fexp
     *   4. typmap   : lvar -> cty
@@ -256,22 +259,22 @@ struct
     *   7. arguments to RCC
     * The function emits the call code and returns:
     *   1. result --- return value of call
-    *   2. hp     --- the heap pointer 
-    * 
+    *   2. hp     --- the heap pointer
+    *
     *)
-   fun c_call {stream=TS.S.STREAM{emit, ...}, 
+   fun c_call {stream=TS.S.STREAM{emit, ...},
                regbind,
                fregbind,
                typmap,
-               vfp, 
+               vfp,
                hp
-              } 
+              }
               (reentrant, linkage, p, vl, wtl, e) =
-   let 
+   let
 
        val { retTy, paramTys, ... } = p : CTypes.c_proto
 
-       fun build_args vl = let 
+       fun build_args vl = let
            open CTypes
            fun m (C_double, v :: vl) = ([CCalls.FARG (fregbind v)], vl)
              | m (C_float, v :: vl) =
@@ -295,7 +298,7 @@ struct
 	     | m (C_void, _) = error "RCC: unexpected void argument"
              | m (_, []) = error "RCC: not enough ML args"
 
-           and ml (tl, vl) = let 
+           and ml (tl, vl) = let
                   fun one (t, (ral, vl)) = let val (a, vl') = m (t, vl)
                                            in (a @ ral, vl') end
                   val (ral, vl') = foldl one ([], vl) tl
@@ -355,7 +358,7 @@ struct
                  saveRestoreDedicated = srd,
                  paramAlloc = paramAlloc,
                  callComment =
-                 SOME ("C prototype is: " ^ CProto.pshow p),
+                 SOME ("C prototype is: " ^ CTypes.protoToString p),
                  args = a }
 
        fun withVSP f = let
@@ -380,7 +383,7 @@ struct
        end (* withVSP *)
 
        (* prepare for leaving ML *)
-       val () = 
+       val () =
        withVSP (fn { inML, LimitPtrMask } =>
                    ((* set vp_limitPtrMask to ~1 *)
                     emit (assign (LimitPtrMask, LW 0wxffffffff));
@@ -388,11 +391,11 @@ struct
                     emit (assign (inML, LW 0w0))));
 
        (* now do the actual call! *)
-       val () = 
+       val () =
        app emit callseq;
 
        (* come back to ML, restore proper limit pointer *)
-       val () = 
+       val () =
        withVSP (fn { inML, LimitPtrMask } =>
                    ((* set vp_inML back to 1 *)
                     emit (assign (inML, LW 0w1));
@@ -401,7 +404,7 @@ struct
                                   M.ANDB (pty, LimitPtrMask,
                                                C.limitptr(vfp))))));
        (* Find result *)
-       val result = 
+       val result =
        case (result, retTy) of
            (([] | [_]), (CTypes.C_void | CTypes.C_STRUCT _ | CTypes.C_UNION _)) => []
          | ([], _) => error "RCC: unexpectedly few results"

@@ -1,6 +1,7 @@
-/* blast-gc.c
+/*! \file blast-gc.c
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * This is the garbage collector for compacting a blasted object.
  *
@@ -678,7 +679,8 @@ PVT ml_val_t BlastGC_ForwardObj (heap_t *heap, ml_val_t v, aid_t id)
 	switch (GET_TAG(desc)) {
 	  case DTAG_forward:
 	    return PTR_CtoML(FOLLOW_FWDOBJ(obj));
-	  case DTAG_raw32:
+/* 64BIT: on 64-bit machines, DTAG_raw and DTAG_raw64 can be handled in the same way */
+	  case DTAG_raw:
 	    len = GET_LEN(desc);
 	    break;
 	  case DTAG_raw64:
@@ -759,8 +761,13 @@ PVT bigobj_desc_t *BlastGC_ForwardBigObj (
     bigobj_desc_t   *dp;
     embobj_info_t   *codeInfo;
 
-    for (i = BIBOP_ADDR_TO_INDEX(obj);  !BO_IS_HDR(aid);  aid = BIBOP[--i])
-	continue;
+  /* find the beginning of the region containing the code object */
+    i = BIBOP_ADDR_TO_INDEX(obj);
+    while (! BO_IS_HDR(aid)) {
+	--i;
+	aid = INDEX_TO_PAGEID(BIBOP, i);
+    }
+
     region = (bigobj_region_t *)BIBOP_INDEX_TO_ADDR(i);
     dp = ADDR_TO_BODESC(region, obj);
 
@@ -826,6 +833,8 @@ PVT void BlastGC_AssignLits (Addr_t addr, void *_closure, void *_info)
 	closure->offset |= WORD_SZB;
 #endif
 	break;
+      default:
+	Die("BlastGC_AssignLits: unexpected kind %d\n", info->kind);
     }
 
     if (info->codeObj->kind == USED_CODE) {
@@ -885,6 +894,8 @@ PVT void BlastGC_ExtractLits (Addr_t addr, void *_closure, void *_info)
 	}
 #endif
 	break;
+      default:
+	Die("BlastGC_ExtractLits: unexpected kind %d\n", info->kind);
     }
 
     if (objSzB != 0) {

@@ -1,6 +1,7 @@
-/* major-gc.c
+/*! \file major-gc.c
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * This is the regular garbage collector (for collecting the
  * generations).
@@ -64,7 +65,6 @@ PVT void ScanMem (Word_t *start, Word_t *stop, int gen, int objKind)
 {
     bibop_t	    bibop = BIBOP;
     Word_t	    w;
-    int		    indx;
     aid_t	    aid;
     bigobj_region_t *region;
     bigobj_desc_t   *dp;
@@ -72,17 +72,18 @@ PVT void ScanMem (Word_t *start, Word_t *stop, int gen, int objKind)
     while (start < stop) {
 	w = *start;
 	if (isBOXED(w)) {
-	    int		indx = BIBOP_ADDR_TO_INDEX(w);
-	    aid_t	id = bibop[indx];
+	    Addr_t	indx = BIBOP_ADDR_TO_INDEX(w);
+	    aid_t	id = INDEX_TO_PAGEID(bibop,indx);
 	    switch (EXTRACT_OBJC(id)) {
 	      case OBJC_bigobj:
 		while (!BO_IS_HDR(id)) {
-		    id = bibop[--indx];
+		    indx--;
+		    id = INDEX_TO_PAGEID(bibop,indx);
 		}
 		region = (bigobj_region_t *)BIBOP_INDEX_TO_ADDR(indx);
 		dp = ADDR_TO_BODESC(region, w);
 		if (dp->state == BO_FREE) {
-		    SayDebug ("** [%d/%d]: %#x --> %#x; unexpected free big-object\n",
+		    SayDebug ("** [%d/%d]: %p --> %p; unexpected free big-object\n",
 			gen, objKind, start, w);
 		}
 		break;
@@ -93,7 +94,7 @@ PVT void ScanMem (Word_t *start, Word_t *stop, int gen, int objKind)
 		break;
 	      default:
 		if (id != AID_UNMAPPED)
-		    SayDebug ("** [%d/%d]: %#x --> %#x; strange object class %d\n",
+		    SayDebug ("** [%d/%d]: %p --> %p; strange object class %d\n",
 			gen, objKind, start, w, EXTRACT_OBJC(id));
 		break;
 	    }
@@ -121,7 +122,6 @@ PVT void TrimHeap (heap_t *heap, int maxCollectedGen);
 char		*ArenaName[NUM_ARENAS+1] = {
 	"new", "record", "pair", "string", "array"
     };
-/* DEBUG */PVT char *StateName[] = {"FREE", "YOUNG", "FORWARD", "OLD", "PROMOTE"};
 
 /* Check a word for a from-space reference */
 #ifdef TOSPACE_ID
@@ -150,7 +150,7 @@ IFBO_COUNT1(arena_id);							\
 	}
 #ifdef TOSPACE_ID
 	else if (IS_TOSPACE_AID(arena_id)) {
-	    Die ("CheckWord: TOSPACE reference: %#x (%#x) --> %#x\n",
+	    Die ("CheckWord: TOSPACE reference: %p (%p) --> %p\n",
 		p, ADDR_TO_PAGEID(bibop, p), w);
 	}
 #endif
@@ -259,6 +259,7 @@ numBO1 = numBO2 = numBO3 = 0;
 	  /* oldest generation objects are promoted to the same generation */
 	    promoteGen = heap->gen[i-1];
 	    forwardState = BO_YOUNG; /* oldest gen has only YOUNG objects */
+	    promoteState = BO_YOUNG;
 	}
 	for (j = 0;  j < NUM_BIGOBJ_KINDS;  j++) {
 	    bigobj_desc_t   *dp, *dq, *forward, *promote;
@@ -284,7 +285,7 @@ numBO1 = numBO2 = numBO3 = 0;
 		    promote = dp;
 		    break;
 		  default:
-		    Die ("strange bigobject state %d @ %#x in generation %d\n",
+		    Die ("strange bigobject state %d @ %p in generation %d\n",
 			dp->state, dp, i);
 		} /* end switch */
 		dp = dq;
@@ -327,7 +328,7 @@ ScanMem((Word_t *)(gen->arena[ARRAY_INDX]->tospBase), (Word_t *)(gen->arena[ARRA
 		    rp->minGen = min;
 		    MarkRegion (bibop, (ml_val_t *)rp, MEMOBJ_SZB(rp->memObj),
 			AID_BIGOBJ(min));
-		    bibop[BIBOP_ADDR_TO_INDEX(rp)] = AID_BIGOBJ_HDR(min);
+		    BIBOP_UPDATE(bibop, BIBOP_ADDR_TO_INDEX(rp), AID_BIGOBJ_HDR(min));
 		}
 	    }
 	} /* end for */
@@ -619,7 +620,7 @@ PVT bool_t MajorGC_SweepToSpArrays (
     ml_val_t	w, *p, *stop;
     int		thisGen;
     Word_t	cardMask = ~(CARD_SZB - 1);
-    aid_t	*bibop = BIBOP;
+    bibop_t	bibop = BIBOP;
     aid_t	maxAid = MAKE_MAX_AID(maxGen);
 #ifndef BIT_CARDS
     ml_val_t	*cardStart;
@@ -685,7 +686,7 @@ IFBO_COUNT1(arena_id);
 		}
 #ifdef TOSPACE_ID
 		else if (IS_TOSPACE_AID(arena_id)) {
-		    Die ("Sweep Arrays: TOSPACE reference: %#x (%#x) --> %#x\n",
+		    Die ("Sweep Arrays: TOSPACE reference: %p (%p) --> %p\n",
 			p, ADDR_TO_PAGEID(bibop, p), w);
 		}
 #endif
@@ -731,7 +732,7 @@ PVT ml_val_t MajorGC_ForwardObj (heap_t *heap, aid_t maxAid, ml_val_t v, aid_t i
 	    len = GET_LEN(desc);
 	    break;
 	  default:
-	    Die ("bad record tag %d, obj = %#x, desc = %#x",
+	    Die ("bad record tag %d, obj = %p, desc = %p",
 		GET_TAG(desc), obj, desc);
 	} /* end of switch */
 	arena = heap->gen[EXTRACT_GEN(id)-1]->arena[RECORD_INDX];
@@ -768,7 +769,7 @@ PVT ml_val_t MajorGC_ForwardObj (heap_t *heap, aid_t maxAid, ml_val_t v, aid_t i
 	switch (GET_TAG(desc)) {
 	  case DTAG_forward:
 	    return PTR_CtoML(FOLLOW_FWDOBJ(obj));
-	  case DTAG_raw32:
+	  case DTAG_raw:
 	    len = GET_LEN(desc);
 	    break;
 	  case DTAG_raw64:
@@ -785,7 +786,7 @@ PVT ml_val_t MajorGC_ForwardObj (heap_t *heap, aid_t maxAid, ml_val_t v, aid_t i
 #endif
 	    break;
 	  default:
-	    Die ("bad string tag %d, obj = %#x, desc = %#x",
+	    Die ("bad string tag %d, obj = %p, desc = %p",
 		GET_TAG(desc), obj, desc);
 	} /* end of switch */
       } break;
@@ -802,7 +803,7 @@ PVT ml_val_t MajorGC_ForwardObj (heap_t *heap, aid_t maxAid, ml_val_t v, aid_t i
 	  case DTAG_special:
 	    return MajorGC_FwdSpecial (heap, maxAid, obj, id, desc);
 	  default:
-	    Die ("bad array tag %d, obj = %#x, desc = %#x",
+	    Die ("bad array tag %d, obj = %p, desc = %p",
 		GET_TAG(desc), obj, desc);
 	} /* end of switch */
 	arena = heap->gen[EXTRACT_GEN(id)-1]->arena[ARRAY_INDX];
@@ -815,7 +816,7 @@ PVT ml_val_t MajorGC_ForwardObj (heap_t *heap, aid_t maxAid, ml_val_t v, aid_t i
 	return v;
 
       default:
-	Die("unknown object class %d @ %#x", EXTRACT_OBJC(id), obj);
+	Die("unknown object class %d @ %p", EXTRACT_OBJC(id), obj);
     } /* end of switch */
 
   /* Allocate and initialize a to-space copy of the object */
@@ -842,13 +843,16 @@ PVT ml_val_t MajorGC_ForwardObj (heap_t *heap, aid_t maxAid, ml_val_t v, aid_t i
 PVT bigobj_desc_t *MajorGC_ForwardBigObj (
 	heap_t *heap, int maxGen, ml_val_t obj, aid_t id)
 {
-    int		    i;
+    Addr_t	    i;
     bigobj_region_t *region;
     bigobj_desc_t   *dp;
 
 BO2_COUNT;
-    for (i = BIBOP_ADDR_TO_INDEX(obj);  !BO_IS_HDR(id);  id = BIBOP[--i])
-	continue;
+    i = BIBOP_ADDR_TO_INDEX(obj);
+    while (!BO_IS_HDR(id)) {
+	--i;
+	id = INDEX_TO_PAGEID(BIBOP,i);
+    }
     region = (bigobj_region_t *)BIBOP_INDEX_TO_ADDR(i);
     dp = ADDR_TO_BODESC(region, obj);
     if ((dp->gen <= maxGen) && BO_IS_FROM_SPACE(dp)) {
@@ -900,7 +904,7 @@ PVT ml_val_t MajorGC_FwdSpecial (
       case SPCL_weak: {
 	    ml_val_t	v = *obj;
 #ifdef DEBUG_WEAK_PTRS
-SayDebug ("MajorGC: weak [%#x ==> %#x] --> %#x", obj, new_obj+1, v);
+SayDebug ("MajorGC: weak [%p ==> %p] --> %p", obj, new_obj+1, v);
 #endif
 	    if (! isBOXED(v)) {
 #ifdef DEBUG_WEAK_PTRS
@@ -929,7 +933,7 @@ SayDebug (" unboxed\n");
 			   * it never sees to-space pointers during sweeping.
 			   */
 #ifdef DEBUG_WEAK_PTRS
-SayDebug (" already forwarded to %#x\n", FOLLOW_FWDOBJ(vp));
+SayDebug (" already forwarded to %p\n", FOLLOW_FWDOBJ(vp));
 #endif
 			    *new_obj++ = DESC_weak;
 			    *new_obj = v;
@@ -942,7 +946,7 @@ SayDebug (" already forwarded to %#x\n", FOLLOW_FWDOBJ(vp));
 			   * reference.
 			   */
 #ifdef DEBUG_WEAK_PTRS
-SayDebug (" forward (start = %#x)\n", vp);
+SayDebug (" forward (start = %p)\n", vp);
 #endif
 			    *new_obj = MARK_PTR(PTR_CtoML(gen->heap->weakList));
 			    gen->heap->weakList = new_obj++;
@@ -958,7 +962,7 @@ SayDebug (" forward (start = %#x)\n", vp);
 			   * it never sees to-space pointers during sweeping.
 			   */
 #ifdef DEBUG_WEAK_PTRS
-SayDebug (" (pair) already forwarded to %#x\n", FOLLOW_FWDPAIR(desc, vp));
+SayDebug (" (pair) already forwarded to %p\n", FOLLOW_FWDPAIR(desc, vp));
 #endif
 			    *new_obj++ = DESC_weak;
 			    *new_obj = v;
@@ -985,7 +989,7 @@ SayDebug (" old object\n");
 	    }
 	} break;
       default:
-	Die ("strange/unexpected special object @ %#x; desc = %#x\n", obj, desc);
+	Die ("strange/unexpected special object @ %p; desc = %p\n", obj, desc);
     } /* end of switch */
 
     obj[-1] = DESC_forwarded;

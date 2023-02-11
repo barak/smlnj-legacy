@@ -1,69 +1,49 @@
 /* timeofday.c
  *
- * COPYRIGHT (c) 1994 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  */
 
 #  include "ml-osdep.h"
-#if defined(HAS_GETTIMEOFDAY)
-#  if defined(OPSYS_WIN32)
-#    include <sys/types.h>
-#    include <sys/timeb.h>
-#  else
-#    include <sys/time.h>
-#  endif
+#if defined(OPSYS_WIN32)
+#  include <windows.h>
+#elif defined(HAS_GETTIMEOFDAY)
+#  include <sys/time.h>
 #else
 #  error no timeofday mechanism
-#endif   
+#endif
 #include "ml-base.h"
 #include "ml-values.h"
 #include "ml-objects.h"
 #include "cfun-proto-list.h"
 
-/* _ml_Time_timeofday : unit -> (Int32.int * int)
+/* _ml_Time_timeofday : unit -> Word64.word
  *
- * Return the time of day.
- * NOTE: gettimeofday() is not POSIX (time() returns seconds, and is POSIX
- * and ISO C).
+ * Return the UTC time of day in nanoseconds.
  */
 ml_val_t _ml_Time_timeofday (ml_state_t *msp, ml_val_t arg)
 {
-    int			c_sec, c_usec;
-    ml_val_t		ml_sec, res;
-
-#ifdef HAS_GETTIMEOFDAY
 #if defined(OPSYS_UNIX)
-    {
-	struct timeval	t;
+    struct timeval	t;
 
-	gettimeofday (&t, NIL(struct timezone *));
-	c_sec = t.tv_sec;
-	c_usec = t.tv_usec;
-    }
+    gettimeofday (&t, NIL(struct timezone *));
+
+    return ML_AllocNanoseconds(msp, t.tv_sec, t.tv_usec);
 #elif defined(OPSYS_WIN32)
-  /* we could use Win32 GetSystemTime/SystemTimetoFileTime here,
-   * but the conversion routines for 64-bit 100-ns values
-   * (in the mapi dll) are non-Win32s
-   *
-   * we'll use time routines from the C runtime for now.
-   */
-    {
-	struct _timeb t;
+    FILETIME ft;
+    ULARGE_INTEGER uli;
+    Unsigned64_t ns;
 
-	_ftime(&t);
-	c_sec = t.time;
-	c_usec = t.millitm*1000;
-    }
+    GetSystemTimeAsFileTime (&ft);
+
+  /* convert to nanoseconds; FILETIME is in units of 100ns */
+    uli.HighPart = ft.dwHighDateTime;
+    uli.LowPart = ft.dwLowDateTime;
+    ns = 100 * uli.QuadPart;
+
+    return ML_AllocWord64(msp, ns);
 #else
-#error timeofday not defined for OS
+#  error no timeofday mechanism
 #endif
-#else
-#error no timeofday mechanism
-#endif
-
-    INT32_ALLOC(msp, ml_sec, c_sec);
-    REC_ALLOC2 (msp, res, ml_sec, INT_CtoML(c_usec));
-
-    return res;
 
 } /* end of _ml_Time_timeofday */
-

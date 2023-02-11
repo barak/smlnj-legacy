@@ -83,7 +83,7 @@ structure ThompsonEngine : REGEXP_ENGINE =
 	(* compile an RE *)
 	  fun reComp re = (case re
 		 of RE.Group re => reComp re
-		  | RE.Alt[] => raise Fail "empty alternative"
+		  | RE.Alt[] => raise RE.CannotCompile
 		  | RE.Alt[re] => reComp re
 		  | RE.Alt(re::rest) =>  let
 		      val f1 = reComp re
@@ -92,16 +92,13 @@ structure ThompsonEngine : REGEXP_ENGINE =
 		      in
 			{start = s, out = #out f1 @ #out f2}
 		      end
-		  | RE.Concat[] => raise Fail "empty concatenation"
+		  | RE.Concat[] => raise RE.CannotCompile
 		  | RE.Concat[re] => reComp re
 		  | RE.Concat(re::rest) => cat (re, RE.Concat rest)
 		  | RE.Interval(re, 0, SOME 1) => option re
 		  | RE.Interval(re, 0, NONE) => closure re
 		  | RE.Interval(re, 1, NONE) => posClosure re
-		  | RE.Interval(re, i, SOME j) => raise Fail "unimplemented"
-		  | RE.Option re => option re
-		  | RE.Star re => closure re
-		  | RE.Plus re => posClosure re
+		  | RE.Interval _ => raise RE.CannotCompile
 		  | RE.MatchSet cset => let
 		      val out = ref final
 		      in
@@ -122,7 +119,7 @@ structure ThompsonEngine : REGEXP_ENGINE =
 		      in
 			{start = newBOL out, out = [out]}
 		      end
-		  | RE.End => raise Fail "End"
+		  | RE.End => raise RE.CannotCompile
 		(* end case *))
 	(* compile re1 . re2 *)
 	  and cat (re1, re2) = let
@@ -295,12 +292,12 @@ String.concatWith "," (List.map stateToString nextNfaState), "}\n"]);
 		      | loop ((re, act)::r, max, maxLen) = (case scan(re, getc) (true, strm)
 			   of NONE => loop (r, max, maxLen)
 			    | SOME(m as MatchTree.Match({len, ...}, _), cs) =>
-				if (len > maxLen) 
+				if (len > maxLen)
 				  then loop (r, SOME(m, act, cs), len)
 				  else loop (r, max, maxLen)
 			  (* end case *))
 		    in
-		      case loop (l, NONE, ~1) 
+		      case loop (l, NONE, ~1)
 		       of NONE => NONE
 			| SOME(m, act, cs) => SOME(act m, cs)
 		      (* end case *)

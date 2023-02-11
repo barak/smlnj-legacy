@@ -1,6 +1,10 @@
-(* COPYRIGHT (c) 1997 YALE FLINT PROJECT *)
-(* ppflint.sml -- Pretty printer for Flint IL. *)
-
+(* ppflint.sml
+ *
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
+ * Pretty printer for Flint IL.
+ *)
 
 structure PPFlint :> PPFLINT =
 struct
@@ -10,7 +14,7 @@ struct
     structure S = Symbol
     structure LV = LambdaVar
     structure LT = LtyExtern
-    structure PO = PrimOp
+    structure PO = Primop
     structure PU = PrintUtil
     structure CTRL = Control.FLINT
 
@@ -28,7 +32,7 @@ struct
     infix &
     fun op& (f1,f2) () = (f1(); f2())
 
-    fun toStringFFlag ff = 
+    fun toStringFFlag ff =
       let fun h b = if b then "r" else "c"
        in LT.ffw_var (ff, fn (b1,b2) => (h b1)^(h b2), fn _ => "f")
       end
@@ -67,24 +71,24 @@ struct
 
     (** con: used to specify all possible switching statements. *)
     fun toStringCon (F.DATAcon((symbol,_,_),_,_))   = S.name symbol
-      | toStringCon (F.INTcon i)    = "(I)" ^ (Int.toString i)
-      | toStringCon (F.INT32con i)  = "(I32)" ^ (Int32.toString i)
-      | toStringCon (F.WORDcon i)   = "(W)" ^ (Word.toString i)
-      | toStringCon (F.WORD32con i) = "(W32)" ^ (Word32.toString i)
-      | toStringCon (F.REALcon r)   = r
-      | toStringCon (F.STRINGcon s) = PU.mlstr s
+      | toStringCon (F.INTcon{ival, ty}) =
+	  concat["(I", Int.toString ty, ")", IntInf.toString ival]
+      | toStringCon (F.WORDcon{ival, ty}) =
+	  concat["(W", Int.toString ty, ")", IntInf.toString ival]
+      | toStringCon (F.STRINGcon s) = PrintUtil.formatString s
       | toStringCon (F.VLENcon n)   = Int.toString n
 
     val printCon = say o toStringCon
 
     (** simple values, including variables and static constants. *)
-    fun toStringValue (F.VAR v)    = LV.lvarName v
-      | toStringValue (F.INT i)    = "(I)" ^ Int.toString i
-      | toStringValue (F.INT32 i)  = "(I32)" ^ Int32.toString i
-      | toStringValue (F.WORD i)   = "(W)" ^ Word.toString i
-      | toStringValue (F.WORD32 i) = "(W32)" ^ Word32.toString i
-      | toStringValue (F.REAL r)   = r
-      | toStringValue (F.STRING s) = PU.mlstr s
+    fun toStringValue (F.VAR v) = LV.lvarName v
+      | toStringValue (F.INT{ival, ty}) =
+	  concat["(I", Int.toString ty, ")", IntInf.toString ival]
+      | toStringValue (F.WORD{ival, ty}) =
+	  concat["(W", Int.toString ty, ")", IntInf.toString ival]
+      | toStringValue (F.REAL{rval, ty}) =
+	  concat["(R", Int.toString ty, ")", RealLit.toString rval]
+      | toStringValue (F.STRING s) = PrintUtil.formatString s
 
     val printSval = say o toStringValue
     val LVarString = ref LV.lvarName
@@ -92,7 +96,7 @@ struct
     fun printVar v = say (!LVarString v)
     val printTyc = say o LT.tc_print
     val printLty = say o LT.lt_print
-    fun printTvTk (tv:LT.tvar,tk) = 
+    fun printTvTk (tv:LT.tvar,tk) =
 	say ((LV.lvarName tv)^":"^(LT.tk_print tk))
 
     val parenCommaSep = ("(", ",", ")")
@@ -102,16 +106,16 @@ struct
     val printLtyList = PU.printClosedSequence ("[",",","]") printLty
     val printTvTkList = PU.printClosedSequence ("[",",","]") printTvTk
 
-    fun printDecon (F.DATAcon((_,Access.CONSTANT _,_),_,_)) = () 
+    fun printDecon (F.DATAcon((_,Access.CONSTANT _,_),_,_)) = ()
         (* WARNING: a hack, but then what about constant exceptions ? *)
       | printDecon (F.DATAcon((symbol,conrep,lty),tycs,lvar)) =
 	(* <lvar> = DECON(<symbol>,<conrep>,<lty>,[<tycs>]) *)
-	(printVar lvar; 
-	 say " = DECON("; 
+	(printVar lvar;
+	 say " = DECON(";
 	 say (S.name symbol); say ",";
 	 say (Access.prRep conrep); say ",";
 	 printLty lty; say ",";
-	 printTycList tycs; say ")"; 
+	 printTycList tycs; say ")";
 	 newline(); dent())
       | printDecon _ = ()
 
@@ -129,10 +133,10 @@ struct
       | complex (F.HANDLE _) = true
       | complex _ = false
 
-    fun pLexp (F.RET values) = 
+    fun pLexp (F.RET values) =
 	(* RETURN [values] *)
 	(say "RETURN "; printValList values)
-	
+
       | pLexp (F.APP (f, args)) =
 	(* APP(f, [args]) *)
 	(say "APP(";
@@ -154,7 +158,7 @@ struct
 	 *   body                 lexp
 	 *                      body
 	 *)
-	(printVarList vars; say " = ";  
+	(printVarList vars; say " = ";
 	 if complex lexp then
 	     (indent 2; newline(); dent(); pLexp lexp; undent 2)
 	 else
@@ -179,11 +183,11 @@ struct
 	 indent 4;
 	 appPrint printFundec (newline & dent) fundecs;
 	 undent 4;  say ")";  newline();
-	 dent();  
+	 dent();
 	 pLexp body)
-	
+
       | pLexp (F.TFN ((tfk as {inline,...}, lvar, tv_tk_list, tfnbody), body)) =
-	(* v = 
+	(* v =
 	 *   TFN([tk],lty,
 	 *     <tfnbody>)
 	 * <body>
@@ -204,13 +208,13 @@ struct
       (** NOTE: I'm ignoring the consig here **)
       | pLexp (F.SWITCH (value, consig, con_lexp_list, lexpOption)) =
 	(* SWITCH <value>
-	 *   <con> => 
+	 *   <con> =>
 	 *       <lexp>
-	 *   <con> => 
+	 *   <con> =>
 	 *       <lexp>
 	 *)
 	 (say "SWITCH "; printSval value; newline();
-	  indent 2;  dent();  
+	  indent 2;  dent();
 	  appPrint printCase (newline & dent) con_lexp_list;
 	  case  lexpOption of
 	      NONE => ()
@@ -227,18 +231,18 @@ struct
 	 (printVar lvar; say " = CON(";
 	  say (S.name symbol); say ", ";
 	  printTycList tycs;  say ", ";
-	  printSval value;  say ")";  
+	  printSval value;  say ")";
 	  newline();  dent();  pLexp body)
-	  
+
       | pLexp (F.RECORD (rkind, values, lvar, body)) =
 	 (* <lvar> = RECORD(<rkind>, <values>)
 	  * <body>
 	  *)
 	 (printVar lvar;  say " = ";
 	  printRKind rkind; say " ";
-	  printValList values; 
+	  printValList values;
 	  newline();  dent();  pLexp body)
-	 
+
       | pLexp (F.SELECT (value, int, lvar, body)) =
 	 (* <lvar> = SELECT(<value>, <int>)
 	  * <body>
@@ -247,25 +251,25 @@ struct
 	  printSval value;  say ", ";
 	  say (Int.toString int);  say ")";
 	  newline();  dent();  pLexp body)
-	 
+
       | pLexp (F.RAISE (value, ltys)) =
-	 (* NOTE: I'm ignoring the lty list here. It is the return type 
+	 (* NOTE: I'm ignoring the lty list here. It is the return type
 	  * of the raise expression. (ltys temporarily being printed --v)
 	  *)
 	 (* RAISE(<value>) *)
 	 (say "RAISE(";
 	  printSval value; say ") : "; printLtyList ltys)
-	 
+
       | pLexp (F.HANDLE (body, value)) =
 	 (* <body>
 	  * HANDLE(<value>)
 	  *)
-	 (pLexp body;  
+	 (pLexp body;
 	  newline();  dent();
 	  say "HANDLE(";  printSval value;  say ")")
 
       | pLexp (F.BRANCH ((d, primop, lty, tycs), values, body1, body2)) =
-	 (* IF PRIM(<primop>, <lty>, [<tycs>]) [<values>] 
+	 (* IF PRIM(<primop>, <lty>, [<tycs>]) [<values>]
           * THEN
 	  *   <body1>
           * ELSE
@@ -273,14 +277,14 @@ struct
 	  *)
 	 ((case d of NONE => say "IF PRIMOP("
                    | _ => say "IF GENOP(");
-	  say (PO.prPrimop primop);  say ", ";
+	  say (PrimopUtil.toString primop);  say ", ";
 	  printLty lty;  say ", ";
 	  printTycList tycs;  say ") ";
 	  printValList values; newline();
           dent();
-          appPrint printBranch (newline & dent) 
+          appPrint printBranch (newline & dent)
               [("THEN", body1), ("ELSE", body2)])
-	 
+
       | pLexp (F.PRIMOP (p as (_, PO.MKETAG, _, _), [value], lvar, body)) =
 	 (* <lvar> = ETAG(<value>[<tyc>])
 	  * <body>
@@ -312,22 +316,22 @@ struct
 	 (* <lvar> = PRIM(<primop>, <lty>, [<tycs>]) [<values>]
 	  * <body>
 	  *)
-	 (printVar lvar;  
+	 (printVar lvar;
           (case d of NONE => say " = PRIMOP("
                    | _ => say " = GENOP(");
-	  say (PO.prPrimop primop);  say ", ";
+	  say (PrimopUtil.toString primop);  say ", ";
 	  printLty lty;  say ", ";
 	  printTycList tycs;  say ") ";
 	  printValList values;
 	  newline();  dent();  pLexp body)
-	 
+
     and printFundec (fkind as {cconv,...}, lvar, lvar_lty_list, body) =
 	(*  <lvar> : (<fkind>) <lty> =
 	 *    FN([v1 : lty1,
 	 *        v2 : lty2],
 	 *      <body>)
 	 *)
-	(printVar lvar; say " : "; 
+	(printVar lvar; say " : ";
 	 say "("; printFKind fkind; say ") ";
 	 (*** the return-result lty no longer available ---- printLty lty; **)
          say " = "; newline();
@@ -337,7 +341,7 @@ struct
 	 indent 4;
 	 (case lvar_lty_list of
 	      [] => ()
-	    | ((lvar,lty)::L) => 
+	    | ((lvar,lty)::L) =>
 		  (printVar lvar; say " : ";
 		   if !CTRL.printFctTypes orelse cconv <> F.CC_FCT
 		   then printLty lty else say "???";
@@ -364,6 +368,6 @@ struct
     fun printLexp lexp = pLexp lexp before (newline(); newline())
 
     fun printProg prog = (printFundec prog; newline())
-	 
+
 
 end (* structure PPFlint *)

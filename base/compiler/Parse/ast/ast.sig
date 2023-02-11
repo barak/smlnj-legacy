@@ -1,5 +1,7 @@
-(* Copyright 1992 by AT&T Bell Laboratories 
+(* ast.sig
  *
+ * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *)
 
 signature AST =
@@ -8,7 +10,14 @@ sig
   type symbol  (* = Symbol.symbol *)
   val infixleft : int -> fixity
   val infixright : int -> fixity
-  type literal = IntInf.int
+
+(* integer/word literal; the string is the literal as it appeared in the source
+ * and the int is the value of the literal.
+ *)
+  type literal = string * IntInf.int
+
+(* real literal; also paired with source string *)
+  type real_lit = string * RealLit.t
 
   (* to mark positions in files *)
   type srcpos  (* = int *)
@@ -37,7 +46,7 @@ sig
     | SeqExp of exp list		(* sequence of expressions *)
     | IntExp of literal		(* integer *)
     | WordExp of literal	(* word literal *)
-    | RealExp of string		(* floating point coded by its string *)
+    | RealExp of real_lit	(* floating point coded by its string *)
     | StringExp of string	(* string *)
     | CharExp of string		(* char *)
     | RecordExp of (symbol * exp) list	(* record *)
@@ -70,19 +79,18 @@ sig
 	  | CharPat of string			(* char *)
 	  | RecordPat of {def:(symbol * pat) list, flexibility:bool}
 						(* record *)
-          | ListPat of pat list		       (*  [list,in,square,brackets] *)
+          | ListPat of pat list		        (*  [list,in,square,brackets] *)
 	  | TuplePat of pat list		(* tuple *)
-          | FlatAppPat of pat fixitem list
-                                        (* patterns prior to fixity parsing *)
-	  | AppPat of {constr:pat,argument:pat}(* application *)
+          | FlatAppPat of pat fixitem list      (* patterns prior to fixity parsing *)
+	  | AppPat of {constr:pat,argument:pat} (* application *)
 	  | ConstraintPat of {pattern:pat,constraint:ty}
-						  (* constraint *)
-	  | LayeredPat of {varPat:pat,expPat:pat}	(* as expressions *)
-          | VectorPat of pat list                 (* vector pattern *)
-	  | MarkPat of pat * region	(* mark a pattern *)
+						(* constraint *)
+	  | LayeredPat of {varPat:pat,expPat:pat} (* as expressions *)
+          | VectorPat of pat list               (* vector pattern *)
+	  | MarkPat of pat * region	        (* mark a pattern *)
 	  | OrPat of pat list			(* or-pattern *)
 
-  (* STRUCTURE EXPRESSION *) 
+  (* STRUCTURE EXPRESSION *)
   and strexp = VarStr of path			(* variable structure *)
 	     | BaseStr of dec			(* defined structure *)
              | ConstrainedStr of strexp * sigexp sigConst (* signature constrained *)
@@ -134,6 +142,7 @@ sig
   (* DECLARATIONS (let and structure) *)
   and dec = ValDec of (vb list * tyvar list)		  (* values *)
 	  | ValrecDec of (rvb list * tyvar list)	  (* recursive values *)
+	  | DoDec of exp				  (* 'do' exp *)
 	  | FunDec of (fb list * tyvar list)		  (* recurs functions *)
 	  | TypeDec of tb list				  (* type dec *)
 	  | DatatypeDec of {datatycs: db list, withtycs: tb list} (* datatype dec *)
@@ -141,14 +150,13 @@ sig
 	  | AbstypeDec of {abstycs: db list, withtycs: tb list, body: dec} (* abstract type *)
 	  | ExceptionDec of eb list			  (* exception *)
 	  | StrDec of strb list				  (* structure *)
-	  | AbsDec of strb list				  (* abstract struct *)
 	  | FctDec of fctb list				  (* functor *)
 	  | SigDec of sigb list				  (* signature *)
 	  | FsigDec of fsigb list			  (* funsig *)
 	  | LocalDec of dec * dec			  (* local dec *)
 	  | SeqDec of dec list				  (* sequence of dec *)
 	  | OpenDec of path list			  (* open structures *)
-	  | OvldDec of symbol * ty * exp list	          (* overloading (internal) *)
+	  | OvldDec of symbol * exp list	          (* overloading (internal; restricted) *)
 	  | FixDec of {fixity: fixity, ops: symbol list}  (* fixity *)
 	  | MarkDec of dec * region		          (* mark a dec *)
 
@@ -203,7 +211,7 @@ sig
 	    | MarkTyv of tyvar * region
 
   (* TYPES *)
-  and ty 
+  and ty
       = VarTy of tyvar			(* type variable *)
       | ConTy of symbol list * ty list	(* type constructor *)
       | RecordTy of (symbol * ty) list 	(* record *)

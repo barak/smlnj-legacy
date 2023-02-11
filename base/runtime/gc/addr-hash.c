@@ -1,6 +1,7 @@
-/* addr-hash.c
+/*! \file addr-hash.c
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Hash tables for mapping addresses to objects.
  */
@@ -15,14 +16,19 @@ typedef struct item {	    /* items in the hash table */
 } item_t;
 
 struct addr_tbl {
-    int		    ignoreBits;
-    int		    size;
-    int		    numItems;
-    Addr_t	    mask;
-    item_t	    **buckets;
+    int		    ignoreBits;	/* how many low bits of a hashed address are ignored */
+    int		    size;	/* number of buckets in the table; will be a power of 2 */
+    int		    numItems;	/* the number of items in the table */
+    Addr_t	    mask;	/* mask to form table index (== size-1) */
+    item_t	    **buckets;	/* array of buckets */
 };
 
-#define HASH(tbl,addr)	(((addr) >> (tbl)->ignoreBits) & (tbl)->mask)
+STATIC_INLINE int _AddrHash (addr_tbl_t *tbl, Addr_t addr)
+{
+    return (int)((addr >> tbl->ignoreBits) & tbl->mask);
+}
+
+#define HASH(tbl,addr)	_AddrHash(tbl, addr)
 
 /* MakeAddrTbl:
  *
@@ -60,8 +66,10 @@ void AddrTblInsert (addr_tbl_t *tbl, Addr_t addr, void *obj)
     int		h = HASH(tbl,addr);
     item_t	*p;
 
-    for (p = tbl->buckets[h];  (p != NIL(item_t *)) && (p->addr != addr);  p = p->next)
+    ASSERT((0 <= h) && (h < tbl->size));
+    for (p = tbl->buckets[h];  (p != NIL(item_t *)) && (p->addr != addr);  p = p->next) {
 	continue;
+    }
     if (p == NIL(item_t *)) {
 	p		= NEW_OBJ(item_t);
 	p->addr		= addr;
@@ -70,8 +78,9 @@ void AddrTblInsert (addr_tbl_t *tbl, Addr_t addr, void *obj)
 	tbl->buckets[h]	= p;
 	tbl->numItems++;
     }
-    else if (p->obj != obj)
+    else if (p->obj != obj) {
 	Die ("AddrTblInsert: %#x mapped to multiple objects", addr);
+    }
 
 } /* end of AddrTblInsert */
 
@@ -85,6 +94,7 @@ void *AddrTblLookup (addr_tbl_t *tbl, Addr_t addr)
     int		h = HASH(tbl,addr);
     item_t	*p;
 
+    ASSERT((0 <= h) && (h < tbl->size));
     for (p = tbl->buckets[h];  (p != NIL(item_t *)) && (p->addr != addr);  p = p->next)
 	continue;
 
@@ -125,8 +135,9 @@ void FreeAddrTbl (addr_tbl_t *tbl, bool_t freeObjs)
     for (i = 0;  i < tbl->size;  i++) {
 	for (p = tbl->buckets[i];  p != NIL(item_t *);  ) {
 	    q = p->next;
-	    if (freeObjs)
+	    if (freeObjs) {
 		FREE (p->obj);
+	    }
 	    FREE (p);
 	    p = q;
 	}

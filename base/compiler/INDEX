@@ -43,7 +43,7 @@ BrowseStatEnv
   ElabData/statenv/browse.sml
 CGCONTROL
   TopLevel/main/control.sig
-CODEGENERATOR
+CODE_GENERATOR
   TopLevel/main/code-generator.sig
 CODE_OBJ
   Execution/codeobj/code-obj.sig
@@ -195,8 +195,6 @@ FASTSYMBOL
   Basics/mlcomp/fastsymbol.sig
 FastSymbol
   Basics/mlcomp/fastsymbol.sml
-Feedback
-  MiscUtil/util/feedback.sml
 FIXITY
   Basics/mlcomp/fixity.sml
 Fixity
@@ -246,9 +244,9 @@ LAMBDA_VAR
 LambdaVar
   ElabData/basics/lambdavar.sml
 LITERAL_TO_NUM
-  MiscUtil/util/literal-to-num.sml
+  FLINT/trans/literal-to-num.sml
 LiteralToNum
-  MiscUtil/util/literal-to-num.sml
+  FLINT/trans/literal-to-num.sml
 LOOKUP
   ElabData/statenv/lookup.sig
 Lookup

@@ -201,9 +201,22 @@ same lexer specification.
 \subsection{The \kw{states} directive}
 \label{sec:start-states}
 
-It is often helpful for a lexer to have multiple \emph{start states}, which influence the regular expressions that the lexer will match.  For instance, after seeing a double-quote, the lexer might switch into a \texttt{STRING} start state, which contains only the rules necessary for matching strings, and which returns to the standard start state after the closing quote.
+It is often helpful for a lexer to have multiple \emph{start states}, which influence
+the regular expressions that the lexer will match. 
+For instance, after seeing a double-quote, the lexer might switch into a \texttt{STRING}
+start state that contains only the rules necessary for matching strings, and which
+returns to the standard start state after the closing quote.
 
-Start states are introduced via \kw{states}, and are named using standard identifiers.  There is always an implicit, default start state called \texttt{INITIAL}.  Within a rule action, the function \texttt{YYBEGIN} can be applied to the name of a start state to switch the lexer into that state; see~\ref{sec:ulex-actions} for details on rule actions.
+Start states are introduced via \kw{states} and are named using standard identifiers. 
+There is always an implicit, default start state called \texttt{INITIAL}.
+Within a rule action, the function \texttt{YYBEGIN} can be applied to the name
+of a start state to switch the lexer into that state; see~\ref{sec:ulex-actions}
+for details on rule actions.
+
+Using start states allows the lexer to be defined as a collection of finite-state machines
+(one per start state), with arbitrary SML code used to control switching between machines.
+This mechanism thus allows non-regular features to be supported by the lexer, such as
+nested comments.
 
 \section{Rules}\label{sec:ulex-rules}
 
@@ -274,13 +287,21 @@ The semantics for \ulex{} regular expressions are shown in Figure~\ref{ulex-re-s
 
 \subsection{EOF rules}\label{sec:eof-rules}
 
-It is sometimes useful for the behavior of a lexer when it reaches the end-of-file to change depending on the current start state.  Normally, there is a single user-defined \texttt{eof} function that defines EOF behavior, but EOF rules can be used to be more selective, as in the following example:
+It is sometimes useful for the behavior of a lexer when it reaches the end-of-file to change
+depending on the current start state.
+Normally, there is a single user-defined \texttt{eof} function that defines EOF behavior, but
+EOF rules can be used to be more selective, as in the following example:
 \begin{verbatim}
   <INITIAL> <<EOF>> => ( Tok.EOF );
   <COMMENT> <<EOF>> => ( print "Error: unclosed comment";
                          Tok.EOF );
 \end{verbatim}
 Other than the special \T{<<EOF>>} symbol, EOF rules work exactly like normal rules.
+
+Note that if you define any EOF rules, then you must define EOF rules for all states;
+otherwise, your scanner may generate a \texttt{Match} exception on EOF.
+Furthermore, if you define EOF rules, you do not need a definition of the \texttt{eof}
+function.
 
 \subsection{Actions}\label{sec:ulex-actions}
 
@@ -345,10 +366,11 @@ This is why the \texttt{strm} type includes a concrete \texttt{start\char`\_stat
 Note that the \texttt{AntlrStreamPos} module is part of the \texttt{ml-lpt-lib} library described in Chapter~\ref{ch:ml-lpt-lib}. 
 An \texttt{AntlrStreamPos.sourcemap} value, combined with an \texttt{AntlrStreamPos.pos} value, compactly represents position information (line number, column number, and so on).
 An \texttt{AntlrStreamPos.span} is a pair of \texttt{pos} values that specify the character position of the
-leftmost character of the scanned token and the position of the character following the token (respectively).
+leftmost (first) character of the scanned token and the position of the
+rightmost (last) character in the token (respectively).
 By default, the span will cover the entire sequence of characters consumed by a call to the lexer, but one may
-use the \texttt{skip} function (see Section~\ref{sec:ulex-actions}) to ignore leading whitespace, \textit{etc.}\ when computing
-the span.
+use the \texttt{skip} function (see Section~\ref{sec:ulex-actions}) to ignore leading whitespace,
+\textit{etc.}\ when computing the span.
 Code to compute the span is generated automatically by \texttt{ml-ulex}.
 
 \section{\texttt{ml-lex} compatibility}\label{sec:lex-compat}

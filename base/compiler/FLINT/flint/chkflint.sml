@@ -1,9 +1,12 @@
-(* COPYRIGHT (c) 1997, 1998 YALE FLINT PROJECT *)
-(* chkflint.sml *)
+(* chkflint.sml
+ *
+ * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *)
 
 (* FLINT Type Checker *)
 
-signature CHKFLINT = sig 
+signature CHKFLINT = sig
 
 (** which set of the typing rules to use while doing the typecheck *)
 type typsys (* currently very crude *)
@@ -13,7 +16,7 @@ val checkExp : FLINT.lexp * typsys -> bool
 
 end (* signature CHKFLINT *)
 
-structure ChkFlint : CHKFLINT = 
+structure ChkFlint : CHKFLINT =
 struct
 
 (** which set of the typing rules to use while doing the typecheck *)
@@ -21,11 +24,11 @@ type typsys = bool (* currently very crude *)
 
 local structure LT = LtyExtern
       structure LV = LambdaVar
-      structure DA = Access 
+      structure DA = Access
       structure DI = DebIndex
       structure PP = PPFlint
-      structure PO = PrimOp
-      structure S  = IntRedBlackSet
+      structure PO = Primop
+      structure S  = LV.Set
       open FLINT
 
 fun bug s = ErrorMsg.impossible ("ChkFlint: "^s)
@@ -44,15 +47,15 @@ fun foldl2 (f,a,xs,ys,g) = let
   in loop (a,xs,ys) end
 
 fun simplify (le,0) = RET [STRING "<...>"]
-  | simplify (le,n) = 
+  | simplify (le,n) =
       let fun h le = simplify (le, n-1)
           fun h1 (fk,v,args,le) = (fk, v, args, h le)
           fun h2 (tfk,v,tvs,le) = (tfk, v, tvs, h le)
-       in case le 
+       in case le
            of LET (vs,e1,e2) => LET (vs, h e1, h e2)
             | FIX (fdecs,b) => FIX (map h1 fdecs, h b)
             | TFN (tdec,e) => TFN (h2 tdec, h e)
-            | SWITCH (v,l,dc,opp) => 
+            | SWITCH (v,l,dc,opp) =>
                 let fun g (c,x) = (c, h x)
                     val f = fn SOME y => SOME (h y) | NONE => NONE
                  in SWITCH (v, l, map g dc, f opp)
@@ -89,12 +92,12 @@ fun laterPhase postReify = postReify
 
 fun check phase envs lexp = let
     (* imperative table -- keeps track of already bound variables,
-     * so we can tell if a variable is re-bound (which should be 
+     * so we can tell if a variable is re-bound (which should be
      * illegal).  Note that lvars and tvars actually share the same
      * namespace!   --league, 11 April 1998
      *)
   val definedLvars = ref S.empty
-  fun lvarDef le (lvar:lvar) = 
+  fun lvarDef le (lvar:lvar) =
       if S.member(!definedLvars, lvar) then
           errMsg (le, ("lvar " ^ (LambdaVar.prLvar lvar) ^ " redefined"), ())
       else
@@ -108,10 +111,10 @@ fun check phase envs lexp = let
   fun constVoid _ = LT.ltc_void
   val (ltString,ltExn,ltEtag,ltVector,ltWrap,ltBool) =
     if laterPhase phase then
-      (LT.ltc_string, LT.ltc_void, constVoid, constVoid, constVoid, 
+      (LT.ltc_string, LT.ltc_void, constVoid, constVoid, constVoid,
        LT.ltc_void)
     else
-      (LT.ltc_string, LT.ltc_exn, LT.ltc_etag, LT.ltc_tyc o LT.tcc_vector, 
+      (LT.ltc_string, LT.ltc_exn, LT.ltc_etag, LT.ltc_tyc o LT.tcc_vector,
        LT.ltc_tyc o LT.tcc_box, LT.ltc_bool)
 
   fun prMsgLt (s,lt) = (say s; ltPrint lt)
@@ -166,10 +169,10 @@ fun check phase envs lexp = let
 	   prList tcPrint "\n** argument Tycs:\n" ts;
 	   []))
 
-  fun ltArrow (le,s) (cconv,alts,rlts) = 
-    (case cconv 
+  fun ltArrow (le,s) (cconv,alts,rlts) =
+    (case cconv
       of CC_FCT => LT.ltc_fct (alts,rlts)
-       | CC_FUN raw => 
+       | CC_FUN raw =>
            (catchExn
              (fn () => LT.ltc_arrow (raw,alts,rlts))
              (le,
@@ -196,24 +199,24 @@ fun check phase envs lexp = let
       fun typeofVar lv = LT.ltLookup (venv,lv,d)
 	  handle ltUnbound =>
 	      errMsg (le, "Unbound Lvar " ^ LV.lvarName lv, LT.ltc_void)
-      val typeofVal =
-       fn VAR lv => typeofVar lv
-	| (INT _ | WORD _) => LT.ltc_int
-	| (INT32 _ | WORD32 _) => LT.ltc_int32
-	| REAL _ => LT.ltc_real
-	| STRING _ => LT.ltc_string
+      fun typeofVal (VAR lv) = typeofVar lv
+(* REAL64: need more cases *)
+	| typeofVal (INT{ty, ...}) = LT.ltc_num ty
+	| typeofVal (WORD{ty, ...}) = LT.ltc_num ty
+        | typeofVal (REAL _) = LT.ltc_real
+	| typeofVal (STRING _) = LT.ltc_string
       fun typeofFn ve (_,lvar,vts,eb) = let
-	fun split ((lv,t), (ve,ts)) = 
-            (lvarDef le lv;
-             (LT.ltInsert (ve,lv,t,d), t::ts))
-	val (ve',ts) = foldr split (ve,[]) vts
-	in 
-            lvarDef le lvar;
-            (ts, typeIn ve' eb)
-	end
+	    fun split ((lv,t), (ve,ts)) = (
+		  lvarDef le lv;
+		  (LT.ltInsert (ve,lv,t,d), t::ts))
+	    val (ve',ts) = foldr split (ve,[]) vts
+	    in
+	      lvarDef le lvar;
+	      (ts, typeIn ve' eb)
+	    end
 
       (* There are lvars hidden in Access.conrep, used by dcon.
-       * These functions just make sure that they are defined in the 
+       * These functions just make sure that they are defined in the
        * current environemnent; we don't bother to typecheck them properly
        * because supposedly conrep will go away...
        *)
@@ -221,9 +224,9 @@ fun check phase envs lexp = let
         | checkAccess (DA.PATH (a,_)) = checkAccess a
         | checkAccess _ = ()
 
-      fun checkConrep (DA.EXN a) = 
+      fun checkConrep (DA.EXN a) =
               checkAccess a
-        | checkConrep (DA.SUSP (SOME (a1,a2))) = 
+        | checkConrep (DA.SUSP (SOME (a1,a2))) =
               (checkAccess a1;
                checkAccess a2)
         | checkConrep _ =
@@ -244,7 +247,7 @@ fun check phase envs lexp = let
 	val lt = case ltFnApp fp (chkSnglInst fp (lt,ts), map typeofVal vs)
 	   of [lt] => lt
             | _ => errMsg
-               (le, 
+               (le,
                 concat [s, ": primop/dcon must return single result type "],
                 LT.ltc_void)
 (*
@@ -261,11 +264,11 @@ fun check phase envs lexp = let
        of RET vs => map typeofVal vs
 	| LET (lvs,e,e') =>
           (app (lvarDef le) lvs;
-           typeIn (foldl2 (extEnv, venv, lvs, 
+           typeIn (foldl2 (extEnv, venv, lvs,
                            typeof e, mismatch (le,"LET"))) e')
 	| FIX ([],e) =>
 	  (say "\n**** Warning: empty declaration list in FIX\n"; typeof e)
-	| FIX ((fd as (fk as {isrec=NONE,cconv,...}, 
+	| FIX ((fd as (fk as {isrec=NONE,cconv,...},
                        lv, _, _)) :: fds', e) => let
 	    val (alts,rlts) = typeofFn venv fd
 	    val lt = ltArrow (le,"non-rec FIX") (cconv,alts,rlts)
@@ -285,7 +288,7 @@ fun check phase envs lexp = let
               | extEnv (({isrec,cconv,...}, lv, vts, _) : fundec, ve) =
 	      case (isrec, isfct)
 	       of (SOME (lts,_), false) => let
-		    val lt = ltArrow (le,"FIX") (cconv, 
+		    val lt = ltArrow (le,"FIX") (cconv,
                                                  map #2 vts, lts)
 		    in LT.ltInsert (ve,lv,lt,d)
 		    end
@@ -309,7 +312,7 @@ fun check phase envs lexp = let
             fun getkind (tv,tk) = (lvarDef le tv; tk)
 	    val ks = map getkind tks
 	    val lts = typeInEnv (LT.tkInsert (kenv,ks), venv, DI.next d) e
-	    in 
+	    in
                 lvarDef le lv;
                 typeWith (lv, LT.ltc_poly (ks,lts)) e'
 	    end
@@ -325,13 +328,12 @@ fun check phase envs lexp = let
 		      val fp = (le,"SWITCH DECON")
 		      val ct = chkSnglInst fp (lt,ts)
 		      val nts = ltFnAppR fp (ct, [selLty])
-		      in 
+		      in
                           lvarDef le v;
                           foldl2 (extEnv, venv, [v], nts, mismatch fp)
 		      end
-		  | (INTcon _ | WORDcon _) => g LT.ltc_int
-		  | (INT32con _ | WORD32con _) => g LT.ltc_int32
-		  | REALcon _ => g LT.ltc_real
+		  | INTcon{ty, ...} => g (LT.ltc_num ty)
+		  | WORDcon{ty, ...} => g (LT.ltc_num ty)
 		  | STRINGcon _ => g ltString
 		  | VLENcon _ => g LT.ltc_int (* ? *)
 	      in typeIn venv' e
@@ -360,7 +362,7 @@ fun check phase envs lexp = let
 		      app (fn v => match (lt, typeofVal v)) vs;
 		      ltVector t
 		    end
-		| RK_TUPLE _ => 
+		| RK_TUPLE _ =>
 		  if null vs then LT.ltc_unit
 		  else let
 		    fun chkMono v = let val t = typeofVal v
@@ -375,7 +377,7 @@ fun check phase envs lexp = let
 		    in LT.ltc_tuple (map chkMono vs)
 		    end
 		| RK_STRUCT => LT.ltc_str (map typeofVal vs)
-	    in 
+	    in
                 lvarDef le lv;
                 typeWith (lv,lt) e
 	    end
@@ -385,7 +387,7 @@ fun check phase envs lexp = let
 		(le,
 		 fn () =>
 		    (say "SELECT from wrong type or out of range"; LT.ltc_void))
-	    in 
+	    in
                 lvarDef le lv;
                 typeWith (lv,lt) e
 	    end
@@ -393,13 +395,13 @@ fun check phase envs lexp = let
 	| HANDLE (e,v) => let val lts = typeof e
 	    in ltFnAppR (le,"HANDLE") (typeofVal v, lts); lts
 	    end
-	| BRANCH ((_,_,lt,ts), vs, e1, e2) => 
+	| BRANCH ((_,_,lt,ts), vs, e1, e2) =>
             let val fp = (le, "BRANCH")
-                val lt = 
+                val lt =
 	          case ltFnApp fp (chkSnglInst fp (lt,ts), map typeofVal vs)
 	           of [lt] => lt
                     | _ => errMsg
-                            (le, 
+                            (le,
                              "BRANCK : primop must return single result ",
                              LT.ltc_void)
                 val _ = ltMatch fp (lt, ltBool)
@@ -408,13 +410,13 @@ fun check phase envs lexp = let
              in ltsMatch fp (lts1, lts2);
                 lts1
             end
-        | PRIMOP ((_,PO.WCAST,lt,[]), [u], lv, e) => 
+        | PRIMOP ((_,PO.WCAST,lt,[]), [u], lv, e) =>
             (*** a hack: checked only after reifY is done ***)
             if laterPhase phase then
               (lvarDef le lv;
                case LT.ltd_fct lt
-                of ([argt], [rt]) => 
-                      (ltMatch (le, "WCAST") (typeofVal u, argt); 
+                of ([argt], [rt]) =>
+                      (ltMatch (le, "WCAST") (typeofVal u, argt);
                        typeWith (lv, rt) e)
                  | _ => bug "unexpected WCAST in typecheck")
             else bug "unexpected WCAST in typecheck"
@@ -425,7 +427,7 @@ fun check phase envs lexp = let
                * types.  (I'm not sure what the rules should look like)
                *   --league, 10 april 1998.
                *)
-              fun checkDict (SOME {default, table}) = 
+              fun checkDict (SOME {default, table}) =
                     (typeofVar default;
                      app (ignore o typeofVar o #2) table)
                 | checkDict (NONE : dict option) = ()
