@@ -16,6 +16,7 @@ structure TypesUtil : TYPESUTIL =
     structure S = Symbol
     structure ST = Stamps
     structure A = Access
+    structure SSS = SpecialSymbols
 
     open Types VarCon
 
@@ -82,10 +83,10 @@ structure TypesUtil : TYPESUTIL =
 
   (*************** primitive operations on tycons ***************)
     fun bugTyc (s: string, tyc) = (case tyc
-	   of GENtyc { path, ... } => bug (s ^ " GENtyc " ^ S.name (IP.last path))
-	    | DEFtyc {path,...} => bug (s ^ " DEFtyc " ^ S.name(IP.last path))
+	   of GENtyc { path, ... } => bug (s ^ " GENtyc " ^ S.name (IP.last (path, SSS.errorTycId)))
+	    | DEFtyc {path,...} => bug (s ^ " DEFtyc " ^ S.name(IP.last (path, SSS.errorTycId)))
 	    | RECORDtyc _ => bug (s ^ " RECORDtyc")
-	    | PATHtyc{path,...} => bug (s ^ " PATHtyc " ^ S.name(IP.last path))
+	    | PATHtyc{path,...} => bug (s ^ " PATHtyc " ^ S.name(IP.last (path, SSS.errorTycId)))
 	    | RECtyc _ => bug (s ^ " RECtyc")
 	    | FREEtyc _ => bug (s ^ " FREEtyc")
 	    | ERRORtyc => bug (s ^ " ERRORtyc")
@@ -93,7 +94,7 @@ structure TypesUtil : TYPESUTIL =
 
   (* short (single symbol) name of tycon *)
     fun tycName (GENtyc { path, ... } | DEFtyc{path,...} | PATHtyc{path,...}) =
-	  IP.last path
+	  IP.last (path, SSS.errorTycId)
       | tycName (RECORDtyc _) = S.tycSymbol "<RECORDtyc>"
       | tycName (RECtyc _) = S.tycSymbol "<RECtyc>"
       | tycName (FREEtyc _) = S.tycSymbol "<FREEtyc>"
@@ -746,11 +747,11 @@ structure TypesUtil : TYPESUTIL =
 	  | WILDpat => false
 	  | CONpat (dcon, tyvars) => dconRefutable dcon
 	  | RECORDpat {fields, ...} =>
-	    List.exists (fn (_,p) => refutable p) fields
+	      List.exists (fn (_,p) => refutable p) fields
 	  | APPpat (dcon, _, arg) =>
-	    dconRefutable dcon orelse refutable arg
+	      dconRefutable dcon orelse refutable arg
 	  | VECTORpat (pats, _) =>
-	    List.exists refutable pats
+	      List.exists refutable pats
 	  | LAYEREDpat (p1, p2) => refutable p1 orelse refutable p2
 	  | CONSTRAINTpat (p, _ ) => refutable p
 	  | MARKpat (p, _) => refutable p
@@ -775,10 +776,10 @@ structure TypesUtil : TYPESUTIL =
       | isValue (CHARexp _) = true
       | isValue (FNexp _) = true
       | isValue (RECORDexp fields) =
-	foldr (fn ((_,exp),x) => x andalso (isValue exp)) true fields
+	  foldr (fn ((_,exp),x) => x andalso (isValue exp)) true fields
       | isValue (SELECTexp(_, e)) = isValue e
       | isValue (VECTORexp (exps, _)) =
-	foldr (fn (exp,x) => x andalso (isValue exp)) true exps
+	  foldr (fn (exp,x) => x andalso (isValue exp)) true exps
       | isValue (SEQexp nil) = true
       | isValue (SEQexp [e]) = isValue e
       | isValue (SEQexp _) = false
@@ -1129,6 +1130,8 @@ structure TypesUtil : TYPESUTIL =
 		| {wid, ...} => (n < pow2 wid) (* we assume that n > 0, since it is unsigned *)
 	      (* end case *)
 	    end
+
+    fun dataconName (DATACON {name, ...}) = name
 
     fun dataconSign (DATACON{sign,...}) = sign
 

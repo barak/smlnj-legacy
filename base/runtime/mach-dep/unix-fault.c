@@ -41,7 +41,7 @@ PVT SigReturn_t FaultHandler (int sig, SigInfo_t code, SigContext_t *scp);
 
 /* InitFaultHandlers:
  */
-void InitFaultHandlers (ml_state_t *msp)
+void InitFaultHandlers ()
 {
 
   /** Set up the Overflow fault(s) **/
@@ -101,11 +101,6 @@ PVT SigReturn_t FaultHandler (int signal, siginfo_t *si, void *uc)
 
     SIG_SetPC (scp, request_fault);
 
-  /* I don't think that this call is still necessary, since we are only
-   * dealing with integer overflow here! -- JHR (2019-10-10)
-    SIG_ResetFPE (scp);
-   */
-
 } /* end of FaultHandler */
 
 #else
@@ -145,7 +140,7 @@ PVT SigReturn_t FaultHandler (
 
 #endif
 
-#if ((defined(ARCH_RS6000) || defined(ARCH_PPC)) && defined(OPSYS_AIX))
+#if (defined(ARCH_PPC) && defined(OPSYS_AIX))
 
 /* SIG_GetCode:
  *

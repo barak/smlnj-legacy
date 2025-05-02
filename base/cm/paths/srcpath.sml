@@ -1,11 +1,15 @@
-(*
- * Operations over abstract names for CM source files.
+(* srcpath.sml
  *
- * Copyright (c) 2000 by Lucent Technologies, Bell Laboratories
+ * COPYRIGHT (c) 2022 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
+ * Operations over abstract names for CM source files.
  *
  * Author: Matthias Blume
  *)
-signature SRCPATH = sig
+
+signature SRCPATH =
+  sig
 
     exception Format
     (* When faced with an undefined anchor, pressing on does not
@@ -60,8 +64,18 @@ signature SRCPATH = sig
     (* non-destructive bindings for anchors (for anchor scoping) *)
     val bind: env -> rebindings -> env
 
-    (* make abstract paths *)
-    val native : { err: string -> unit } ->
+    (* convert strings to abstract paths.  There are three different
+     * ways to interpret the string:
+     *   1) a raw path uses the native pathname syntax and does not
+     *      contain CM anchors.
+     *   2) a native path also uses the native pathname syntax, but
+     *      may have an initial anchor.
+     *   3) a standard path uses the CM pathname syntax and may
+     *      have an initial anchor.
+     *)
+    val raw : { err: string -> unit } ->
+              { context: dir, spec: string } -> prefile
+    val native : { err: string -> unit, env: env } ->
 		 { context: dir, spec: string } -> prefile
     val standard : { err: string -> unit, env: env } ->
 		   { context: dir, spec: string } -> prefile
@@ -121,7 +135,8 @@ signature SRCPATH = sig
 		   { pickled: string list list, relativeTo: file } -> prefile
 end
 
-structure SrcPath :> SRCPATH = struct
+structure SrcPath :> SRCPATH =
+  struct
 
     exception Format
     exception BadAnchor
@@ -224,7 +239,7 @@ structure SrcPath :> SRCPATH = struct
 	fun arc a =
 	    if a = P.currentArc then "."
 	    else if a = P.parentArc then ".."
-	    else if a = "." then dot 
+	    else if a = "." then dot
 	    else if a = ".." then dotdot
 	    else ta a
 	fun e_ac ([], context, _, a) = e_c (context, a, NONE)
@@ -267,7 +282,7 @@ structure SrcPath :> SRCPATH = struct
 	  | NONE =>
 	      { name = a, look = fn () => #get_free e (a, err),
 		encode = fn _ => NONE }
-	
+
     val encode_prefile = encode0 false
     val encode = encode_prefile o pre
 
@@ -507,10 +522,33 @@ structure SrcPath :> SRCPATH = struct
 	work
     end
 
-    datatype stdspec =
-	RELATIVE of string list
-      | ABSOLUTE of string list
+    datatype stdspec
+      = RELATIVE of string list
+      | ABSOLUTE of string * string list
       | ANCHORED of anchor * string list
+
+    fun parseNativeSpec err s = let
+          val impossible = fn s => impossible ("AbsPath.parseNativeSpec: " ^ s)
+          val {isAbs, arcs, vol} = OS.Path.fromString s
+          in
+            case arcs
+             of [""] => impossible "zero-length name"
+              | [] => impossible "no fields"
+              | (["$"] | "$"::""::_) => (
+                  err (concat ["invalid zero-length anchor name in: `", s, "'"]);
+	          RELATIVE arcs)
+	      | "$" :: (arcs' as (arc1 :: _)) => (* "$/arc1/..." *)
+                  if isAbs
+                    then RELATIVE arcs
+                    else ANCHORED(arc1, arcs')
+              | arc1 :: arcn =>
+	          if String.sub(arc1, 0) = #"$"
+                    then ANCHORED(String.extract(arc1, 1, NONE), arcn)
+                  else if isAbs
+                    then ABSOLUTE(vol, arcs)
+                    else RELATIVE arcs
+            (* end case *)
+          end
 
     fun parseStdspec err s = let
 	fun delim #"/" = true
@@ -524,7 +562,7 @@ structure SrcPath :> SRCPATH = struct
 	case map transl (String.fields delim s) of
 	    [""] => impossible "zero-length name"
 	  | [] => impossible "no fields"
-	  | "" :: arcs => ABSOLUTE arcs
+	  | "" :: arcs => ABSOLUTE("", arcs)
 	  | arcs as (["$"] | "$" :: "" :: _) =>
 	    (err (concat ["invalid zero-length anchor name in: `", s, "'"]);
 	     RELATIVE arcs)
@@ -539,7 +577,7 @@ structure SrcPath :> SRCPATH = struct
 	    StringMap.insert (m, anchor,
 			      (fn () => augElab arcs (elab_dir context),
 			       fn brack => encode0 brack pf))
-			      
+
     in
 	{ get_free = #get_free env, set_free = #set_free env,
 	  reset = #reset env, is_set = #is_set env,
@@ -559,17 +597,26 @@ structure SrcPath :> SRCPATH = struct
 
     fun prefile (c, l, e) = { context = c, arcs = l, err = e }
 
-    fun native { err } { context, spec } =
-	case P.fromString spec of
-	    { arcs, vol, isAbs = true } => prefile (ROOT vol, arcs, err)
-	  | { arcs, ... } => prefile (context, arcs, err)
+    fun raw { err } { context, spec } = (
+	  case P.fromString spec
+	   of { arcs, vol, isAbs = true } => prefile (ROOT vol, arcs, err)
+	    | { arcs, ... } => prefile (context, arcs, err)
+        (* end case *))
 
-    fun standard { env, err } { context, spec } =
-	case parseStdspec err spec of
-	    RELATIVE l => prefile (context, l, err)
-	  | ABSOLUTE l => prefile (ROOT "", l, err)
+    fun native { env, err }  { context, spec } = (
+       case parseNativeSpec err spec
+           of RELATIVE l => prefile (context, l, err)
+            | ABSOLUTE(vol, l) => prefile (ROOT vol, l, err)
+            | ANCHORED(a, l) => prefile (ANCHOR(mk_anchor (env, a, err)), l, err)
+        (* end case *))
+
+    fun standard { env, err } { context, spec } = (
+	case parseStdspec err spec
+	 of RELATIVE l => prefile (context, l, err)
+	  | ABSOLUTE(_, l) => prefile (ROOT "", l, err)
 	  | ANCHORED (a, l) =>
 	      prefile (ANCHOR (mk_anchor (env, a, err)), l, err)
+        (* end case *))
 
     fun extend { context, arcs, err } morearcs =
 	{ context = context, arcs = arcs @ morearcs, err = err }
@@ -652,7 +699,7 @@ structure SrcPath :> SRCPATH = struct
 
 		    fun say l = TextIO.output (TextIO.stdErr, concat l)
 		in
-		    if arc0 = "" then file (ROOT "", arcs) 
+		    if arc0 = "" then file (ROOT "", arcs)
 		    else
 			case String.sub (arc0, 0) of
 			    #"%" => file (ROOT (xtr ()), arcs)

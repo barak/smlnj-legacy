@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: sml
 .\"    Author: [see the "AUTHOR(S)" section]
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-04-02
+.\" Generator: Asciidoctor 2.0.23
+.\"      Date: 2025-04-25
 .\"    Manual: \ \&
 .\"    Source: SML/NJ
 .\"  Language: English
 .\"
-.TH "SML" "1" "2020-04-02" "SML/NJ" "\ \&"
+.TH "SML" "1" "2025-04-25" "SML/NJ" "\ \&"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -57,7 +57,7 @@ output and then exit.  (This option was added in version 110.97).
 .sp
 \fB@SMLversion\fP
 .RS 4
-echo the command name and SML/NJ version (\fIe.g.\fP, "\f(CRsml 110.99\fP")
+echo the command name and SML/NJ version (\fIe.g.\fP, "\f(CRsml 110.99.8\fP")
 to standard output and then exit.
 .RE
 .sp
@@ -107,22 +107,22 @@ show list of executable objects
 write debugging info to file
 .RE
 .sp
-\fB\-C\fP\(cqctl\(aq=\fIvalue\fP
+\fB\-C\fP\fIctl\fP=\fIvalue\fP
 .RS 4
 set the control \fIctl\fP to \fIvalue\fP.
 .RE
 .sp
-\fB\-D\fP\(cqname\(aq=\fIvalue\fP
+\fB\-D\fP\fIname\fP=\fIvalue\fP
 .RS 4
 define the CM variable \fIname\fP to have the given value.
 .RE
 .sp
-\fB\-D\fP\(cqname
+\fB\-D\fP\*(Aqname
 .RS 4
 define the CM variable \fIname\fP to have the value 1.
 .RE
 .sp
-\fB\-U\fP\(cqname\(aq
+\fB\-U\fP\fIname\fP
 .RS 4
 remove any definition of the CM variable \fIname\fP.
 .RE
@@ -137,7 +137,7 @@ produce complete help listing
 produce minimal help listing
 .RE
 .sp
-\fB\-h\fP\(cqlevel\(aq
+\fB\-h\fP\fIlevel\fP
 .RS 4
 help with obscurity limit
 .RE
@@ -147,7 +147,7 @@ help with obscurity limit
 list all the controls along with their default value
 .RE
 .sp
-\fB\-s\fP\(cqlevel\(aq
+\fB\-s\fP\fIlevel\fP
 .RS 4
 print a limited list of settings.
 The number of levels of the control heirarchy is controled by \fIlevel\fP, with 0 printing
@@ -159,7 +159,7 @@ just the root of the heirarchy.
 list all the controls along with their corresponding environment variables
 .RE
 .sp
-\fB\-e\fP\(cqlevel\(aq
+\fB\-e\fP\fIlevel\fP
 .RS 4
 print a limited list of environment variables;
 The number of levels of the control heirarchy is controled by \fIlevel\fP, with 0 printing

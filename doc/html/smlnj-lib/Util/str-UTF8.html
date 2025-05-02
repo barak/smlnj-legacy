@@ -78,6 +78,7 @@
       <li class="toc-page"><a href="str-CharMap.html"><span class="toc-lib-page">The <code>CharMap</code> structure</span></a></li>
       <li class="toc-page"><a href="str-DynamicArray.html"><span class="toc-lib-page">The <code>DynamicArray</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-DynamicArrayFn.html"><span class="toc-lib-page">The <code>DynamicArrayFn</code> functor</span></a></li>
+      <li class="toc-page"><a href="str-EditDistance.html"><span class="toc-lib-page">The <code>EditDistance</code> structure</span></a></li>
       <li class="toc-page"><a href="str-Fifo.html"><span class="toc-lib-page">The <code>Fifo</code> structure</span></a></li>
       <li class="toc-page"><a href="str-FNVHash.html"><span class="toc-lib-page">The <code>FNVHash</code> structure</span></a></li>
       <li class="toc-page"><a href="str-Format.html"><span class="toc-lib-page">The <code>Format</code> structure</span></a></li>
@@ -103,6 +104,8 @@
       <li class="toc-page"><a href="str-ListXProd.html"><span class="toc-lib-page">The <code>ListXProd</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-MonoArrayFn.html"><span class="toc-lib-page">The <code>MonoArrayFn</code> functor</span></a></li>
       <li class="toc-page"><a href="sig-MONO_HASH_TABLE.html"><span class="toc-lib-page">The <code>MONO_HASH_TABLE</code> signature</span></a></li>
+      <li class="toc-page"><a href="str-Native.html"><span class="toc-lib-page">Native structure aliases</span></a></li>
+      <li class="toc-page"><a href="str-Native.html"><span class="toc-lib-page">Native structure aliases</span></a></li>
       <li class="toc-page"><a href="sig-ORD_KEY.html"><span class="toc-lib-page">The <code>ORD_KEY</code> signature</span></a></li>
       <li class="toc-page"><a href="sig-ORD_MAP.html"><span class="toc-lib-page">The <code>ORD_MAP</code> signature</span></a></li>
       <li class="toc-page"><a href="sig-ORD_SET.html"><span class="toc-lib-page">The <code>ORD_SET</code> signature</span></a></li>
@@ -217,6 +220,29 @@ The encoding scheme uses one to four bytes as follows:</p>
 </tr>
 </tbody>
 </table>
+<div class="paragraph">
+<p>There are three additional well-formedness restrictions on UTF-8 encodings
+that were introduced in the Unicode 3.1 and 3.2 standards.</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Characters cannot be larger than <code>0x10FFFF</code> (the maximum code point).</p>
+</li>
+<li>
+<p>Characters must be in the <strong>shortest</strong> encoding for the codepoint (<em>e.g.</em>,
+using two bytes to encode an ASCII character is invalid).</p>
+</li>
+<li>
+<p>Surogate pairs should be encoded as a single three-byte character instead of
+as two three-byte sequences.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -238,9 +264,16 @@ The encoding scheme uses one to four bytes as follows:</p>
 <pre class="pygments highlight"><code data-lang="sml"><span></span><span class="tok-kr">type</span> <span class="tok-kt">wchar</span> <span class="tok-p">=</span> <span class="tok-n">word</span>
 
 <span class="tok-kr">val</span> <span class="tok-nv">maxCodePoint</span> <span class="tok-p">:</span> <span class="tok-n">wchar</span>
+<span class="tok-kr">val</span> <span class="tok-nv">replacementCodePoint</span> <span class="tok-p">:</span> <span class="tok-n">wchar</span>
 
 <span class="tok-kr">exception</span> <span class="tok-nc">Incomplete</span>
+<span class="tok-nc">exception</span> <span class="tok-nc">Invalid</span>
 
+<span class="tok-nc">datatype</span> <span class="tok-nc">decode_strategy</span> <span class="tok-nc">=</span> <span class="tok-nc">STRICT</span> <span class="tok-nc">|</span> <span class="tok-nc">REPLACE</span>
+
+<span class="tok-nc">val</span> <span class="tok-nc">getWC</span> <span class="tok-nc">:</span> <span class="tok-nc">decode_strategy</span> <span class="tok-nc">-&gt;</span> <span class="tok-p">(</span><span class="tok-n">char</span><span class="tok-p">,</span> <span class="tok-nd">&#39;strm</span><span class="tok-p">)</span> <span class="tok-nn">StringCvt</span><span class="tok-p">.</span><span class="tok-n">reader</span> <span class="tok-p">-&gt;</span> <span class="tok-p">(</span><span class="tok-n">wchar</span><span class="tok-p">,</span> <span class="tok-nd">&#39;strm</span><span class="tok-p">)</span> <span class="tok-nn">StringCvt</span><span class="tok-p">.</span><span class="tok-n">reader</span>
+
+<span class="tok-kr">val</span> <span class="tok-nv">getWCStrict</span> <span class="tok-p">:</span> <span class="tok-p">(</span><span class="tok-n">char</span><span class="tok-p">,</span> <span class="tok-nd">&#39;strm</span><span class="tok-p">)</span> <span class="tok-nn">StringCvt</span><span class="tok-p">.</span><span class="tok-n">reader</span> <span class="tok-p">-&gt;</span> <span class="tok-p">(</span><span class="tok-n">wchar</span><span class="tok-p">,</span> <span class="tok-nd">&#39;strm</span><span class="tok-p">)</span> <span class="tok-nn">StringCvt</span><span class="tok-p">.</span><span class="tok-n">reader</span>
 <span class="tok-kr">val</span> <span class="tok-nv">getu</span> <span class="tok-p">:</span> <span class="tok-p">(</span><span class="tok-n">char</span><span class="tok-p">,</span> <span class="tok-nd">&#39;strm</span><span class="tok-p">)</span> <span class="tok-nn">StringCvt</span><span class="tok-p">.</span><span class="tok-n">reader</span> <span class="tok-p">-&gt;</span> <span class="tok-p">(</span><span class="tok-n">wchar</span><span class="tok-p">,</span> <span class="tok-nd">&#39;strm</span><span class="tok-p">)</span> <span class="tok-nn">StringCvt</span><span class="tok-p">.</span><span class="tok-n">reader</span>
 
 <span class="tok-kr">val</span> <span class="tok-nv">encode</span> <span class="tok-p">:</span> <span class="tok-n">wchar</span> <span class="tok-p">-&gt;</span> <span class="tok-n">string</span>
@@ -252,6 +285,8 @@ The encoding scheme uses one to four bytes as follows:</p>
 <span class="tok-kr">val</span> <span class="tok-nv">toString</span> <span class="tok-p">:</span> <span class="tok-n">wchar</span> <span class="tok-p">-&gt;</span> <span class="tok-n">string</span>
 
 <span class="tok-kr">val</span> <span class="tok-nv">size</span> <span class="tok-p">:</span> <span class="tok-n">string</span> <span class="tok-p">-&gt;</span> <span class="tok-n">int</span>
+
+<span class="tok-kr">val</span> <span class="tok-nv">size&#39;</span> <span class="tok-p">:</span> <span class="tok-n">substring</span> <span class="tok-p">-&gt;</span> <span class="tok-n">int</span>
 
 <span class="tok-kr">val</span> <span class="tok-nv">explode</span> <span class="tok-p">:</span> <span class="tok-n">string</span> <span class="tok-p">-&gt;</span> <span class="tok-n">wchar</span> <span class="tok-n">list</span>
 <span class="tok-kr">val</span> <span class="tok-nv">implode</span> <span class="tok-p">:</span> <span class="tok-n">wchar</span> <span class="tok-n">list</span> <span class="tok-p">-&gt;</span> <span class="tok-n">string</span>
@@ -283,25 +318,88 @@ definition will likely change.</p>
 </dd>
 </dl>
 </div>
+<div id="val:replacementCodePoint" class="dlist">
+<dl>
+<dt class="hdlist1"><code><span class="kw">val</span> replacementCodePoint : wchar</code></dt>
+<dd>
+<p>The replacement code point (<code>0wx00FFFD</code>) for invalid or incomplete
+sequences when using the <a href="#con:REPLACE"><code>REPLACE</code></a> decode strategy.</p>
+</dd>
+</dl>
+</div>
 <div id="exn:Incomplete" class="dlist">
 <dl>
 <dt class="hdlist1"><code><span class="kw">exception</span> Incomplete</code></dt>
 <dd>
 <p>This exception is raised when certain operations are applied to incomplete
-strings (<em>i.e.</em>, strings that end with a partial <strong>UTF-8</strong> character encoding).</p>
+strings (<em>i.e.</em>, strings that end in the middle of multi-byte <strong>UTF-8</strong> character
+encoding).</p>
+</dd>
+</dl>
+</div>
+<div id="exn:Invalid" class="dlist">
+<dl>
+<dt class="hdlist1"><code><span class="kw">exception</span> Invalid</code></dt>
+<dd>
+<p>This exception is raised when invalid UTF-8 encodings, such as
+non-shortest-length encodings, are encountered.</p>
+</dd>
+<dt class="hdlist1"><code><span class="kw">datatype</span> decode_strategy =</code> &#8230;&#8203;</dt>
+<dd>
+<p>This datatype is used to specify the strategy for handling incomplete or
+incorrect UTF-8 sequences.
+The constructors are interpreted as follows:</p>
+<div class="openblock">
+<div class="content">
+<div id="con:STRICT" class="dlist">
+<dl>
+<dt class="hdlist1"><code>STRICT</code></dt>
+<dd>
+<p>Raise the <a href="#exn:Incomplete"><code>Incomplete</code></a> exception when the end of
+input is encountered in the middle of an otherwise acceptable multi-byte
+encoding and raise the <a href="#exn:Invalid"><code>Invalid</code></a> exception when an
+invalid byte is encountered. <code>STRICT</code> is the default decoding option.</p>
+</dd>
+</dl>
+</div>
+<div id="con:REPLACE" class="dlist">
+<dl>
+<dt class="hdlist1"><code>REPLACE</code></dt>
+<dd>
+<p>Replace invalid input with the <a href="#val:replacementCodePoint"><code>replacementCodePoint</code></a>
+using the <a href="https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G66453">
+W3C standard substitution of maximal subparts algorithm</a>.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><code><span class="kw">val</span> getWC : decode_strategy &#8594; (char, 'strm) <a href="https://standardml.org/Basis/string-cvt.html#SIG:STRING_CVT.reader:TY">StringCvt.reader</a> -&gt; (wchar, 'strm) <a href="https://standardml.org/Basis/string-cvt.html#SIG:STRING_CVT.reader:TY">StringCvt.reader</a></code></dt>
+<dd>
+<p><code>getWC strategy getc</code> returns a wide-character reader for the character reader <code>getc</code>.
+The resulting reader handles incomplete and invalid encodings according the the
+<code>strategy</code> argument.</p>
+</dd>
+<dt class="hdlist1"><code><span class="kw">val</span> getWCStrict : (char, 'strm) <a href="https://standardml.org/Basis/string-cvt.html#SIG:STRING_CVT.reader:TY">StringCvt.reader</a> -&gt; (wchar, 'strm) <a href="https://standardml.org/Basis/string-cvt.html#SIG:STRING_CVT.reader:TY">StringCvt.reader</a></code></dt>
+<dd>
+<p><code>getu getc</code> returns a wide-character reader for the character reader <code>getc</code>.
+The resulting reader raises the <a href="#exn:Incomplete"><code>Incomplete</code></a> exception
+if it encounters an incomplete <strong>UTF-8</strong> character and it raises the
+<a href="#exn:Invalid"><code>Invalid</code></a> exception if it encounters an invalid encoding.
+This function is equivalent to the expression <code>getWC STRICT</code>.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> getu : (char, 'strm) <a href="https://standardml.org/Basis/string-cvt.html#SIG:STRING_CVT.reader:TY">StringCvt.reader</a> -&gt; (wchar, 'strm) <a href="https://standardml.org/Basis/string-cvt.html#SIG:STRING_CVT.reader:TY">StringCvt.reader</a></code></dt>
 <dd>
-<p><code>getu getc</code> returns a wide-character reader for the character reader <code>getc</code>.
-The resulting reader will raise the <a href="#exn:Incomplete"><code>Incomplete</code></a> exception
-if it encounters an incomplete <strong>UTF-8</strong> character.</p>
+<p>This function is equivalent to <code>getWCStrict</code>.  It is included for backwards
+compatibility.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> encode : wchar -&gt; string</code></dt>
 <dd>
 <p><code>encode wc</code> returns the <strong>UTF-8</strong> encoding of the wide character <code>wc</code>.
 This expression raises the
-<a href="https://standardml.org/Basis/general.html#SIG:GENERAL.Domain:EXN"><code>Domain</code></a> exception
-if <code>wc</code> is greater than the maximum <strong>Unicode</strong> code point.</p>
+<a href="#exn:Invalid"><code>Invalid</code></a> exception if <code>wc</code> is greater than the
+maximum <strong>Unicode</strong> code point.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> isAscii : wchar -&gt; bool</code></dt>
 <dd>
@@ -329,6 +427,22 @@ in the string <code>s</code>.  This expression raises the
 <a href="#exn:Incomplete"><code>Incomplete</code></a> exception if an incomplete
 character is encountered.</p>
 </dd>
+<dt class="hdlist1"><code><span class="kw">val</span> size : string -&gt; int</code></dt>
+<dd>
+<p><code>size s</code> returns the number of <strong>UTF-8</strong> encoded <strong>Unicode</strong> characters
+in the string <code>s</code>.  This expression raises the
+<a href="#exn:Incomplete"><code>Incomplete</code></a> exception
+if it encounters an incomplete <strong>UTF-8</strong> character and it raises the
+<a href="#exn:Invalid"><code>Invalid</code></a> exception if it encounters an invalid encoding.</p>
+</dd>
+<dt class="hdlist1"><code><span class="kw">val</span> size' : substring -&gt; int</code></dt>
+<dd>
+<p><code>size' ss</code> returns the number of <strong>UTF-8</strong> encoded <strong>Unicode</strong> characters
+in the substring <code>ss</code>.  This expression raises the
+<a href="#exn:Incomplete"><code>Incomplete</code></a> exception
+if it encounters an incomplete <strong>UTF-8</strong> character and it raises the
+<a href="#exn:Invalid"><code>Invalid</code></a> exception if it encounters an invalid encoding.</p>
+</dd>
 <dt class="hdlist1"><code><span class="kw">val</span> explode : string -&gt; wchar list</code></dt>
 <dd>
 <p><code>explode s</code> returns the list of <strong>UTF-8</strong> encoded Unicode characters that
@@ -339,17 +453,15 @@ comprise the string <code>s</code>.</p>
 <p><code>implode wcs</code> returns the <strong>UTF-8</strong> encoded string that represents
 the list <code>wcs</code> of Unicode code points.
 This expression raises the
-<a href="https://standardml.org/Basis/general.html#SIG:GENERAL.Domain:EXN"><code>Domain</code></a> exception
-if any character in the list is greater than the maximum <strong>Unicode</strong> code point.</p>
+<a href="#exn:Invalid"><code>Invalid</code></a> exception if it encounters an invalid encoding.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> map : (wchar -&gt; wchar) -&gt; string -&gt; string</code></dt>
 <dd>
 <p><code>map f s</code> maps the function <code>f</code> over the <strong>UTF-8</strong> encoded characters
 in the string <code>s</code> to produce a new <strong>UTF-8</strong> string. This expression raises
-the <a href="#exn:Incomplete"><code>Incomplete</code></a> exception if an incomplete
-character is encountered and the
-<a href="https://standardml.org/Basis/general.html#SIG:GENERAL.Domain:EXN"><code>Domain</code></a> exception
-if <code>f</code> returns a value that is greater than the maximum <strong>Unicode</strong> code point.
+the <a href="#exn:Incomplete"><code>Incomplete</code></a> exception
+if it encounters an incomplete <strong>UTF-8</strong> character and it raises the
+<a href="#exn:Invalid"><code>Invalid</code></a> exception if it encounters an invalid encoding.
 It is equivalent to the expression</p>
 <div class="listingblock">
 <div class="content">
@@ -361,8 +473,10 @@ It is equivalent to the expression</p>
 <dd>
 <p><code>app f s</code> applies the function <code>f</code> to the  <strong>UTF-8</strong> encoded characters
 in the string <code>s</code>.  This expression raises the
-<a href="#exn:Incomplete"><code>Incomplete</code></a> exception if an incomplete
-character is encountered.  It is equivalent to the expression</p>
+<a href="#exn:Incomplete"><code>Incomplete</code></a> exception
+if it encounters an incomplete <strong>UTF-8</strong> character and it raises the
+<a href="#exn:Invalid"><code>Invalid</code></a> exception if it encounters an invalid encoding.
+It is equivalent to the expression</p>
 <div class="listingblock">
 <div class="content">
 <pre class="pygments highlight"><code data-lang="sml"><span></span><span class="tok-nn">List</span><span class="tok-p">.</span><span class="tok-n">app</span> <span class="tok-n">f</span> <span class="tok-p">(</span><span class="tok-n">explode</span> <span class="tok-n">s</span><span class="tok-p">)</span></code></pre>
@@ -372,9 +486,10 @@ character is encountered.  It is equivalent to the expression</p>
 <dt class="hdlist1"><code><span class="kw">val</span> fold : ((wchar * 'a) -&gt; 'a) -&gt; 'a -&gt; string -&gt; 'a</code></dt>
 <dd>
 <p><code>fold f init s</code> folds a function from left-to-right over the
-<strong>UTF-8</strong> encoded characters in the string.  This expression raises
-the <a href="#exn:Incomplete"><code>Incomplete</code></a> exception if an incomplete
-character is encountered.  It is equivalent to the expression</p>
+<strong>UTF-8</strong> encoded characters in the string.  <a href="#exn:Incomplete"><code>Incomplete</code></a> exception
+if it encounters an incomplete <strong>UTF-8</strong> character and it raises the
+<a href="#exn:Invalid"><code>Invalid</code></a> exception if it encounters an invalid encoding.
+It is equivalent to the expression</p>
 <div class="listingblock">
 <div class="content">
 <pre class="pygments highlight"><code data-lang="sml"><span></span><span class="tok-nn">List</span><span class="tok-p">.</span><span class="tok-n">foldl</span> <span class="tok-n">f</span> <span class="tok-n">init</span> <span class="tok-p">(</span><span class="tok-n">explode</span> <span class="tok-n">s</span><span class="tok-p">)</span></code></pre>
@@ -387,8 +502,10 @@ character is encountered.  It is equivalent to the expression</p>
 returns true for all of the <strong>UTF-8</strong> encoded characters in the
 string.  It short-circuits evaluation as soon as a character
 is encountered for which <code>pred</code> returns <code>false</code>.  This expression
-raises the <a href="#exn:Incomplete"><code>Incomplete</code></a> exception if an incomplete
-character is encountered.  It is equivalent to the expression</p>
+raises the <a href="#exn:Incomplete"><code>Incomplete</code></a> exception
+if it encounters an incomplete <strong>UTF-8</strong> character and it raises the
+<a href="#exn:Invalid"><code>Invalid</code></a> exception if it encounters an invalid encoding.
+It is equivalent to the expression</p>
 <div class="listingblock">
 <div class="content">
 <pre class="pygments highlight"><code data-lang="sml"><span></span><span class="tok-nn">List</span><span class="tok-p">.</span><span class="tok-n">all</span> <span class="tok-n">pred</span> <span class="tok-p">(</span><span class="tok-n">explode</span> <span class="tok-n">s</span><span class="tok-p">)</span></code></pre>
@@ -404,8 +521,10 @@ character is encountered.  It is equivalent to the expression</p>
 returns <code>true</code> for at least one <strong>UTF-8</strong> encoded character in
 the string <code>s</code>.  It short-circuits evaluation as soon as a character
 is encountered for which <code>pred</code> returns <code>true</code>.  This expression raises
-the <a href="#exn:Incomplete"><code>Incomplete</code></a> exception if an incomplete
-character is encountered.  It is equivalent to the expression</p>
+the <a href="#exn:Incomplete"><code>Incomplete</code></a> exception
+if it encounters an incomplete <strong>UTF-8</strong> character and it raises the
+<a href="#exn:Invalid"><code>Invalid</code></a> exception if it encounters an invalid encoding.
+It is equivalent to the expression</p>
 <div class="listingblock">
 <div class="content">
 <pre class="pygments highlight"><code data-lang="sml"><span></span><span class="tok-nn">List</span><span class="tok-p">.</span><span class="tok-n">exists</span> <span class="tok-n">pred</span> <span class="tok-p">(</span><span class="tok-n">explode</span> <span class="tok-n">s</span><span class="tok-p">)</span></code></pre>
@@ -432,8 +551,8 @@ character is encountered.  It is equivalent to the expression</p>
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99 (December 24, 2020)<br />
-	  Last updated 2020-04-19 22:12:26 UTC
+	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
+	  Last updated 2025-04-25 20:04:52 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->

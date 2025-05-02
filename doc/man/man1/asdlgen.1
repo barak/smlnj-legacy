@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: asdlgen
 .\"    Author: [see the "AUTHOR(S)" section]
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-04-02
+.\" Generator: Asciidoctor 2.0.23
+.\"      Date: 2025-04-25
 .\"    Manual: \ \&
 .\"    Source: SML/NJ
 .\"  Language: English
 .\"
-.TH "ASDLGEN" "1" "2020-04-02" "SML/NJ" "\ \&"
+.TH "ASDLGEN" "1" "2025-04-25" "SML/NJ" "\ \&"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -74,14 +74,14 @@ Do not write any output files. Instead write the list of files that
 would have been written to the standard output.
 .RE
 .sp
-\fB\-d\fP \fIDIR\fP, \fB\-\-output\-directory=\fP\(cqDIR\(aq
+\fB\-d\fP \fIDIR\fP, \fB\-\-output\-directory=\fP\fIDIR\fP
 .RS 4
 Specify the output directory to place the generated files.
 By default the output will be placed in the same directory
 as the input file from which it was produced.
 .RE
 .sp
-\fB\-\-gen=\fP\(cqNAMES\(aq
+\fB\-\-gen=\fP\fINAMES\fP
 .RS 4
 Specifies the components to generate, where \fINAMES\fP is a comma\-separated
 list of names taken from the following:
@@ -132,13 +132,13 @@ list of names taken from the following:
 .RE
 .SS "C++ OPTIONS"
 .sp
-\fB\-\-base\-include=\fP\(cqFILE\(aq
+\fB\-\-base\-include=\fP\fIFILE\fP
 .RS 4
 Specify the name of the \fBC++\fP header file that defines the primitive ASDL types and functions. The default value is asdl/asdl.hxx.
 .RE
 .SS "SML OPTIONS"
 .sp
-\fB\-\-cm=\fP\(cqFILE\(aq
+\fB\-\-cm=\fP\fIFILE\fP
 .RS 4
 Generate a CM file for the pickler; this will define a CM library.
 Note that if the ASDL specification includes primitive modules, these
@@ -146,7 +146,7 @@ will be included in the list of exported structures, but the supporting
 source files will have to be added to the CM file by hand.
 .RE
 .sp
-\fB\-\-mlb=\fP\(cqFILE\(aq
+\fB\-\-mlb=\fP\fIFILE\fP
 .RS 4
 Generate an MLB file for the pickler. Note that if the ASDL specification
 includes primitive modules, these will be included in the list of

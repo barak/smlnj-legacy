@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: ml-build
 .\"    Author: [see the "AUTHOR(S)" section]
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-09-07
+.\" Generator: Asciidoctor 2.0.23
+.\"      Date: 2025-04-25
 .\"    Manual: \ \&
 .\"    Source: SML/NJ
 .\"  Language: English
 .\"
-.TH "ML\-BUILD" "1" "2020-09-07" "SML/NJ" "\ \&"
+.TH "ML\-BUILD" "1" "2025-04-25" "SML/NJ" "\ \&"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,7 +28,7 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-ml\-build \- command\-line build tool for SML/NJ programs
+ml-build \- command\-line build tool for SML/NJ programs
 .SH "SYNOPSIS"
 .sp
 \fBml\-build\fP [\fIOPTIONS\fP] \fIgroup.cm\fP [\fImain\fP [\fIheap\-image\fP]]
@@ -38,22 +38,22 @@ ml\-build \- command\-line build tool for SML/NJ programs
 files using the Compilation Manager and SML/NJ compiler.
 .SH "OPTIONS"
 .sp
-\fB\-C\fP\(cqctl\(aq=\fIvalue\fP
+\fB\-C\fP\fIctl\fP=\fIvalue\fP
 .RS 4
 set the control \fIctl\fP to \fIvalue\fP.
 .RE
 .sp
-\fB\-D\fP\(cqname\(aq=\fIvalue\fP
+\fB\-D\fP\fIname\fP=\fIvalue\fP
 .RS 4
 define the CM variable \fIname\fP to have the given value.
 .RE
 .sp
-\fB\-D\fP\(cqname
+\fB\-D\fP\*(Aqname
 .RS 4
 define the CM variable \fIname\fP to have the value 1.
 .RE
 .sp
-\fB\-U\fP\(cqname\(aq
+\fB\-U\fP\fIname\fP
 .RS 4
 remove any definition of the CM variable \fIname\fP.
 .RE

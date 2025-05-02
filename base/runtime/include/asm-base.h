@@ -19,7 +19,7 @@
 #define FALSE	0
 #define TRUE	1
 
-#if (!defined(GLOBALS_HAVE_UNDERSCORE)) && (((defined(OPSYS_FREEBSD) || defined(OPSYS_NETBSD2) || defined(OPSYS_OPENBSD)) && !defined(__ELF__)) || defined(OPSYS_WIN32) || defined(OPSYS_DARWIN) || defined(OPSYS_CYGWIN))
+#if (!defined(GLOBALS_HAVE_UNDERSCORE)) && (((defined(OPSYS_FREEBSD) || defined(OPSYS_NETBSD) || defined(OPSYS_OPENBSD)) && !defined(__ELF__)) || defined(OPSYS_WIN32) || defined(OPSYS_DARWIN) || defined(OPSYS_CYGWIN))
 #  define GLOBALS_HAVE_UNDERSCORE
 #endif
 
@@ -97,9 +97,8 @@
     .globl CFUNSYM(ID) __SC__	\
     LABEL(CFUNSYM(ID))
 
-/* FIXME: move these definitions to the x86-prim.h file */
 #elif defined(ARCH_X86) || defined(ARCH_AMD64)
-#  error use x86-syntax.h instead if ml-base.h
+#  error use x86-syntax.h instead of ml-base.h
 
 #else
 #  error missing asm definitions

@@ -1,6 +1,6 @@
 (* cm-boot.sml
  *
- * COPYRIGHT (c) 2017 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * COPYRIGHT (c) 2022 The Fellowship of SML/NJ (http://www.smlnj.org)
  * All rights reserved.
  *
  * This is the module that actually puts together the contents of the
@@ -166,11 +166,20 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 	  fun resetPathConfig () = SrcPath.reset_anchors penv
 	  (* get the current binding for an anchor *)
 	  fun getAnchor a () = SrcPath.get_anchor (penv, a)
-
+          (* make a source path from a string using the host OS pathname
+           * conventions.
+           *)
+	  fun mkNativeSrcPath s =
+                SrcPath.file
+                  (SrcPath.native
+                    { err = fn s => raise Fail s, env = penv }
+                    { context = SrcPath.cwd (), spec = s })
+          (* make a source path from a string using CM standard path syntax *)
 	  fun mkStdSrcPath s =
-	      SrcPath.file
-	        (SrcPath.standard { err = fn s => raise Fail s, env = penv }
-				  { context = SrcPath.cwd (), spec = s })
+                SrcPath.file
+                  (SrcPath.standard
+                    { err = fn s => raise Fail s, env = penv }
+                    { context = SrcPath.cwd (), spec = s })
 
 	  fun getPending () =
 	      map (Symbol.describe o #1)
@@ -232,16 +241,17 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 
 	  and slave_parse_arg x = parse_arg0 true x
 
-	  and autoload s = let
-	      val p = mkStdSrcPath s
-	  in
-	      (case Parse.parse (parse_arg (al_greg, NONE, p)) of
-		   NONE => false
-		 | SOME (g, _) =>
-		   (AutoLoad.register (EnvRef.loc (), g);
-		    true))
-	      before dropPickles ()
-	  end
+	  and autoload mkSrcPath s = let
+	        val p = mkSrcPath s
+	        in
+	          (case Parse.parse (parse_arg (al_greg, NONE, p))
+                   of NONE => false
+		    | SOME (g, _) => (
+		        AutoLoad.register (EnvRef.loc (), g);
+		        true)
+                  (* end case *))
+	            before dropPickles ()
+	        end
 
 	  and run mkSrcPath sflag f s = let
 	      val p = mkSrcPath s
@@ -281,41 +291,43 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 
 	  fun cwd_load_plugin x = load_plugin (SrcPath.cwd ()) x
 
-	  fun stabilize recursively root = let
-	      fun stabilize_recomp_runner gp g = let
-		  val _ = init_servers g
-		  val { allgroups, ... } =
-		      Compile.newTraversal (Link.evict, fn _ => (), g)
-	      in
-		  Servers.withServers (fn () => allgroups gp)
-	      end
-	      fun stabilize_dummy_runner gp g = true
-	      fun phase1 () = run mkStdSrcPath NONE
-				  stabilize_recomp_runner root
-	      fun phase2 () = (Compile.reset ();(* a bit too draconian? *)
-			       run mkStdSrcPath (SOME recursively)
-				   stabilize_dummy_runner root)
-	  in
-	      (* Don't bother with the 2-phase thing if there are
-	       * no compile servers attached.  (We still need
-	       * the "withServers" call to clean up our queues in case
-	       * of an interrupt or error.) *)
-	      if Servers.noServers () then Servers.withServers phase2
-	      else
-		  (* We do this in two phases:
-		   *    1. recompile everything without stabilization but
-		   *       potentially using compile servers
-		   *    2. do a local stabilization run (which should have
-		   *       no need to compile anything); don't use servers
-		   *)
-		  phase1 () andalso phase2 ()
-	  end
+	  fun stabilize mkSrcPath recursively root = let
+                fun stabilize_recomp_runner gp g = let
+                      val _ = init_servers g
+                      val { allgroups, ... } =
+                            Compile.newTraversal (Link.evict, fn _ => (), g)
+                      in
+                        Servers.withServers (fn () => allgroups gp)
+                      end
+                fun stabilize_dummy_runner gp g = true
+                fun phase1 () = run mkSrcPath NONE
+                                    stabilize_recomp_runner root
+                fun phase2 () = (Compile.reset ();(* a bit too draconian? *)
+                                 run mkSrcPath (SOME recursively)
+                                     stabilize_dummy_runner root)
+                in
+                (* Don't bother with the 2-phase thing if there are
+                 * no compile servers attached.  (We still need
+                 * the "withServers" call to clean up our queues in case
+                 * of an interrupt or error.) *)
+                  if Servers.noServers ()
+                    then Servers.withServers phase2
+	            else
+                    (* We do this in two phases:
+                     *    1. recompile everything without stabilization but
+                     *       potentially using compile servers
+                     *    2. do a local stabilization run (which should have
+                     *       no need to compile anything); don't use servers
+                     *)
+                      phase1 () andalso phase2 ()
+	        end
 
-	  val recomp = run mkStdSrcPath NONE recomp_runner
-	  val make = run mkStdSrcPath NONE (make_runner true)
+	  fun recomp mkSrcPath = run mkSrcPath NONE recomp_runner
+          val makeNative = run mkNativeSrcPath NONE (make_runner true)
+          val makeStd = run mkStdSrcPath NONE (make_runner true)
 
 	  fun to_portable s = let
-	      val gp = mkStdSrcPath s
+	      val gp = mkNativeSrcPath s
 	      fun nativesrc s = let
 		  val p = SrcPath.standard
 			      { err = fn s => raise Fail s, env = penv }
@@ -327,9 +339,8 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 				    nativesrc = nativesrc }
 	  in
 	      Option.map
-		  (mkres o ToPortable.export)
-		  (Parse.parse (parse_arg
-				    (GroupReg.new (), NONE, mkStdSrcPath s)))
+                (mkres o ToPortable.export)
+                (Parse.parse (parse_arg (GroupReg.new (), NONE, mkNativeSrcPath s)))
 	  end
 
 	  fun sources archos group =
@@ -374,8 +385,8 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 			       | GG.NOLIB n =>
 				   addSources (#subgroups n, sources,
 					       insert (a, p, x), v))
-		      
-		  val p = mkStdSrcPath group
+
+		  val p = mkNativeSrcPath group
 		  val gr = GroupReg.new ()
 		  val x0 = { class = "cm", derived = false }
 		  fun doit () =
@@ -403,9 +414,9 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 		      { base, ext = NONE } => extendTarget ()
 		    | { base, ext = SOME e } =>
 		      if e = hsfx then target else extendTarget ()
-	      val spopt = Option.map mkStdSrcPath setup
-	      val pp = mkStdSrcPath project
-	      val wp = mkStdSrcPath wrapper
+	      val spopt = Option.map mkNativeSrcPath setup
+	      val pp = mkNativeSrcPath project
+	      val wp = mkNativeSrcPath wrapper
 	      val ts = TStamp.fmodTime target
 	      val gr = GroupReg.new ()
 	      fun do_cmfile p =
@@ -453,7 +464,7 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 			    parse = parse,
 			    my_archos = my_archos,
 			    sbtrav = Compile.newSbnodeTraversal,
-			    make = make }
+			    make = makeNative }
 	  end
 
 	  (* This function works on behalf of the ml-build script.
@@ -517,7 +528,7 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 	  val al_managers =
 	      AutoLoad.mkManagers { get_ginfo = al_ginfo,
 				    dropPickles = dropPickles }
-	      
+
 	  fun reset () =
 	      (Compile.reset ();
 	       Link.reset ();
@@ -568,7 +579,7 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 				       (SOME p, SOME i) =>
 				       (case DE.look de p of
 					    NONE => pm
-					  | SOME obj => 
+					  | SOME obj =>
 					    IM.insert (pm, i,
 						       DE.singleton (p, obj)))
 				     | _ => pm)
@@ -590,7 +601,7 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 	      in
 		  system_values := m
 	      end
-	      
+
 	      val _ =
 		  SafeIO.perform { openIt = fn () => TextIO.openIn pidmapfile,
 				   closeIt = TextIO.closeIn,
@@ -651,12 +662,15 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 			  (Say.say
 			    ["!* ", x,
 			     ": \"autoload\" not available, using \"make\"\n"];
-			   make x)
-		      val bare_preload =
-			  Preload.preload { make = make,
-					    autoload = bare_autoload }
-		      val standard_preload =
-			  Preload.preload { make = make, autoload = autoload }
+			   makeStd x)
+		      val bare_preload = Preload.preload {
+                              make = makeStd,
+                              autoload = bare_autoload
+                            }
+		      val standard_preload = Preload.preload {
+                              make = makeStd,
+                              autoload = autoload mkStdSrcPath
+                            }
 		  in
 		      #set ER.pervasive pervasive;
 		      #set (ER.loc ()) E.emptyEnv;(* redundant? *)
@@ -678,8 +692,8 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
   in
     fun init (bootdir, de, er, useStream, useFile, errorwrap, icm) = let
 	fun procCmdLine () = let
-	    val autoload = errorwrap (ignore o autoload)
-	    val make = errorwrap (ignore o make)
+	    val autoload' = errorwrap (ignore o autoload mkStdSrcPath)
+	    val make' = errorwrap (ignore o makeStd)
             fun processFile (file, mk, ext) = (case ext
 		  of ("sml" | "sig" | "fun") => useFile file
 		   | "cm" => mk file
@@ -736,9 +750,10 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 		     \\n\
 		     \  rtsargs:\n\
 		     \    @SMLversion      (echo the version of SML/NJ then exit)\n\
+		     \    @SMLwordsize     (echo the wordsze for the system then exit)\n\
+		     \    @SMLsuffix       (echo the heap suffix for the system then exit)\n\
 		     \    @SMLload=<h>     (load specified heap image)\n\
 		     \    @SMLcmdname=<n>  (set command name)\n\
-		     \    @SMLsuffix       (echo heap suffix for the system then exit)\n\
 		     \    @SMLalloc=<s>    (specify size of allocation area)\n\
                      \    @SMLrun=<rt>     (specify runtime system)\n\
 		     \    @SMLquiet        (load heap image silently)\n\
@@ -855,8 +870,8 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 				       (getOpt (OS.Path.ext f, "<none>")))
 
 	    fun args ([], _) = ()
-	      | args ("-a" :: _, _) = nextarg autoload
-	      | args ("-m" :: _, _) = nextarg make
+	      | args ("-a" :: _, _) = nextarg autoload'
+	      | args ("-m" :: _, _) = nextarg make'
 	      | args (["-H"], _) = (help NONE; quit ())
 	      | args ("-H" :: _ :: _, mk) = (help NONE; nextarg mk)
 	      | args (["-S"], _) = (showcur NONE; quit ())
@@ -878,7 +893,7 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 	in
 	    case SMLofNJ.getArgs () of
 		["@CMslave"] => (#set StdConfig.verbose false; slave ())
-	      | l => (SMLofNJ.shiftArgs (); args (l, autoload))
+	      | l => (SMLofNJ.shiftArgs (); args (l, autoload'))
 	end
     in
 	useStreamHook := useStream;
@@ -931,15 +946,18 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 	    val name = Servers.name
 	end
 
-	val autoload = autoload
-	val make = make
-	val recomp = recomp
-	val stabilize = stabilize
+        (* note that we use the "standard" path syntax during the bootstrapping
+         * process, but switch to native paths for the use of CM in the REPL.
+         *)
+	val autoload = autoload mkNativeSrcPath
+	val make = makeNative
+	val recomp = recomp mkNativeSrcPath
+	val stabilize = stabilize mkNativeSrcPath
 
 	val sources = sources
 
 	val symval = SSV.symval
-	val load_plugin = cwd_load_plugin 
+	val load_plugin = cwd_load_plugin
 	val mk_standalone = mk_standalone
 
 	structure Graph = struct
@@ -956,4 +974,4 @@ functor LinkCM (structure HostBackend : BACKEND) = struct
 
     val load_plugin = load_plugin
   end
-end
+end (* end functor *)

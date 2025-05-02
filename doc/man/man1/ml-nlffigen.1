@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: ml-nlffigen
 .\"    Author: [see the "AUTHOR(S)" section]
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-04-02
+.\" Generator: Asciidoctor 2.0.23
+.\"      Date: 2025-04-25
 .\"    Manual: \ \&
 .\"    Source: SML/NJ
 .\"  Language: English
 .\"
-.TH "ML\-NLFFIGEN" "1" "2020-04-02" "SML/NJ" "\ \&"
+.TH "ML\-NLFFIGEN" "1" "2025-04-25" "SML/NJ" "\ \&"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,7 +28,7 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-ml\-nlffigen \- foreign function glue\-code generator for Standard ML
+ml-nlffigen \- foreign function glue\-code generator for Standard ML
 .SH "SYNOPSIS"
 .sp
 \fBml\-nlffigen\fP [\fIOPTIONS\fP] \fIfile\fP
@@ -103,9 +103,9 @@ there is enough information for this in the \fBC\fP source.
 Do not collect enum constants from truly unnamed enumerations
 (those without tags that occur at toplevel or in an unnamed
 context; \fIi.e.\fP, not in a typedef or another named struct
-or union) into a single artificial enumeration tagged by \f(CR\(aq\fP
+or union) into a single artificial enumeration tagged by \f(CR\*(Aq\fP
 (single apostrohe).  The corresponding SML\-side representative
-will be a structure named \f(CRE_\(aq\fP.
+will be a structure named \f(CRE_\*(Aq\fP.
 .RE
 .sp
 \fB\-ec, \-enum\-constructors\fP
@@ -147,19 +147,19 @@ passed to the \fBC\fP preprocessor.  The list of options
 gets substituted for \f(CR%o\fP in the cpp command line template.
 .RE
 .sp
-\fB\-U\fP\(cqx\(aq
+\fB\-U\fP\fIx\fP
 .RS 4
-The option (\fIi.e.\fP, \fB\-U\fP\(cqx\(aq) is added to the list of cpp options.
+The option (\fIi.e.\fP, \fB\-U\fP\fIx\fP) is added to the list of cpp options.
 .RE
 .sp
-\fB\-D\fP\(cqx\(aq
+\fB\-D\fP\fIx\fP
 .RS 4
-The option (\fIi.e.\fP, \fB\-D\fP\(cqx\(aq) is added to the list of cpp options.
+The option (\fIi.e.\fP, \fB\-D\fP\fIx\fP) is added to the list of cpp options.
 .RE
 .sp
-\fB\-I\fP\(cqx\(aq
+\fB\-I\fP\fIx\fP
 .RS 4
-The option (\fIi.e.\fP, \fB\-I\fP\(cqx\(aq) is added to the list of cpp options.
+The option (\fIi.e.\fP, \fB\-I\fP\fIx\fP) is added to the list of cpp options.
 .RE
 .sp
 \fB\-version\fP

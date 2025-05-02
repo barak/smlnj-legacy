@@ -22,24 +22,24 @@ sig
   val ppStrexp : StaticEnv.staticEnv * Source.inputSource option
                  -> PrettyPrint.stream -> Absyn.strexp * int -> unit
 
-  val lineprint : bool ref
-
-  val debugging : bool ref
-
 end (* signature PPABSYN *)
 
 
 structure PPAbsyn: PPABSYN =
 struct
 
-local structure EM = ErrorMsg
-      structure M = Modules
-      structure B = Bindings
-      structure S = Symbol
-      structure PP = PrettyPrint
-      structure PU = PPUtil
+local
+  structure S = Symbol
+  structure SS = SpecialSymbols
+  structure IP = InvPath
+  structure EM = ErrorMsg
+  structure M = Modules
+  structure B = Bindings
+  structure PP = PrettyPrint
+  structure PU = PPUtil
+  structure AU = AbsynUtil
 
-      open Absyn Tuples Fixity VarCon Types PPType PPVal
+  open Absyn Tuples Fixity VarCon Types PPType PPVal
 in
 
 (* debugging *)
@@ -49,9 +49,8 @@ fun debugmsg (msg: string) =
       if !debugging then (say msg; say "\n") else ()
 fun bug msg = ErrorMsg.impossible("PPAbsyn: "^msg)
 
+val lineprint = ElabDataControl.absynLineprint
 val internals = ElabDataControl.absynInternals
-
-val lineprint = ref false
 
 fun C f x y = f y x
 
@@ -93,10 +92,8 @@ fun isTUPLEexp (RECORDexp [_]) = false
 fun lookFIX (env,sym) =
     Lookup.lookFix (env,S.fixSymbol(S.name sym))
 
-fun stripMark (MARKexp(a,_)) = stripMark a
-  | stripMark x = x
 
-fun ppRpath ppstrm rpath = PP.string ppstrm (InvPath.toString rpath)
+fun ppRpath ppstrm rpath = PP.string ppstrm (IP.toString rpath)
 
 fun ppStr ppstrm str =
     (case str
@@ -212,30 +209,39 @@ and ppDconPat(env,ppstrm) =
 	      pps "("; ppPat env ppstrm (v,d); PP.break ppstrm {nsp=1,offset=2};
 	      pps " as "; ppPat env ppstrm (p,d-1); pps ")";
 	      closeBox ())
-	  | ppDconPat'(APPpat(DATACON{name,...},_,p),l,r,d) =
-	      let val dname = S.name name
-		      (* should really have original path, like for VARexp *)
-		  val thisFix = lookFIX(env,name)
-		  val effFix = case thisFix of NONfix => infFix | x => x
-		  val atom = strongerR(effFix,r) orelse strongerL(l,effFix)
-	       in openHOVBox 2;
-		  lpcond(atom);
-		  case (thisFix,p)
-		    of (INfix _, RECORDpat{fields=[(_,pl),(_,pr)],...}) =>
-			 let val (left,right) =
-				 if atom then (nullFix,nullFix)
-				 else (l,r)
-			  in ppDconPat' (pl,left,thisFix,d-1);
-			     PP.break ppstrm {nsp=1,offset=0};
-			     pps dname;
-			     PP.break ppstrm {nsp=1,offset=0};
-			     ppDconPat' (pr,thisFix,right,d-1)
-			 end
-		     | _ =>
-		        (pps dname; PP.break ppstrm {nsp=1,offset=0};
-			 ppDconPat'(p,infFix,infFix,d-1));
-		  rpcond(atom);
-		  closeBox ()
+	  | ppDconPat'(APPpat(DATACON{name,...}, _, argPat), l, r, d) = let
+              val dname = S.name name
+		    (* should really have original path, like for VARexp *)
+              val thisFix = lookFIX(env,name)
+              val effFix = case thisFix of NONfix => infFix | x => x
+              val atom = strongerR(effFix,r) orelse strongerL(l,effFix)
+              fun pp name = (
+                    pps name;
+                    PP.break ppstrm {nsp=1,offset=0};
+                    ppDconPat' (argPat, infFix, infFix, d-1))
+              in
+                openHOVBox 2;
+                lpcond atom;
+                case thisFix
+                 of INfix _ => (case AU.headStripPat argPat
+                       of RECORDpat{fields=[(_,leftPat),(_,rightPat)],...} => let
+                            (* BUG? assuming field pairs are in the right order! *)
+                            val (left,right) = if atom
+                                  then (nullFix,nullFix)
+                                  else (l,r)
+                            in
+                              ppDconPat' (leftPat,left,thisFix,d-1);
+                              PP.break ppstrm {nsp=1,offset=0};
+                              pps dname;
+                              PP.break ppstrm {nsp=1,offset=0};
+                              ppDconPat' (rightPat, thisFix, right, d-1)
+                            end
+                        | _ => pp ("op "^dname) (* assume that there was an "op" prefix *)
+                      (* end case *))
+                  | NONfix => pp dname
+                (* end case *);
+                rpcond atom;
+                closeBox ()
 	      end
 	  | ppDconPat' (p,_,_,d) = ppPat env ppstrm (p,d)
      in ppDconPat'
@@ -297,7 +303,7 @@ fun ppExp (context as (env,source_opt)) ppstrm =
 	  | ppExp' (SEQexp exps,_,d) =
 	      PU.ppClosedSequence ppstrm
 	        {front=(C PP.string "("),
-		 sep=PU.sepWithSpc ",",
+		 sep=PU.sepWithSpc ";",
 		 back=(C PP.string ")"),
 		 pr=(fn _ => fn exp => ppExp'(exp,false,d-1)),
 		 style=PU.INCONSISTENT}
@@ -444,8 +450,9 @@ fun ppExp (context as (env,source_opt)) ppstrm =
 			     closeBox ())
 		     in case thisFix
 			  of INfix _ =>
-			     (case stripMark rand
-				of RECORDexp[(_,pl),(_,pr)] =>
+			     (case AU.headStripExp rand
+				of RECORDexp[(_,leftExp), (_,rightExp)] =>
+				   (* BUG: depends on proper order in the fields list *)
 				    let val atom = strongerL(leftFix,thisFix)
 					     orelse strongerR(thisFix,rightFix)
 					val (left,right) =
@@ -453,11 +460,11 @@ fun ppExp (context as (env,source_opt)) ppstrm =
 					    else (leftFix,rightFix)
 				     in (openHOVBox 2;
 					  lpcond(atom);
-					  ppAppExp (pl,left,thisFix,d-1);
+					  ppAppExp (leftExp, left, thisFix, d-1);
 					  PP.break ppstrm {nsp=1,offset=0};
 					  pps dname;
 					  PP.break ppstrm {nsp=1,offset=0};
-					  ppAppExp (pr,thisFix,right,d-1);
+					  ppAppExp (rightExp, thisFix, right, d-1);
 					  rpcond(atom);
 					 closeBox ())
 				    end
@@ -466,7 +473,7 @@ fun ppExp (context as (env,source_opt)) ppstrm =
 		    end
 		fun appPrint(_,_,_,0) = pps "#"
 		  | appPrint(APPexp(rator,rand),l,r,d) =
-		    (case stripMark rator
+		    (case AU.headStripExp rator
 		       of CONexp(DATACON{name,...},_) =>
 		           fixitypp([name],rand,l,r,d)
 		        | VARexp(v,_) =>
@@ -549,7 +556,7 @@ and ppDec (context as (env,source_opt)) ppstrm =
 		     | 1 => (pps "'a ")
 		     | n => (PU.ppTuple ppstrm PP.string (typeFormals n);
                              pps " ");
-		   PU.ppSym ppstrm (InvPath.last path);
+		   PU.ppSym ppstrm (IP.last (path, SS.errorTycId));
 		   pps " = "; ppType env ppstrm body)
 		| f _ _ = bug "ppDec'(TYPEdec)"
 	  in
@@ -566,7 +573,8 @@ and ppDec (context as (env,source_opt)) ppstrm =
 			  | 1 => (pps "'a ")
 			  | n => (PU.ppTuple ppstrm PP.string (typeFormals n);
 				  pps " ");
-			PU.ppSym ppstrm (InvPath.last path); pps " = ..."(*;
+			PU.ppSym ppstrm (IP.last (path, SS.errorTycId));
+			pps " = ..." (* ;
 		        PU.ppSequence ppstrm
 			{sep=(fn ppstrm => (PP.string ppstrm " |";
 					    PP.break ppstrm {nsp=1,offset=0})),
@@ -582,7 +590,7 @@ and ppDec (context as (env,source_opt)) ppstrm =
 		     | 1 => (pps "'a ")
 		     | n => (PU.ppTuple ppstrm PP.string (typeFormals n);
                              pps " ");
-		   PU.ppSym ppstrm (InvPath.last path);
+		   PU.ppSym ppstrm (IP.last (path, SS.errorTycId));
 		   pps " = "; ppType env ppstrm body)
 		| ppWITH _ _ = bug "ppDec'(DATATYPEdec) 2"
 	  in

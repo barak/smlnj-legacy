@@ -158,19 +158,19 @@ structure ModuleId : MODULE_ID = struct
     fun insertTyc ({ m_tyc, m_sig, m_str, m_fct, m_env }, k, t) =
 	{ m_tyc = StampM.insert (m_tyc, k, t),
 	  m_sig = m_sig, m_str = m_str, m_fct = m_fct, m_env = m_env }
-	  
+
     fun insertSig ({ m_tyc, m_sig, m_str, m_fct, m_env }, k, t) =
 	{ m_sig = StampM.insert (m_sig, k, t),
 	  m_tyc = m_tyc, m_str = m_str, m_fct = m_fct, m_env = m_env }
-	  
+
     fun insertStr ({ m_tyc, m_sig, m_str, m_fct, m_env }, k, t) =
 	{ m_str = StrM.insert (m_str, k, t),
 	  m_tyc = m_tyc, m_sig = m_sig, m_fct = m_fct, m_env = m_env }
-	  
+
     fun insertFct ({ m_tyc, m_sig, m_str, m_fct, m_env }, k, t) =
 	{ m_fct = FctM.insert (m_fct, k, t),
 	  m_tyc = m_tyc, m_sig = m_sig, m_str = m_str, m_env = m_env }
-	  
+
     fun insertEnv ({ m_tyc, m_sig, m_str, m_fct, m_env }, k, t) =
 	{ m_env = StampM.insert (m_env, k, t),
 	  m_tyc = m_tyc, m_sig = m_sig, m_str = m_str, m_fct = m_fct }

@@ -1,14 +1,14 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)
+dnl COPYRIGHT (c) 2023 The Fellowship of SML/NJ (http://www.smlnj.org)
 dnl All rights reserved.
 dnl
 dnl This the configuration script for autoconf version 2.60+.
 
 AC_INIT([smlnj-lib-doc],[1.0],[],[],[http://smlnj.org])
 
-AC_PREREQ(2.60)
-AC_COPYRIGHT([[COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)]])
+AC_PREREQ([2.71])
+AC_COPYRIGHT([[COPYRIGHT (c) 2023 The Fellowship of SML/NJ (http://www.smlnj.org)]])
 AC_CONFIG_SRCDIR(src/JSON/json-lib.adoc)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
@@ -54,7 +54,7 @@ dnl
 dnl ******************** get SML/NJ root directory ********************
 dnl
 AC_ARG_WITH([smlnj-root],
-  AC_HELP_STRING([--with-smlnj-root=DIR], [specify the SML/NJ root directory path]),
+  AS_HELP_STRING([--with-smlnj-root=DIR], [specify the SML/NJ root directory path]),
   [SMLNJ_ROOT=$withval],
   [SMLNJ_ROOT=none])
 if test x"$SMLNJ_ROOT" = xnone ; then
@@ -70,7 +70,7 @@ dnl
 dnl ******************** get the output directory ********************
 dnl
 AC_ARG_WITH([output-dir],
-  AC_HELP_STRING([--with-output-dir=DIR], [specify the output directory path]),
+  AS_HELP_STRING([--with-output-dir=DIR], [specify the output directory path]),
   [OUT_DIR=$withval],
   [OUT_DIR=none])
 if test x"$OUT_DIR" = xnone ; then
@@ -81,56 +81,51 @@ AC_SUBST(OUT_DIR)
 dnl
 dnl ******************** get SML/NJ release number and date ********************
 dnl
-SMLNJ_DATE=`date "+%B %d, %Y"`
-
 AC_ARG_WITH([version],
-  AC_HELP_STRING([--with-version=VERS], [specify the SML/NJ release version]),
-  [SMLNJ_VERSION=$withval],
-  [SMLNJ_VERSION=none])
-if test x"$SMLNJ_VERSION" = xnone ; then
+  AS_HELP_STRING([--with-version=VERS], [specify the SML/NJ release version]),
+  [SMLNJ_RELEASE_VERSION=$withval],
+  [SMLNJ_RELEASE_VERSION=none])
+if test x"$SMLNJ_RELEASE_VERSION" = xnone ; then
   if test -r $SMLNJ_ROOT/config/version ; then
-    SMLNJ_VERSION=`cat $SMLNJ_ROOT/config/version`
-    AC_MSG_NOTICE(["SML/NJ release version: $SMLNJ_VERSION"])
+    SMLNJ_RELEASE_VERSION=`cat $SMLNJ_ROOT/config/version`
   else
-    SMLNJ_VERSION="working"
-    AC_MSG_NOTICE(["SML/NJ working version"])
+    SMLNJ_RELEASE_VERSION="working"
   fi
 fi
-AC_SUBST(SMLNJ_VERSION)
+AC_MSG_NOTICE(["SML/NJ release version: $SMLNJ_RELEASE_VERSION"])
+AC_SUBST(SMLNJ_RELEASE_VERSION)
 
 AC_ARG_WITH([date],
-  AC_HELP_STRING([--with-date=DATE], [specify the SML/NJ release date]),
-  [SMLNJ_DATE=$withval],
-  [SMLNJ_DATE=none])
-if test x"$SMLNJ_DATE" = xnone ; then
-  if test x"$SMLNJ_VERSION" = xworking ; then
+  AS_HELP_STRING([--with-date=DATE], [specify the SML/NJ release date]),
+  [SMLNJ_RELEASE_DATE=$withval],
+  [SMLNJ_RELEASE_DATE=none])
+if test x"$SMLNJ_RELEASE_DATE" = xnone ; then
+  if test x"$SMLNJ_RELEASE_VERSION" = xworking ; then
     #
     # for working versions, we just use the current date
     #
-    SMLNJ_DATE=`date "+%B %d, %Y"`
+    SMLNJ_RELEASE_DATE=`date "+%B %d, %Y"`
   else
     if test -r $SMLNJ_ROOT/config/releasedate ; then
-      SMLNJ_DATE=`cat $SMLNJ_ROOT/config/releasedate`
+      SMLNJ_RELEASE_DATE=`cat $SMLNJ_ROOT/config/releasedate`
     else
-      SMLNJ_DATE=`date "+%B %d, %Y"`
+      SMLNJ_RELEASE_DATE=`date "+%B %d, %Y"`
     fi
   fi
 fi
-AC_MSG_NOTICE(["SML/NJ release date: $SMLNJ_DATE"])
-AC_SUBST(SMLNJ_DATE)
+AC_MSG_NOTICE(["SML/NJ release date: $SMLNJ_RELEASE_DATE"])
+AC_SUBST(SMLNJ_RELEASE_DATE)
 
 dnl
 dnl ******************** get SML/NJ info (for generation tools) ********************
 dnl
 
-dnl ***** TODO: once it is released, the version number should be 110.98 to avoid
-dnl ***** a bug in the JSON library
-
-dnl check that we have a compatible version of SML/NJ
+dnl check that we have a compatible version of SML/NJ; we need at least 110.98 because
+dnl of a bug in earlier versions of the JSON library.
 dnl
 CHECK_SMLNJ([AC_MSG_ERROR([unable to find SML/NJ installation; please add it to your PATH or set SML_CMD])])
 if test $SMLNJ_MAJOR_VERSION -lt 110 \
-  -o $SMLNJ_MINOR_VERSION -lt 97
+  -o \( $SMLNJ_MAJOR_VERSION -eq 110 -a $SMLNJ_MINOR_VERSION -lt 98 \)
 then
   AC_MSG_ERROR([installation requires SML/NJ version 110.97+ (available from smlnj.org)])
 fi

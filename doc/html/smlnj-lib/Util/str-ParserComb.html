@@ -78,6 +78,7 @@
       <li class="toc-page"><a href="str-CharMap.html"><span class="toc-lib-page">The <code>CharMap</code> structure</span></a></li>
       <li class="toc-page"><a href="str-DynamicArray.html"><span class="toc-lib-page">The <code>DynamicArray</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-DynamicArrayFn.html"><span class="toc-lib-page">The <code>DynamicArrayFn</code> functor</span></a></li>
+      <li class="toc-page"><a href="str-EditDistance.html"><span class="toc-lib-page">The <code>EditDistance</code> structure</span></a></li>
       <li class="toc-page"><a href="str-Fifo.html"><span class="toc-lib-page">The <code>Fifo</code> structure</span></a></li>
       <li class="toc-page"><a href="str-FNVHash.html"><span class="toc-lib-page">The <code>FNVHash</code> structure</span></a></li>
       <li class="toc-page"><a href="str-Format.html"><span class="toc-lib-page">The <code>Format</code> structure</span></a></li>
@@ -103,6 +104,8 @@
       <li class="toc-page"><a href="str-ListXProd.html"><span class="toc-lib-page">The <code>ListXProd</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-MonoArrayFn.html"><span class="toc-lib-page">The <code>MonoArrayFn</code> functor</span></a></li>
       <li class="toc-page"><a href="sig-MONO_HASH_TABLE.html"><span class="toc-lib-page">The <code>MONO_HASH_TABLE</code> signature</span></a></li>
+      <li class="toc-page"><a href="str-Native.html"><span class="toc-lib-page">Native structure aliases</span></a></li>
+      <li class="toc-page"><a href="str-Native.html"><span class="toc-lib-page">Native structure aliases</span></a></li>
       <li class="toc-page"><a href="sig-ORD_KEY.html"><span class="toc-lib-page">The <code>ORD_KEY</code> signature</span></a></li>
       <li class="toc-page"><a href="sig-ORD_MAP.html"><span class="toc-lib-page">The <code>ORD_MAP</code> signature</span></a></li>
       <li class="toc-page"><a href="sig-ORD_SET.html"><span class="toc-lib-page">The <code>ORD_SET</code> signature</span></a></li>
@@ -227,14 +230,14 @@ does not accept any input.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> seq : (('a, 'strm) parser * ('b, 'strm) parser) -&gt; (('a * 'b), 'strm) parser</code></dt>
 <dd>
-<p><code>seq (parser1, parser2)</code> returns a parser is the sequential combination of the
+<p><code>seq (parser1, parser2)</code> is the sequential combination of the
 two parsers; <em>i.e.</em>, a parser that will first parse a value <code>v1</code>
 from the input using <code>parser1</code> and then parse a value <code>v2</code> using <code>parser2</code>
 yielding the pair <code>(v1, v2)</code>.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> seqWith : (('a * 'b) -&gt; 'c) -&gt; (('a, 'strm) parser * ('b, 'strm) parser) -&gt; ('c, 'strm) parser</code></dt>
 <dd>
-<p><code>seq f (parser1, parser2)</code> is the sequential combination of the two parsers composed
+<p><code>seqWith f (parser1, parser2)</code> is the sequential combination of the two parsers composed
 with the function <code>f</code>;  <em>i.e.</em>, a parser that will first parse a value <code>v1</code>
 from the input using <code>parser1</code> and then parse a value <code>v2</code> using <code>parser2</code>
 yielding the result of <code>f(v1, v2)</code>.  This expression is equivalent to</p>
@@ -366,9 +369,11 @@ for this language as follows.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="pygments highlight"><code data-lang="sml"><span></span><span class="tok-kr">fun</span> <span class="tok-nf">numParser</span> <span class="tok-n">getc</span> <span class="tok-p">=</span> <span class="tok-nn">P</span><span class="tok-p">.</span><span class="tok-n">wrap</span> <span class="tok-p">(</span><span class="tok-nn">Int</span><span class="tok-p">.</span><span class="tok-n">scan</span> <span class="tok-nn">StringCvt</span><span class="tok-p">.</span><span class="tok-n">DEC</span><span class="tok-p">,</span> <span class="tok-n">NUM</span><span class="tok-p">)</span> <span class="tok-n">getc</span>
-<span class="tok-kr">fun</span> <span class="tok-nf">idParser</span> <span class="tok-n">getc</span> <span class="tok-p">=</span> <span class="tok-nn">P</span><span class="tok-p">.</span><span class="tok-n">seqWith</span> <span class="tok-nn">String</span><span class="tok-p">.</span><span class="tok-n">^</span> <span class="tok-p">(</span>
-      <span class="tok-nn">P</span><span class="tok-p">.</span><span class="tok-n">wrap</span> <span class="tok-p">(</span><span class="tok-nn">P</span><span class="tok-p">.</span><span class="tok-n">eatChar</span> <span class="tok-nn">Char</span><span class="tok-p">.</span><span class="tok-n">isAlpha</span><span class="tok-p">,</span> <span class="tok-n">str</span><span class="tok-p">),</span>
-      <span class="tok-nn">P</span><span class="tok-p">.</span><span class="tok-n">token</span> <span class="tok-nn">Char</span><span class="tok-p">.</span><span class="tok-n">isAlphaNum</span><span class="tok-p">)</span> <span class="tok-n">getc</span>
+<span class="tok-kr">fun</span> <span class="tok-nf">idParser</span> <span class="tok-n">getc</span> <span class="tok-p">=</span> <span class="tok-nn">P</span><span class="tok-p">.</span><span class="tok-n">seqWith</span>
+      <span class="tok-p">(</span><span class="tok-kr">fn</span> <span class="tok-p">(</span><span class="tok-n">a</span><span class="tok-p">,</span> <span class="tok-n">SOME</span> <span class="tok-n">b</span><span class="tok-p">)</span> <span class="tok-p">=&gt;</span> <span class="tok-n">a</span> <span class="tok-n">^</span> <span class="tok-n">b</span> <span class="tok-n">|</span> <span class="tok-p">(</span><span class="tok-n">a</span><span class="tok-p">,</span> <span class="tok-n">NONE</span><span class="tok-p">)</span> <span class="tok-p">=&gt;</span> <span class="tok-n">a</span><span class="tok-p">)</span>
+      <span class="tok-p">(</span><span class="tok-nn">P</span><span class="tok-p">.</span><span class="tok-n">wrap</span> <span class="tok-p">(</span><span class="tok-nn">P</span><span class="tok-p">.</span><span class="tok-n">eatChar</span> <span class="tok-nn">Char</span><span class="tok-p">.</span><span class="tok-n">isAlpha</span><span class="tok-p">,</span> <span class="tok-n">str</span><span class="tok-p">),</span>
+       <span class="tok-nn">P</span><span class="tok-p">.</span><span class="tok-n">option</span> <span class="tok-p">(</span><span class="tok-nn">P</span><span class="tok-p">.</span><span class="tok-n">token</span> <span class="tok-nn">Char</span><span class="tok-p">.</span><span class="tok-n">isAlphaNum</span><span class="tok-p">))</span>
+      <span class="tok-n">getc</span>
 <span class="tok-kr">fun</span> <span class="tok-nf">varParser</span> <span class="tok-n">getc</span> <span class="tok-p">=</span> <span class="tok-nn">P</span><span class="tok-p">.</span><span class="tok-n">wrap</span><span class="tok-p">(</span><span class="tok-n">idParser</span><span class="tok-p">,</span> <span class="tok-n">VAR</span><span class="tok-p">)</span> <span class="tok-n">getc</span></code></pre>
 </div>
 </div>
@@ -435,8 +440,8 @@ that addition is left associative.</p>
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99 (December 24, 2020)<br />
-	  Last updated 2020-05-21 20:10:56 UTC
+	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
+	  Last updated 2025-04-25 20:04:52 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->

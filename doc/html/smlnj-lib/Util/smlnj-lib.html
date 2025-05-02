@@ -78,6 +78,7 @@
       <li class="toc-page"><a href="str-CharMap.html"><span class="toc-lib-page">The <code>CharMap</code> structure</span></a></li>
       <li class="toc-page"><a href="str-DynamicArray.html"><span class="toc-lib-page">The <code>DynamicArray</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-DynamicArrayFn.html"><span class="toc-lib-page">The <code>DynamicArrayFn</code> functor</span></a></li>
+      <li class="toc-page"><a href="str-EditDistance.html"><span class="toc-lib-page">The <code>EditDistance</code> structure</span></a></li>
       <li class="toc-page"><a href="str-Fifo.html"><span class="toc-lib-page">The <code>Fifo</code> structure</span></a></li>
       <li class="toc-page"><a href="str-FNVHash.html"><span class="toc-lib-page">The <code>FNVHash</code> structure</span></a></li>
       <li class="toc-page"><a href="str-Format.html"><span class="toc-lib-page">The <code>Format</code> structure</span></a></li>
@@ -103,6 +104,8 @@
       <li class="toc-page"><a href="str-ListXProd.html"><span class="toc-lib-page">The <code>ListXProd</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-MonoArrayFn.html"><span class="toc-lib-page">The <code>MonoArrayFn</code> functor</span></a></li>
       <li class="toc-page"><a href="sig-MONO_HASH_TABLE.html"><span class="toc-lib-page">The <code>MONO_HASH_TABLE</code> signature</span></a></li>
+      <li class="toc-page"><a href="str-Native.html"><span class="toc-lib-page">Native structure aliases</span></a></li>
+      <li class="toc-page"><a href="str-Native.html"><span class="toc-lib-page">Native structure aliases</span></a></li>
       <li class="toc-page"><a href="sig-ORD_KEY.html"><span class="toc-lib-page">The <code>ORD_KEY</code> signature</span></a></li>
       <li class="toc-page"><a href="sig-ORD_MAP.html"><span class="toc-lib-page">The <code>ORD_MAP</code> signature</span></a></li>
       <li class="toc-page"><a href="sig-ORD_SET.html"><span class="toc-lib-page">The <code>ORD_SET</code> signature</span></a></li>
@@ -207,6 +210,10 @@ by <a href="https://www.ietf.org/rfc/rfc4648.txt">RFC 4648</a>.</p>
 <dd>
 <p>Provides dynamically sized monomorphic arrays.</p>
 </dd>
+<dt class="hdlist1"><a href="str-EditDistance.html"><code><span class="kw">structure</span> EditDistance</code></a></dt>
+<dd>
+<p>Provides a function for computing Levenshtein between distance between strings.</p>
+</dd>
 <dt class="hdlist1"><a href="str-Fifo.html"><code><span class="kw">structure</span> Fifo</code></a></dt>
 <dd>
 <p>Provides a functional queue data structure.</p>
@@ -238,15 +245,15 @@ components of a directed graph.</p>
 <dd>
 <p>Provides hash tables that are keyed by two different key types.</p>
 </dd>
+</dl>
+</div>
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><a href="sig-HASH_KEY.html"><code><span class="kw">signature</span> HASH_KEY</code></a></dt>
 <dd>
 <p>Defines an interface to a monomorphic type with an equality
 test and hashing function.</p>
 </dd>
-</dl>
-</div>
-<div class="dlist">
-<dl>
 <dt class="hdlist1"><a href="fun-HashSetFn.html"><code><span class="kw">functor</span> HashSetFn</code></a></dt>
 <dd>
 <p>Provides a hash-table-based implementation of imperative sets
@@ -290,15 +297,15 @@ sets are represented by intervals.</p>
 <p>Provides a functional implementation of priority
 queues using leaftist heaps.</p>
 </dd>
+</dl>
+</div>
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><a href="str-LibBase.html"><code><span class="kw">structure</span> LibBase</code></a></dt>
 <dd>
 <p>Provides some common definitions that are
 shared across the <strong>SML/NJ Lbrary</strong>.</p>
 </dd>
-</dl>
-</div>
-<div class="dlist">
-<dl>
 <dt class="hdlist1"><a href="str-ListFormat.html"><code><span class="kw">structure</span> ListFormat</code></a></dt>
 <dd>
 <p>Provides some utility functions for converting
@@ -331,6 +338,18 @@ over the "Cartesian product" of two lists.</p>
 <dd>
 <p>Defines an interface to imperative hash tables with monomorphic keys.</p>
 </dd>
+<dt class="hdlist1"><a href="str-Native.html"><code><span class="kw">structure</span> NativeInt</code></a></dt>
+<dd>
+<p>An alias to the native-sized integer structure (<em>e.g.</em>, <code>Int64</code>).</p>
+</dd>
+<dt class="hdlist1"><a href="str-Native.html"><code><span class="kw">structure</span> NativeWord</code></a></dt>
+<dd>
+<p>An alias to the native-sized word structure (<em>e.g.</em>, <code>Word64</code>).</p>
+</dd>
+</dl>
+</div>
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><a href="sig-ORD_KEY.html"><code><span class="kw">signature</span> ORD_KEY</code></a></dt>
 <dd>
 <p>Defines an interface to an abstract type
@@ -344,10 +363,6 @@ of keys with a comparison function.</p>
 <dd>
 <p>Defines an interface to finite sets of ordered elements.</p>
 </dd>
-</dl>
-</div>
-<div class="dlist">
-<dl>
 <dt class="hdlist1"><a href="str-ParserComb.html"><code><span class="kw">structure</span> ParserComb</code></a></dt>
 <dd>
 <p>Provides parser combinators over character readers.</p>
@@ -372,12 +387,18 @@ of property lists.</p>
 </dd>
 <dt class="hdlist1"><a href="str-Random.html"><code><span class="kw">structure</span> Random</code></a></dt>
 <dd>
-<p>Provides a more sophisticated random number generator.</p>
+<p>Pseudo-random-number generation using the
+<a href="http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/emt.html"><em>Mersenne Twister</em>
+algorithm</a>.</p>
 </dd>
 <dt class="hdlist1"><a href="str-RealOrderStats.html"><code><span class="kw">structure</span> RealOrderStats</code></a></dt>
 <dd>
 <p><strong>To be written</strong></p>
 </dd>
+</dl>
+</div>
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><a href="fun-RedBlackMapFn.html"><code><span class="kw">functor</span> RedBlackMapFn</code></a></dt>
 <dd>
 <p>Provides a red-black-tree implementation of the
@@ -392,10 +413,6 @@ of property lists.</p>
 <dd>
 <p><strong>To be written</strong></p>
 </dd>
-</dl>
-</div>
-<div class="dlist">
-<dl>
 <dt class="hdlist1"><a href="fun-SplayMapFn.html"><code><span class="kw">functor</span> SplayMapFn</code></a></dt>
 <dd>
 <p>Provides a splay-tree implementation of the
@@ -450,8 +467,8 @@ immediately available to interactive use in the <strong>SML/NJ</strong> REPL.</p
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99 (December 24, 2020)<br />
-	  Last updated 2020-05-21 15:30:27 UTC
+	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
+	  Last updated 2025-04-25 20:04:52 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->

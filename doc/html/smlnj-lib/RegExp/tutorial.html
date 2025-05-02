@@ -100,7 +100,7 @@ simple applications a bit less obvious.  This tutorial shows how the
 <div class="sectionbody">
 <div class="paragraph">
 <p>Before we can do anything else, we must assemble a regular-expression
-matcher.  For the purposes of this tutorial, we will use a combination
+matcher.  For the purposes of this tutorial, we use a combination
 of the <code>AwkSyntax</code> front-end and the <code>BackTrackEngine</code> back-end.</p>
 </div>
 <div class="listingblock">
@@ -115,6 +115,15 @@ of the <code>AwkSyntax</code> front-end and the <code>BackTrackEngine</code> bac
 <div class="sect1">
 <h2 id="_match_trees">Match trees</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>Regular expressions may contain <a href="str-RegExpSyntax.html#con:Group">grouping</a>
+operators.  When a pattern matches a string, these groups induce a nested
+tree structure on the matched string.
+The <a href="str-MatchTree.html"><code>MatchTree</code></a> structure defines
+a polymorphic representation of this structure, along with a
+number of utility functions for extracting information from
+a match.</p>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="pygments highlight"><code data-lang="sml"><span></span><span class="tok-kr">structure</span> <span class="tok-nn">MT</span> <span class="tok-p">=</span> <span class="tok-n">MatchTree</span></code></pre>
@@ -145,11 +154,11 @@ which can be white space, numbers, or identifiers.</p>
 <pre class="pygments highlight"><code data-lang="sml"><span></span><span class="tok-kr">fun</span> <span class="tok-nf">scanner</span> <span class="tok-n">getc</span> <span class="tok-n">gets</span> <span class="tok-p">=</span> <span class="tok-kr">let</span>
       <span class="tok-kr">fun</span> <span class="tok-nf">getMatch</span> <span class="tok-n">cons</span> <span class="tok-p">(</span><span class="tok-nn">MT</span><span class="tok-p">.</span><span class="tok-n">Match</span><span class="tok-p">({</span><span class="tok-n">pos</span><span class="tok-p">,</span> <span class="tok-n">len</span><span class="tok-p">},</span> <span class="tok-p">_))</span> <span class="tok-p">=</span> <span class="tok-n">cons</span> <span class="tok-p">(</span><span class="tok-n">gets</span> <span class="tok-p">(</span><span class="tok-n">pos</span><span class="tok-p">,</span> <span class="tok-n">len</span><span class="tok-p">))</span>
       <span class="tok-kr">in</span>
-	<span class="tok-nn">RE</span><span class="tok-p">.</span><span class="tok-n">match</span> <span class="tok-p">[</span>
-	    <span class="tok-p">(</span><span class="tok-s2">&quot;[ </span><span class="tok-se">\t\n</span><span class="tok-s2">]+&quot;</span><span class="tok-p">,</span> <span class="tok-n">getMatch</span> <span class="tok-p">(</span><span class="tok-kr">fn</span> <span class="tok-p">_</span> <span class="tok-p">=&gt;</span> <span class="tok-n">WS</span><span class="tok-p">)),</span>
-	    <span class="tok-p">(</span><span class="tok-s2">&quot;[0-9]+&quot;</span><span class="tok-p">,</span> <span class="tok-n">getMatch</span> <span class="tok-p">(</span><span class="tok-kr">fn</span> <span class="tok-n">s</span> <span class="tok-p">=&gt;</span> <span class="tok-n">NUM</span><span class="tok-p">(</span><span class="tok-n">valOf</span><span class="tok-p">(</span><span class="tok-nn">IntInf</span><span class="tok-p">.</span><span class="tok-n">fromString</span> <span class="tok-n">s</span><span class="tok-p">)))),</span>
-	    <span class="tok-p">(</span><span class="tok-s2">&quot;[a-zA-Z][a-zA-Z0-9]*&quot;</span><span class="tok-p">,</span> <span class="tok-n">getMatch</span> <span class="tok-n">ID</span><span class="tok-p">)</span>
-	  <span class="tok-p">]</span> <span class="tok-n">getc</span>
+        <span class="tok-nn">RE</span><span class="tok-p">.</span><span class="tok-n">match</span> <span class="tok-p">[</span>
+            <span class="tok-p">(</span><span class="tok-s2">&quot;[ </span><span class="tok-se">\t\n</span><span class="tok-s2">]+&quot;</span><span class="tok-p">,</span> <span class="tok-n">getMatch</span> <span class="tok-p">(</span><span class="tok-kr">fn</span> <span class="tok-p">_</span> <span class="tok-p">=&gt;</span> <span class="tok-n">WS</span><span class="tok-p">)),</span>
+            <span class="tok-p">(</span><span class="tok-s2">&quot;[0-9]+&quot;</span><span class="tok-p">,</span> <span class="tok-n">getMatch</span> <span class="tok-p">(</span><span class="tok-kr">fn</span> <span class="tok-n">s</span> <span class="tok-p">=&gt;</span> <span class="tok-n">NUM</span><span class="tok-p">(</span><span class="tok-n">valOf</span><span class="tok-p">(</span><span class="tok-nn">IntInf</span><span class="tok-p">.</span><span class="tok-n">fromString</span> <span class="tok-n">s</span><span class="tok-p">)))),</span>
+            <span class="tok-p">(</span><span class="tok-s2">&quot;[a-zA-Z][a-zA-Z0-9]*&quot;</span><span class="tok-p">,</span> <span class="tok-n">getMatch</span> <span class="tok-n">ID</span><span class="tok-p">)</span>
+          <span class="tok-p">]</span> <span class="tok-n">getc</span>
       <span class="tok-kr">end</span></code></pre>
 </div>
 </div>
@@ -171,12 +180,12 @@ terms of the <code>getc</code> function as follows:</p>
 <div class="content">
 <pre class="pygments highlight"><code data-lang="sml"><span></span><span class="tok-kr">fun</span> <span class="tok-nf">gets</span> <span class="tok-n">getc</span> <span class="tok-p">(</span><span class="tok-n">strm</span><span class="tok-p">,</span> <span class="tok-n">n</span><span class="tok-p">)</span> <span class="tok-p">=</span> <span class="tok-kr">let</span>
       <span class="tok-kr">fun</span> <span class="tok-nf">getChrs</span> <span class="tok-p">(</span><span class="tok-mi">0</span><span class="tok-p">,</span> <span class="tok-p">_,</span> <span class="tok-n">chrs</span><span class="tok-p">)</span> <span class="tok-p">=</span> <span class="tok-nn">String</span><span class="tok-p">.</span><span class="tok-n">implodeRev</span> <span class="tok-n">chrs</span>
-	<span class="tok-p">|</span> <span class="tok-nf">getChrs</span> <span class="tok-p">(</span><span class="tok-n">n</span><span class="tok-p">,</span> <span class="tok-n">strm</span><span class="tok-p">,</span> <span class="tok-n">chrs</span><span class="tok-p">)</span> <span class="tok-p">=</span> <span class="tok-p">(</span><span class="tok-kr">case</span> <span class="tok-n">getc</span> <span class="tok-n">strm</span>
-	     <span class="tok-kr">of</span> <span class="tok-n">NONE</span> <span class="tok-p">=&gt;</span> <span class="tok-kr">raise</span> <span class="tok-n">Fail</span> <span class="tok-s2">&quot;empty stream&quot;</span>
-	      <span class="tok-n">|</span> <span class="tok-n">SOME</span><span class="tok-p">(</span><span class="tok-n">c</span><span class="tok-p">,</span> <span class="tok-n">strm</span><span class="tok-p">)</span> <span class="tok-p">=&gt;</span> <span class="tok-n">getChrs</span> <span class="tok-p">(</span><span class="tok-n">n-</span><span class="tok-mi">1</span><span class="tok-p">,</span> <span class="tok-n">strm</span><span class="tok-p">,</span> <span class="tok-n">c::chrs</span><span class="tok-p">)</span>
-	    <span class="tok-cm">(* end case *)</span><span class="tok-p">)</span>
+        <span class="tok-p">|</span> <span class="tok-nf">getChrs</span> <span class="tok-p">(</span><span class="tok-n">n</span><span class="tok-p">,</span> <span class="tok-n">strm</span><span class="tok-p">,</span> <span class="tok-n">chrs</span><span class="tok-p">)</span> <span class="tok-p">=</span> <span class="tok-p">(</span><span class="tok-kr">case</span> <span class="tok-n">getc</span> <span class="tok-n">strm</span>
+             <span class="tok-kr">of</span> <span class="tok-n">NONE</span> <span class="tok-p">=&gt;</span> <span class="tok-kr">raise</span> <span class="tok-n">Fail</span> <span class="tok-s2">&quot;empty stream&quot;</span>
+              <span class="tok-n">|</span> <span class="tok-n">SOME</span><span class="tok-p">(</span><span class="tok-n">c</span><span class="tok-p">,</span> <span class="tok-n">strm</span><span class="tok-p">)</span> <span class="tok-p">=&gt;</span> <span class="tok-n">getChrs</span> <span class="tok-p">(</span><span class="tok-n">n-</span><span class="tok-mi">1</span><span class="tok-p">,</span> <span class="tok-n">strm</span><span class="tok-p">,</span> <span class="tok-n">c::chrs</span><span class="tok-p">)</span>
+            <span class="tok-cm">(* end case *)</span><span class="tok-p">)</span>
       <span class="tok-kr">in</span>
-	<span class="tok-n">getChrs</span> <span class="tok-p">(</span><span class="tok-n">n</span><span class="tok-p">,</span> <span class="tok-n">strm</span><span class="tok-p">,</span> <span class="tok-p">[])</span>
+        <span class="tok-n">getChrs</span> <span class="tok-p">(</span><span class="tok-n">n</span><span class="tok-p">,</span> <span class="tok-n">strm</span><span class="tok-p">,</span> <span class="tok-p">[])</span>
       <span class="tok-kr">end</span><span class="tok-p">;</span></code></pre>
 </div>
 </div>
@@ -195,11 +204,11 @@ occur for well behaving input streams.</p>
       <span class="tok-kr">fun</span> <span class="tok-nf">gets</span> <span class="tok-p">(</span><span class="tok-n">ss</span><span class="tok-p">,</span> <span class="tok-n">n</span><span class="tok-p">)</span> <span class="tok-p">=</span> <span class="tok-nn">Substring</span><span class="tok-p">.</span><span class="tok-n">string</span><span class="tok-p">(</span><span class="tok-nn">Substring</span><span class="tok-p">.</span><span class="tok-n">slice</span> <span class="tok-p">(</span><span class="tok-n">ss</span><span class="tok-p">,</span> <span class="tok-mi">0</span><span class="tok-p">,</span> <span class="tok-n">SOME</span> <span class="tok-n">n</span><span class="tok-p">))</span>
       <span class="tok-kr">val</span> <span class="tok-nv">scan</span> <span class="tok-p">=</span> <span class="tok-n">scanner</span> <span class="tok-nn">Substring</span><span class="tok-p">.</span><span class="tok-n">getc</span> <span class="tok-n">gets</span>
       <span class="tok-kr">fun</span> <span class="tok-nf">lp</span> <span class="tok-p">(</span><span class="tok-n">ss</span><span class="tok-p">,</span> <span class="tok-n">toks</span><span class="tok-p">)</span> <span class="tok-p">=</span> <span class="tok-p">(</span><span class="tok-kr">case</span> <span class="tok-n">scan</span> <span class="tok-n">ss</span>
-	     <span class="tok-kr">of</span> <span class="tok-n">SOME</span><span class="tok-p">(</span><span class="tok-n">tok</span><span class="tok-p">,</span> <span class="tok-n">ss&#39;</span><span class="tok-p">)</span> <span class="tok-p">=&gt;</span> <span class="tok-n">lp</span> <span class="tok-p">(</span><span class="tok-n">ss&#39;</span><span class="tok-p">,</span> <span class="tok-n">tok::toks</span><span class="tok-p">)</span>
-	      <span class="tok-n">|</span> <span class="tok-n">NONE</span> <span class="tok-p">=&gt;</span> <span class="tok-nn">List</span><span class="tok-p">.</span><span class="tok-n">rev</span> <span class="tok-n">toks</span>
-	    <span class="tok-cm">(* end case *)</span><span class="tok-p">)</span>
+             <span class="tok-kr">of</span> <span class="tok-n">SOME</span><span class="tok-p">(</span><span class="tok-n">tok</span><span class="tok-p">,</span> <span class="tok-n">ss&#39;</span><span class="tok-p">)</span> <span class="tok-p">=&gt;</span> <span class="tok-n">lp</span> <span class="tok-p">(</span><span class="tok-n">ss&#39;</span><span class="tok-p">,</span> <span class="tok-n">tok::toks</span><span class="tok-p">)</span>
+              <span class="tok-n">|</span> <span class="tok-n">NONE</span> <span class="tok-p">=&gt;</span> <span class="tok-nn">List</span><span class="tok-p">.</span><span class="tok-n">rev</span> <span class="tok-n">toks</span>
+            <span class="tok-cm">(* end case *)</span><span class="tok-p">)</span>
       <span class="tok-kr">in</span>
-	<span class="tok-n">lp</span> <span class="tok-p">(</span><span class="tok-nn">Substring</span><span class="tok-p">.</span><span class="tok-n">full</span> <span class="tok-n">s</span><span class="tok-p">,</span> <span class="tok-p">[])</span>
+        <span class="tok-n">lp</span> <span class="tok-p">(</span><span class="tok-nn">Substring</span><span class="tok-p">.</span><span class="tok-n">full</span> <span class="tok-n">s</span><span class="tok-p">,</span> <span class="tok-p">[])</span>
       <span class="tok-kr">end</span><span class="tok-p">;</span></code></pre>
 </div>
 </div>
@@ -210,8 +219,8 @@ occur for well behaving input streams.</p>
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99 (December 24, 2020)<br />
-	  Last updated 2020-07-14 19:27:54 UTC
+	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
+	  Last updated 2025-04-25 20:04:52 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->

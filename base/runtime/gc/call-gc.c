@@ -1,6 +1,7 @@
 /* call-gc.c
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.
+ * COPYRIGHT (c) 2022 The SML/NJ Fellowship.
+ * All rights reserved.
  *
  * The main interface between the GC and the rest of the run-time system.
  * These are the routines used to invoke the GC.
@@ -24,6 +25,7 @@
 #include "ml-timer.h"
 #include "gc-stats.h"
 #include "vproc-state.h"
+#include "ml-signals.h"
 #include "profile.h"
 
 #ifdef C_CALLS
@@ -79,14 +81,15 @@ void InvokeGC (ml_state_t *msp, int level)
 #endif
 
   /* Gather the roots */
-    for (i = 0;  i < NumCRoots;  i++)
+    for (i = 0;  i < NumCRoots;  i++) {
 	*rootsPtr++ = CRoots[i];
+    }
 #ifdef MP_SUPPORT
     {
 	vproc_state_t   *vsp;
 	ml_state_t	*msp;
 	int		j;
-      
+
 	for (j = 0; j < MAX_NUM_PROCS; j++) {
 	    vsp = VProc[j];
 	    msp = vsp->vp_state;
@@ -172,6 +175,9 @@ void InvokeGC (ml_state_t *msp, int level)
 
     STOP_GC_PAUSE();
 
+  /* conditionally signal a GC signal */
+    GCSignal (msp->ml_vproc, level);
+
     ASSIGN(ProfCurrent, PROF_RUNTIME);
 
 } /* end of InvokeGC */
@@ -243,7 +249,7 @@ void InvokeGCWithRoots (ml_state_t *msp, int level, ...)
 	ml_state_t	*msp;
 	vproc_state_t   *vsp;
 	int		j;
-      
+
 	for (j = 0; j < MAX_NUM_PROCS; j++) {
 	    vsp = VProc[j];
 	    msp = vsp->vp_state;
@@ -327,6 +333,9 @@ void InvokeGCWithRoots (ml_state_t *msp, int level, ...)
 #endif
 
     STOP_GC_PAUSE();
+
+  /* conditionally signal a GC signal */
+    GCSignal (msp->ml_vproc, level);
 
     ASSIGN(ProfCurrent, PROF_RUNTIME);
 

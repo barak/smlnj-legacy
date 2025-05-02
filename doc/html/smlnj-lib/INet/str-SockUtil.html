@@ -110,9 +110,9 @@ programming with the <strong>Basis Library</strong>
       <span class="tok-p">-&gt;</span> <span class="tok-p">({</span><span class="tok-n">host</span> <span class="tok-p">:</span> <span class="tok-n">hostname</span><span class="tok-p">,</span> <span class="tok-n">port</span> <span class="tok-p">:</span> <span class="tok-n">port</span> <span class="tok-n">option</span><span class="tok-p">},</span> <span class="tok-nd">&#39;a</span><span class="tok-p">)</span> <span class="tok-nn">StringCvt</span><span class="tok-p">.</span><span class="tok-n">reader</span>
 <span class="tok-kr">val</span> <span class="tok-nv">addrFromString</span> <span class="tok-p">:</span> <span class="tok-n">string</span> <span class="tok-p">-&gt;</span> <span class="tok-p">{</span><span class="tok-n">host</span> <span class="tok-p">:</span> <span class="tok-n">hostname</span><span class="tok-p">,</span> <span class="tok-n">port</span> <span class="tok-p">:</span> <span class="tok-n">port</span> <span class="tok-n">option</span><span class="tok-p">}</span> <span class="tok-n">option</span>
 
-<span class="tok-kr">exception</span> <span class="tok-nc">BadAddr</span> <span class="tok-kr">of</span> <span class="tok-n">string</span>
+<span class="tok-kr">exception</span> <span class="tok-nc">BadAddr</span> <span class="tok-kr">of</span> <span class="tok-nc">string</span>
 
-<span class="tok-kr">val</span> <span class="tok-nv">resolveAddr</span> <span class="tok-p">:</span> <span class="tok-p">{</span><span class="tok-n">host</span> <span class="tok-p">:</span> <span class="tok-n">hostname</span><span class="tok-p">,</span> <span class="tok-n">port</span> <span class="tok-p">:</span> <span class="tok-n">port</span> <span class="tok-n">option</span><span class="tok-p">}</span>
+<span class="tok-nc">val</span> <span class="tok-nc">resolveAddr</span> <span class="tok-nc">:</span> <span class="tok-p">{</span><span class="tok-n">host</span> <span class="tok-p">:</span> <span class="tok-n">hostname</span><span class="tok-p">,</span> <span class="tok-n">port</span> <span class="tok-p">:</span> <span class="tok-n">port</span> <span class="tok-n">option</span><span class="tok-p">}</span>
       <span class="tok-p">-&gt;</span> <span class="tok-p">{</span><span class="tok-n">host</span> <span class="tok-p">:</span> <span class="tok-n">string</span><span class="tok-p">,</span> <span class="tok-n">addr</span> <span class="tok-p">:</span> <span class="tok-nn">NetHostDB</span><span class="tok-p">.</span><span class="tok-n">in_addr</span><span class="tok-p">,</span> <span class="tok-n">port</span> <span class="tok-p">:</span> <span class="tok-n">int</span> <span class="tok-n">option</span><span class="tok-p">}</span>
 
 <span class="tok-kr">type</span> <span class="tok-nd">&#39;a</span> <span class="tok-kt">stream_sock</span> <span class="tok-p">=</span> <span class="tok-p">(</span><span class="tok-nd">&#39;a</span><span class="tok-p">,</span> <span class="tok-nn">Socket</span><span class="tok-p">.</span><span class="tok-n">active</span> <span class="tok-nn">Socket</span><span class="tok-p">.</span><span class="tok-n">stream</span><span class="tok-p">)</span> <span class="tok-nn">Socket</span><span class="tok-p">.</span><span class="tok-n">sock</span>
@@ -234,8 +234,8 @@ when <code>n</code> is negative.</p>
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99 (December 24, 2020)<br />
-	  Last updated 2020-04-14 01:07:53 UTC
+	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
+	  Last updated 2025-04-25 20:04:52 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->
