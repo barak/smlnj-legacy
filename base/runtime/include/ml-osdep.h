@@ -19,7 +19,7 @@
 
 #if defined(OPSYS_UNIX)
 #  include "ml-unixdep.h"
-#  if (defined(OPSYS_LINUX) || defined(OPSYS_AIX) || defined(OPSYS_FREEBSD) || defined(OPSYS_NETBSD) || defined(OPSYS_NETBSD2) || defined(OPSYS_OPENBSD) || defined(OPSYS_DARWIN) || defined(OPSYS_CYGWIN))
+#  if (defined(OPSYS_LINUX) || defined(OPSYS_AIX) || defined(OPSYS_FREEBSD) || defined(OPSYS_NETBSD) || defined(OPSYS_OPENBSD) || defined(OPSYS_DARWIN) || defined(OPSYS_CYGWIN))
 #     define GETPAGESIZE()	(getpagesize())
 #  else
    /* POSIX 1003.1b interface */
@@ -52,7 +52,7 @@ extern int GetPageSize (void);
 #endif
 
 /* support for ANSI C Floating-point extensions */
-#if defined(OPSYS_DARWIN)
+#if defined(OPSYS_DARWIN) || defined(OPSYS_LINUX)
 #  define HAS_ANSI_C_FP_EXT
 #endif
 

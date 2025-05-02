@@ -61,9 +61,12 @@
     <ul class="toc-page-list">
       <li class="toc-page"><a href="str-HashCons.html"><span class="toc-lib-page">The <code>HashCons</code> structure</span></a></li>
       <li class="toc-page"><a href="str-HashConsAtom.html"><span class="toc-lib-page">The <code>HashConsAtom</code> structure</span></a></li>
+      <li class="toc-page"><a href="str-HashConsBool.html"><span class="toc-lib-page">The <code>HashConsBool</code> structure</span></a></li>
+      <li class="toc-page"><a href="str-HashConsInt.html"><span class="toc-lib-page">The <code>HashConsInt</code> structure</span></a></li>
       <li class="toc-page"><a href="str-HashConsMap.html"><span class="toc-lib-page">The <code>HashConsMap</code> structure</span></a></li>
       <li class="toc-page"><a href="str-HashConsString.html"><span class="toc-lib-page">The <code>HashConsString</code> structure</span></a></li>
       <li class="toc-page"><a href="str-HashConsSet.html"><span class="toc-lib-page">The <code>HashConsSet</code> structure</span></a></li>
+      <li class="toc-page"><a href="str-HashConsWord.html"><span class="toc-lib-page">The <code>HashConsWord</code> structure</span></a></li>
       <li class="toc-page"><span class="toc-lib-page" id="toc-current">The <code>HashConsGroundFn</code> functor</span></li>
     </ul>
   </li>
@@ -137,15 +140,15 @@ hashing function a the "leaf" type.</p>
 <dl>
 <dt class="hdlist1"><code><span class="kw">type</span> hash_key = T.hash_key</code></dt>
 <dd>
-<p>something</p>
+<p>the ground type.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">type</span> obj = hash_key HashCons.obj</code></dt>
 <dd>
-<p>something</p>
+<p>the hash-consed ground type.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> mk : hash_key -&gt; obj</code></dt>
 <dd>
-<p>something</p>
+<p>map a ground type value to a hash-consed value.</p>
 </dd>
 </dl>
 </div>
@@ -185,8 +188,8 @@ the following functor application:</p>
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99 (December 24, 2020)<br />
-	  Last updated 2020-05-20 00:54:25 UTC
+	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
+	  Last updated 2025-04-25 20:04:52 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->

@@ -65,7 +65,10 @@
       <li class="toc-page"><a href="str-JSONParser.html"><span class="toc-lib-page">The <code>JSONParser</code> structure</span></a></li>
       <li class="toc-page"><a href="str-JSONPrinter.html"><span class="toc-lib-page">The <code>JSONPrinter</code> structure</span></a></li>
       <li class="toc-page"><a href="str-JSONUtil.html"><span class="toc-lib-page">The <code>JSONUtil</code> structure</span></a></li>
+      <li class="toc-page"><a href="str-JSONDecode.html"><span class="toc-lib-page">The <code>JSONDecode</code> structure</span></a></li>
       <li class="toc-page"><a href="str-JSONStreamParser.html"><span class="toc-lib-page">The <code>JSONStreamParser</code> structure</span></a></li>
+      <li class="toc-page"><a href="sig-JSON_STREAM_OUTPUT.html"><span class="toc-lib-page">The <code>JSON_STREAM_OUTPUT</code> signature</span></a></li>
+      <li class="toc-page"><a href="str-JSONBufferPrinter.html"><span class="toc-lib-page">The <code>JSONBufferPrinter</code> structure</span></a></li>
       <li class="toc-page"><a href="str-JSONStreamPrinter.html"><span class="toc-lib-page">The <code>JSONStreamPrinter</code> structure</span></a></li>
     </ul>
   </li>
@@ -102,6 +105,7 @@
   <span class="tok-p">|</span> <span class="tok-nc">NULL</span>
   <span class="tok-p">|</span> <span class="tok-nc">BOOL</span> <span class="tok-kr">of</span> <span class="tok-n">bool</span>
   <span class="tok-p">|</span> <span class="tok-nc">INT</span> <span class="tok-kr">of</span> <span class="tok-nn">IntInf</span><span class="tok-p">.</span><span class="tok-n">int</span>
+  <span class="tok-p">|</span> <span class="tok-nc">INTLIT</span> <span class="tok-kr">of</span> <span class="tok-n">string</span>
   <span class="tok-p">|</span> <span class="tok-nc">FLOAT</span> <span class="tok-kr">of</span> <span class="tok-n">real</span>
   <span class="tok-p">|</span> <span class="tok-nc">STRING</span> <span class="tok-kr">of</span> <span class="tok-n">string</span></code></pre>
 </div>
@@ -143,6 +147,10 @@ Note that the keys should be unique.</p>
 <dd>
 <p>represents <strong>JSON</strong> integer numbers.</p>
 </dd>
+<dt class="hdlist1"><code>INTLIT <span class="kw">of</span> string</code></dt>
+<dd>
+<p>represents <strong>JSON</strong> integer numbers that have a large number of digits.</p>
+</dd>
 <dt class="hdlist1"><code>FLOAT <span class="kw">of</span> real</code></dt>
 <dd>
 <p>represents <strong>JSON</strong> floating-point numbers.</p>
@@ -168,9 +176,9 @@ Note that the keys should be unique.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="pygments highlight"><code data-lang="json"><span></span><span class="tok-p">{</span> <span class="tok-nt">&quot;a&quot;</span> <span class="tok-p">:</span> <span class="tok-mi">23</span><span class="tok-p">,</span>
-  <span class="tok-nt">&quot;b&quot;</span> <span class="tok-p">:</span> <span class="tok-p">[</span> <span class="tok-kc">false</span><span class="tok-p">,</span> <span class="tok-kc">true</span> <span class="tok-p">],</span>
-  <span class="tok-nt">&quot;c&quot;</span> <span class="tok-p">:</span> <span class="tok-s2">&quot;hello world&quot;</span>
+<pre class="pygments highlight"><code data-lang="json"><span></span><span class="tok-p">{</span><span class="tok-w"> </span><span class="tok-nt">&quot;a&quot;</span><span class="tok-w"> </span><span class="tok-p">:</span><span class="tok-w"> </span><span class="tok-mi">23</span><span class="tok-p">,</span>
+<span class="tok-w">  </span><span class="tok-nt">&quot;b&quot;</span><span class="tok-w"> </span><span class="tok-p">:</span><span class="tok-w"> </span><span class="tok-p">[</span><span class="tok-w"> </span><span class="tok-kc">false</span><span class="tok-p">,</span><span class="tok-w"> </span><span class="tok-kc">true</span><span class="tok-w"> </span><span class="tok-p">],</span>
+<span class="tok-w">  </span><span class="tok-nt">&quot;c&quot;</span><span class="tok-w"> </span><span class="tok-p">:</span><span class="tok-w"> </span><span class="tok-s2">&quot;hello world&quot;</span>
 <span class="tok-p">}</span></code></pre>
 </div>
 </div>
@@ -202,8 +210,8 @@ Note that the keys should be unique.</p>
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99 (December 24, 2020)<br />
-	  Last updated 2020-04-12 22:11:25 UTC
+	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
+	  Last updated 2025-04-25 20:04:52 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->

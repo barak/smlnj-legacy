@@ -126,14 +126,13 @@ structure Word8VectorSlice :> MONO_VECTOR_SLICE
     fun map _ (SL(_, _, 0)) = vector0
       | map f (SL(base, start, len)) = let
 	  val vec = create len
-	  val stop = start ++ len
-	  fun mapf i = if (i < stop)
+	  fun mapf i = if (i < len)
 		then (
-		  vuupd (vec, i, f (usub (base, i)));
+		  vuupd (vec, i, f (usub (base, start ++ i)));
 		  mapf (i ++ 1))
 		else vec
 	  in
-	    mapf start
+	    mapf 0
 	  end
 
     fun foldli f init (SL(base, start, len)) = let
@@ -203,9 +202,9 @@ structure Word8VectorSlice :> MONO_VECTOR_SLICE
 
     fun all pred (SL(base, start, len)) = let
 	  val stop = start ++ len
-	  fun ex i = (i < stop) andalso (pred (usub (base, i)) orelse ex (i ++ 1))
+	  fun al i = (i >= stop) orelse (pred (usub (base, i)) andalso al (i ++ 1))
 	  in
-	    ex start
+	    al start
 	  end
 
     fun concat sll = let

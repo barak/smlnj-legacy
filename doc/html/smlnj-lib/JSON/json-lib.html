@@ -65,7 +65,10 @@
       <li class="toc-page"><a href="str-JSONParser.html"><span class="toc-lib-page">The <code>JSONParser</code> structure</span></a></li>
       <li class="toc-page"><a href="str-JSONPrinter.html"><span class="toc-lib-page">The <code>JSONPrinter</code> structure</span></a></li>
       <li class="toc-page"><a href="str-JSONUtil.html"><span class="toc-lib-page">The <code>JSONUtil</code> structure</span></a></li>
+      <li class="toc-page"><a href="str-JSONDecode.html"><span class="toc-lib-page">The <code>JSONDecode</code> structure</span></a></li>
       <li class="toc-page"><a href="str-JSONStreamParser.html"><span class="toc-lib-page">The <code>JSONStreamParser</code> structure</span></a></li>
+      <li class="toc-page"><a href="sig-JSON_STREAM_OUTPUT.html"><span class="toc-lib-page">The <code>JSON_STREAM_OUTPUT</code> signature</span></a></li>
+      <li class="toc-page"><a href="str-JSONBufferPrinter.html"><span class="toc-lib-page">The <code>JSONBufferPrinter</code> structure</span></a></li>
       <li class="toc-page"><a href="str-JSONStreamPrinter.html"><span class="toc-lib-page">The <code>JSONStreamPrinter</code> structure</span></a></li>
     </ul>
   </li>
@@ -116,6 +119,10 @@ streams using a "SAX-style" API.</p>
 <dd>
 <p>A collection of utility functions for working with <strong>JSON</strong> values.</p>
 </dd>
+<dt class="hdlist1"><a href="str-JSONDecode.html"><code><span class="kw">structure</span> JSONDecode</code></a></dt>
+<dd>
+<p>A collection of combinators for decoding <strong>JSON</strong> values.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -127,9 +134,17 @@ streams using a "SAX-style" API.</p>
 <dd>
 <p>A stream (or event) based parser for JSON input.</p>
 </dd>
+<dt class="hdlist1"><a href="sig-JSON_STREAM_OUTPUT.html"><code><span class="kw">signature</span> JSON_STREAM_OUTPUT</code></a></dt>
+<dd>
+<p>The interface to a stream-based printer for JSON output.</p>
+</dd>
+<dt class="hdlist1"><a href="str-JSONBufferPrinter.html"><code><span class="kw">structure</span> JSONBufferPrinter</code></a></dt>
+<dd>
+<p>A stream-based printer for JSON output to character buffers.</p>
+</dd>
 <dt class="hdlist1"><a href="str-JSONStreamPrinter.html"><code><span class="kw">structure</span> JSONStreamPrinter</code></a></dt>
 <dd>
-<p>A stream based printer for JSON input.</p>
+<p>A stream-based printer for JSON output to text files.</p>
 </dd>
 </dl>
 </div>
@@ -154,8 +169,8 @@ streams using a "SAX-style" API.</p>
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99 (December 24, 2020)<br />
-	  Last updated 2020-04-14 01:07:53 UTC
+	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
+	  Last updated 2025-04-25 20:04:52 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->

@@ -137,7 +137,9 @@ structure UnpickMod : UNPICKMOD = struct
 	  P.INTERN64,
 	  P.EXTERN64,
 	  P.PTR_TO_WORD,
-	  P.WORD_TO_PTR (* 54 *)
+	  P.WORD_TO_PTR,
+          P.HOST_WORD_SIZE,
+          P.HOST_BIG_ENDIAN (* 56 *)
         ]
 
     val arithop_table =
@@ -385,6 +387,7 @@ structure UnpickMod : UNPICKMOD = struct
 	      | po #"\115" = P.EXTEND_INF (int ())
 	      | po #"\116" = P.COPY_INF (int ())
 	      | po #"\117" = P.REAL_TO_BITS (int ())
+	      | po #"\118" = P.BITS_TO_REAL (int ())
 	      | po c =
 		Vector.sub (primop_table, Char.ord c)
 		handle General.Subscript => raise Format

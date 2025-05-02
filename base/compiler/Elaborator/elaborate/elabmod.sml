@@ -15,10 +15,9 @@ sig
           epContext : EntPathContext.context,
           path      : InvPath.path,
           region    : SourceMap.region,
-          compInfo  : ElabUtil.compInfo} -> {absyn     : Absyn.dec,
-                                             statenv   : StaticEnv.staticEnv}
-
-  val debugging : bool ref
+          compInfo  : ElabUtil.compInfo}
+      -> {absyn     : Absyn.dec,
+          statenv   : StaticEnv.staticEnv}
 
 end (* signature ELABMOD *)
 
@@ -28,39 +27,41 @@ end (* signature ELABMOD *)
 structure ElabMod : ELABMOD =
 struct
 
-local structure S  = Symbol
-      structure IP = InvPath
-      structure SP = SymPath
-      structure EP = EntPath
-      structure EPC = EntPathContext
-      structure EE = EntityEnv
-      structure T  = Types
-      structure TU = TypesUtil
-      structure V  = VarCon
-      structure M  = Modules
-      structure MU = ModuleUtil
-      structure MI = ModuleId
-      structure L = Lookup
-      structure EU = ElabUtil
-      structure ET = ElabType
-      structure EC = ElabCore
-      structure ES = ElabSig
-      structure B  = Bindings
-      structure LU = Lookup
-      structure SM = SigMatch
-      structure INS = Instantiate
-      structure SE = StaticEnv
-      structure EM = ErrorMsg
-      structure PP = PrettyPrint
-      structure A  = Absyn
-      structure DA = Access
-      structure DI = DebIndex
-      structure PPU = PPUtil
-      structure ED = ElabDebug
-      structure ST = RedBlackSetFn(type ord_key = S.symbol
-                                   val compare = S.compare)
-      open Ast Modules
-      open SpecialSymbols (* special symbols *)
+local
+  structure S  = Symbol
+  structure IP = InvPath
+  structure SP = SymPath
+  structure SS = SpecialSymbols
+  structure EP = EntPath
+  structure EPC = EntPathContext
+  structure EE = EntityEnv
+  structure T  = Types
+  structure TU = TypesUtil
+  structure V  = VarCon
+  structure M  = Modules
+  structure MU = ModuleUtil
+  structure MI = ModuleId
+  structure L = Lookup
+  structure EU = ElabUtil
+  structure ET = ElabType
+  structure EC = ElabCore
+  structure ES = ElabSig
+  structure B  = Bindings
+  structure LU = Lookup
+  structure SM = SigMatch
+  structure INS = Instantiate
+  structure SE = StaticEnv
+  structure EM = ErrorMsg
+  structure PP = PrettyPrint
+  structure A  = Absyn
+  structure DA = Access
+  structure DI = DebIndex
+  structure PPU = PPUtil
+  structure ED = ElabDebug
+  structure ST = RedBlackSetFn(type ord_key = S.symbol
+			       val compare = S.compare)
+  open Ast Modules
+  open SpecialSymbols (* special symbols *)
 in
 
 (* debugging *)
@@ -237,7 +238,7 @@ fun bindReplTyc(EU.INFCT _, epctxt, mkStamp, dtyc) =
  *)
 fun bindNewTycs(EU.INFCT _, epctxt, mkStamp, dtycs, wtycs, rpath, err) =
       let fun stripPath path =
-	    let val namePath = IP.IPATH[IP.last path]
+	    let val namePath = IP.IPATH[IP.last (path, SS.errorTycId)]
 	        val prefix = IP.lastPrefix path
 	        val _ = if IP.equal(rpath,prefix) then ()
 		        else err EM.WARN
@@ -517,7 +518,7 @@ fun extractSig (env, epContext, context,
 		| procdatatycs(T.GENtyc{kind=T.DATATYPE dt, path, ...}::rest) =
 		    let val {index,family as {members,...},...} = dt
 			val {tycname,dcons,...} = Vector.sub(members,index)
-			val pathname = InvPath.last path
+			val pathname = IP.last (path, SS.errorTycId)
 		    in (map (fn ({name,...}) => name) dcons)@
 		       (pathname::procdatatycs rest)
 		    end
@@ -607,29 +608,29 @@ fun extractSig (env, epContext, context,
 
 
 (****************************************************************************
- *                                                                          *
- * The constrStr function is used to carry out the signature matching       *
- * on structure declarations with signature constraints. The first argument *
- * "transp" is a boolean flag; it is used to indicate whether the signature *
- * matching should be done transparently (true) or opaquely (false).        *
- *                                                                          *
+ * The constrStr function is used to carry out the signature matching
+ * on structure declarations with signature constraints. The first argument
+ * "transp" is a boolean flag used to indicate whether the signature
+ * matching should be done transparently (true) or opaquely (false).
+ * (called 3 times within this module).
  ****************************************************************************)
-fun constrStr(transp, sign, str, strDec, strExp, evOp, tdepth, entEnv, rpath,
-              env, region, compInfo) : A.dec * M.Structure * M.strExp =
-  let val {resDec=resDec1, resStr=resStr1, resExp=resExp1} =
-        SM.matchStr{sign=sign, str=str, strExp=strExp, evOp=evOp,
-                    tdepth=tdepth, entEnv=entEnv, rpath=rpath, statenv=env,
-                    region=region, compInfo=compInfo}
-
-   in if transp then (A.SEQdec[strDec, resDec1], resStr1, resExp1)
-      else let val {resDec=resDec2, resStr=resStr2, resExp=resExp2} =
-		   SM.packStr{sign=sign, str=resStr1, strExp=resExp1,
-                              tdepth=tdepth, entEnv=entEnv, rpath=rpath,
-                              statenv=env, region=region, compInfo=compInfo}
-            in (A.SEQdec[strDec, resDec1, resDec2], resStr2, resExp2)
-           end
-  end
-
+fun constrStr (transp, sign, str, strDec, strExp, evOp, tdepth, entEnv, rpath,
+               env, region, compInfo) : A.dec * M.Structure * M.strExp =
+  let val {resDec=matchedDec, resStr=matchedStr, resExp=matchedExp} =
+          SM.matchStr{sign=sign, str=str, strExp=strExp, evOp=evOp,
+                      tdepth=tdepth, entEnv=entEnv, statenv=env, rpath=rpath,
+                      region=region, compInfo=compInfo}
+   in if transp
+      then (A.SEQdec[strDec, matchedDec], matchedStr, matchedExp)
+      else (* instantiate the signature (opaque match) *)
+	   let val STR {rlzn=matchedRlzn, access, prim, ...} = matchedStr
+	       val {rlzn=abstractRlzn, ...} =
+		   INS.instAbstr {sign=sign, entEnv=entEnv, srcRlzn=matchedRlzn,
+				  rpath=rpath, region=region, compInfo=compInfo}
+	       val abstractStr = STR {sign=sign, rlzn=abstractRlzn, access=access, prim=prim}
+            in (A.SEQdec[strDec, matchedDec], abstractStr, matchedExp)
+	   end
+  end (* fun constrStr *)
 
 (*** elabStr: elaborate the raw structure, without signature constraint ***)
 (*** several invariants:
@@ -733,7 +734,7 @@ fun elab (BaseStr decl, env, entEnv, region) =
        in elab(strexp', env, entEnv, region)
       end
 
-  | elab (AppStrI(spath,[(arg,b)]), env, entEnv, region) =
+  | elab (AppStrI(spath,[(arg,_)]), env, entEnv, region) =
       let val _ = debugmsg ">>elab[AppStr-one]"
 
           val fct = LU.lookFct(env, SP.SPATH spath, error region)
@@ -744,7 +745,7 @@ fun elab (BaseStr decl, env, entEnv, region) =
           val entv = mkStamp()   (* ev for the uncoerced argument *)
           val (argDec, argStr, argExp, argDee) =
 	      elabStr(arg, NONE, env, entEnv, context, tdepth, epContext,
-		      SOME entv, IP.IPATH[], region, compInfo)
+		      SOME entv, IP.IPATH[appstriargId], region, compInfo)
 
           val _ = debugmsg "--elab[AppStr-one]: elab arg done"
           val _ = showStr("--elab[AppStr-one]: arg str: ",argStr,env)
@@ -845,38 +846,39 @@ fun elab (BaseStr decl, env, entEnv, region) =
                               entEnv=entEnv, epContext=epContext,
                               region=region, compInfo=compInfo}
 
-                val (csigOp, transp) =
-                 (case constraint
-                   of Transparent x => (SOME (h x), true)
-                    | Opaque x => (SOME (h x), false)
-                    | _ => (NONE, true))
+                val (csigOp, transparent) =
+                    (case constraint
+                       of Transparent x => (SOME (h x), true)
+			| Opaque x => (SOME (h x), false)
+			| _ => (NONE, true))
 
                 val (entsv, evOp) =
-                  case constraint
-                   of NoSig => (entsv, NONE)
-                    | _ => let val nentv = SOME(mkStamp())
-                            in (nentv, nentv)
-                           end
-             in (entsv, evOp, csigOp, transp)
+                    case constraint
+                       of NoSig => (entsv, NONE)
+			| _ => let val nentv = SOME(mkStamp())
+                                in (nentv, nentv)
+                               end
+
+             in (entsv, evOp, csigOp, transparent)
             end
 
           (** elaborating the structure body *)
           val (strDecAbsyn, str, exp, deltaEntEnv) =
-            elabStr(strexp, NONE, env, entEnv, context, tdepth,
-                    epContext, entsv, rpath, region, compInfo)
+              elabStr(strexp, NONE, env, entEnv, context, tdepth,
+                      epContext, entsv, rpath, region, compInfo)
 
           val resDee =
-            case constraint
-             of NoSig => deltaEntEnv
-              | _ =>
-                 (case evOp
-                   of SOME tmpev =>
-                       let val strEnt =
-                             case str of M.STR { rlzn, ... } => rlzn
-                                       | _ => M.bogusStrEntity
-                        in (EE.bind(tmpev, M.STRent strEnt, deltaEntEnv))
-                       end
-                    | _ => bug "unexpected while elaborating constrained str")
+	      case constraint
+		of NoSig => deltaEntEnv
+		 | _ =>
+		   (case evOp
+		     of SOME tmpev =>
+			 let val strEnt =
+			       case str of M.STR { rlzn, ... } => rlzn
+					 | _ => M.bogusStrEntity
+			  in (EE.bind(tmpev, M.STRent strEnt, deltaEntEnv))
+			 end
+		      | _ => bug "unexpected while elaborating constrained str")
 
           (** elaborating the signature matching *)
           val (resDec, resStr, resExp) =
@@ -961,7 +963,7 @@ case fctexp
 				  SM.matchFct
 				    {sign=fsig, fct=fct, fctExp=uncoercedExp,
 				     tdepth=depth, entEnv=entEnv,
-				     rpath=rpath, statenv=env, region=region,
+ 				     rpath=rpath, statenv=env, region=region,
 				     compInfo=compInfo}
 			   in (resDec, resFct, resExp, EE.empty)
 			  end
@@ -1003,7 +1005,7 @@ case fctexp
 	  val body = if curried then body
 		     else BaseStr(StrDec[Strb{name=resultId, def=body,
 					      constraint=constraint}])
-	  val constraint = if curried then constraint else NoSig
+	  val constraint = if curried then constraint else NoSig (* BUG! Issue xxx (23.7.18) ??? *)
           val (flex, depth) =
             case context
              of EU.INFCT {flex=f,depth=d} => (f, d)
@@ -1079,7 +1081,7 @@ case fctexp
 				 entEnv=entEnv', epContext=epContext',
 				 region=region, compInfo=compInfo}
 	       in case constraint
-		   of NoSig => (NONE, NONE, true)
+		   of NoSig => (NONE, NONE, true)  (* csigTrans not used in this case *)
 		    | Transparent x => (SOME(mkStamp()), SOME (doSig x), true)
 		    | Opaque x =>      (SOME(mkStamp()), SOME (doSig x), false)
 	      end
@@ -1095,7 +1097,7 @@ case fctexp
              functor is applied. *)
           val (bodyDecAbsyn, bodyStr, bodyExp, bodyDee) =
               elabStr(body, NONE, env', entEnv', context', tdepth, epContext', entsv,
-                      IP.IPATH [], region, compInfo)
+                      IP.IPATH [basefctId], region, compInfo)
           val _ = debugmsg "--elabFct[BaseFct]: body elaborated"
           val _ = showStr("--elabFct[BaseFct]: bodyStr: ",bodyStr,env)
 
@@ -1157,7 +1159,7 @@ case fctexp
 		    body=BaseStr(
                            FctDec[Fctb{name=functorId,
                                        def=BaseFct{params=lparam, body=body,
-                                                  constraint=constraint}}]),
+                                                   constraint=constraint}}]),
 		    constraint=NoSig}
 
        in elabFct(fctexp', true, name, env, entEnv, context, tdepth, epContext,
@@ -1263,7 +1265,7 @@ fun loop([], decls, entDecls, env, entEnv) =
                                          | _ => false))
                        then str
                        else (error region' EM.COMPLAIN
-                             ("structure " ^ S.name(IP.last rpath) ^
+                             ("structure " ^ S.name(IP.last (rpath, SS.errorId)) ^
                               " defined by partially applied functor")
                              EM.nullErrorBody;
                              ERRORstr)
@@ -1490,8 +1492,8 @@ and elabDecl0
                            andalso not(!(#anyErrors compInfo))
 			then (INS.instParam
 			        {sign=s,entEnv=EE.empty,tdepth=DI.top,
-				 rpath=InvPath.empty,region=region',
-				 compInfo=compInfo};
+				 rpath=IP.extend (IP.empty, SS.errorId),
+				 region=region', compInfo=compInfo};
 			      ())
 			else ()
                   in loop(rest, s::sigs, SE.bind(name, B.SIGbind s, env))
@@ -1668,7 +1670,7 @@ and elabDecl0
 			   end
 			 | _ => (M.EMPTYdec,EE.empty)
 		   val tyc' = T.GENtyc{stamp=stamp, arity=arity,
-				       eq=eq, path=InvPath.extend(InvPath.empty,name),
+				       eq=eq, path=IP.extend (IP.empty, name),
 				       stub=stub, kind=dt}
 		   val resDec = A.DATATYPEdec{datatycs=[tyc' (* tyc *)],
 					      withtycs=[]}
@@ -1754,6 +1756,5 @@ fun elabDecl {ast, statenv, entEnv, context, level, tdepth,
      in {absyn=resDec, statenv=senv}
     end
 
-end (* local *)
-
+end (* top local *)
 end (* structure ElabMod *)

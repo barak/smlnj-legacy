@@ -114,11 +114,12 @@ request smlnj-lib
 
 # build asdlgen and install ASDL libraries
 #
-# NOTE: currently asdlgen does not build on Windows
+# NOTE: asdlgen requires that a C++ compiler be installed and it
+# currently does not build on Windows
 #
-if UNIX
-  request asdl
-endif
+#if UNIX
+#  request asdl
+#endif
 
 # pre-compile and install CM "portable graph" utility library
 #

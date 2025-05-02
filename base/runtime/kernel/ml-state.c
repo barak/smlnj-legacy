@@ -89,6 +89,16 @@ ml_state_t *AllocMLState (bool_t isBoot, heap_params_t *heapParams)
 
 } /* end of AllocMLState */
 
+void FreeMLState (ml_state_t *msp)
+{
+    FreeHeap (msp->ml_heap);
+
+    FREE(msp);
+    for (int i = 0;  i < NumVProcs;  ++i) {
+        FREE(VProc[i]);
+    }
+}
+
 /* InitVProcState:
  */
 PVT void InitVProcState (vproc_state_t *vsp)
@@ -106,6 +116,7 @@ PVT void InitVProcState (vproc_state_t *vsp)
     vsp->vp_sigCount			= 0;
     vsp->vp_nextPendingSig		= MIN_SYSTEM_SIG;
     vsp->vp_gcSigState			= ML_SIG_IGNORE;
+    vsp->vp_gcSigThreshold              = 1;  /* by default, we ignore minor collections */
     vsp->vp_gcTime0			= NEW_OBJ(Time_t);
     vsp->vp_gcTime			= NEW_OBJ(Time_t);
 

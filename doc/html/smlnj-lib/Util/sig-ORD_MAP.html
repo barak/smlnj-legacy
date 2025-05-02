@@ -78,6 +78,7 @@
       <li class="toc-page"><a href="str-CharMap.html"><span class="toc-lib-page">The <code>CharMap</code> structure</span></a></li>
       <li class="toc-page"><a href="str-DynamicArray.html"><span class="toc-lib-page">The <code>DynamicArray</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-DynamicArrayFn.html"><span class="toc-lib-page">The <code>DynamicArrayFn</code> functor</span></a></li>
+      <li class="toc-page"><a href="str-EditDistance.html"><span class="toc-lib-page">The <code>EditDistance</code> structure</span></a></li>
       <li class="toc-page"><a href="str-Fifo.html"><span class="toc-lib-page">The <code>Fifo</code> structure</span></a></li>
       <li class="toc-page"><a href="str-FNVHash.html"><span class="toc-lib-page">The <code>FNVHash</code> structure</span></a></li>
       <li class="toc-page"><a href="str-Format.html"><span class="toc-lib-page">The <code>Format</code> structure</span></a></li>
@@ -103,6 +104,8 @@
       <li class="toc-page"><a href="str-ListXProd.html"><span class="toc-lib-page">The <code>ListXProd</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-MonoArrayFn.html"><span class="toc-lib-page">The <code>MonoArrayFn</code> functor</span></a></li>
       <li class="toc-page"><a href="sig-MONO_HASH_TABLE.html"><span class="toc-lib-page">The <code>MONO_HASH_TABLE</code> signature</span></a></li>
+      <li class="toc-page"><a href="str-Native.html"><span class="toc-lib-page">Native structure aliases</span></a></li>
+      <li class="toc-page"><a href="str-Native.html"><span class="toc-lib-page">Native structure aliases</span></a></li>
       <li class="toc-page"><a href="sig-ORD_KEY.html"><span class="toc-lib-page">The <code>ORD_KEY</code> signature</span></a></li>
       <li class="toc-page"><span class="toc-lib-page" id="toc-current">The <code>ORD_MAP</code> signature</span></li>
       <li class="toc-page"><a href="sig-ORD_SET.html"><span class="toc-lib-page">The <code>ORD_SET</code> signature</span></a></li>
@@ -190,6 +193,8 @@ are also provided.</p>
 
 <span class="tok-kr">val</span> <span class="tok-nv">remove</span> <span class="tok-p">:</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">map</span> <span class="tok-n">*</span> <span class="tok-nn">Key</span><span class="tok-p">.</span><span class="tok-n">ord_key</span> <span class="tok-p">-&gt;</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">map</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;a</span>
 
+<span class="tok-kr">val</span> <span class="tok-nv">findAndRemove</span> <span class="tok-p">:</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">map</span> <span class="tok-n">*</span> <span class="tok-nn">Key</span><span class="tok-p">.</span><span class="tok-n">ord_key</span> <span class="tok-p">-&gt;</span> <span class="tok-p">(</span><span class="tok-nd">&#39;a</span> <span class="tok-n">map</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;a</span><span class="tok-p">)</span> <span class="tok-n">option</span>
+
 <span class="tok-kr">val</span> <span class="tok-nv">first</span> <span class="tok-p">:</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">map</span> <span class="tok-p">-&gt;</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">option</span>
 <span class="tok-kr">val</span> <span class="tok-nv">firsti</span> <span class="tok-p">:</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">map</span> <span class="tok-p">-&gt;</span> <span class="tok-p">(</span><span class="tok-nn">Key</span><span class="tok-p">.</span><span class="tok-n">ord_key</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;a</span><span class="tok-p">)</span> <span class="tok-n">option</span>
 
@@ -201,6 +206,7 @@ are also provided.</p>
 <span class="tok-kr">val</span> <span class="tok-nv">listKeys</span> <span class="tok-p">:</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">map</span> <span class="tok-p">-&gt;</span> <span class="tok-nn">Key</span><span class="tok-p">.</span><span class="tok-n">ord_key</span> <span class="tok-n">list</span>
 
 <span class="tok-kr">val</span> <span class="tok-nv">collate</span> <span class="tok-p">:</span> <span class="tok-p">(</span><span class="tok-nd">&#39;a</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;a</span> <span class="tok-p">-&gt;</span> <span class="tok-n">order</span><span class="tok-p">)</span> <span class="tok-p">-&gt;</span> <span class="tok-p">(</span><span class="tok-nd">&#39;a</span> <span class="tok-n">map</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">map</span><span class="tok-p">)</span> <span class="tok-p">-&gt;</span> <span class="tok-n">order</span>
+<span class="tok-kr">val</span> <span class="tok-nv">extends</span> <span class="tok-p">:</span> <span class="tok-p">(</span><span class="tok-nd">&#39;a</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;b</span> <span class="tok-p">-&gt;</span> <span class="tok-n">order</span><span class="tok-p">)</span> <span class="tok-p">-&gt;</span> <span class="tok-p">(</span><span class="tok-nd">&#39;a</span> <span class="tok-n">map</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;b</span> <span class="tok-n">map</span><span class="tok-p">)</span> <span class="tok-p">-&gt;</span> <span class="tok-n">bool</span>
 
 <span class="tok-kr">val</span> <span class="tok-nv">unionWith</span>  <span class="tok-p">:</span> <span class="tok-p">(</span><span class="tok-nd">&#39;a</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;a</span> <span class="tok-p">-&gt;</span> <span class="tok-nd">&#39;a</span><span class="tok-p">)</span> <span class="tok-p">-&gt;</span> <span class="tok-p">(</span><span class="tok-nd">&#39;a</span> <span class="tok-n">map</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">map</span><span class="tok-p">)</span> <span class="tok-p">-&gt;</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">map</span>
 <span class="tok-kr">val</span> <span class="tok-nv">unionWithi</span> <span class="tok-p">:</span> <span class="tok-p">(</span><span class="tok-nn">Key</span><span class="tok-p">.</span><span class="tok-n">ord_key</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;a</span> <span class="tok-p">-&gt;</span> <span class="tok-nd">&#39;a</span><span class="tok-p">)</span> <span class="tok-p">-&gt;</span> <span class="tok-p">(</span><span class="tok-nd">&#39;a</span> <span class="tok-n">map</span> <span class="tok-n">*</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">map</span><span class="tok-p">)</span> <span class="tok-p">-&gt;</span> <span class="tok-nd">&#39;a</span> <span class="tok-n">map</span>
@@ -306,6 +312,12 @@ and where <code>m'</code> is <code>m</code> with <code>key</code> removed from i
 is not in the domain of <code>m</code>, then it raises the exception
 <a href="str-LibBase.html#exn:NotFound"><code>NotFound</code></a>.</p>
 </dd>
+<dt class="hdlist1"><code><span class="kw">val</span> findAndRemove : 'a map * Key.ord_key -&gt; ('a map * 'a) option</code></dt>
+<dd>
+<p><code>findAndRemove (m, key)</code> returns <code>SOME(m', v)</code>, if <code>m</code> maps <code>key</code> to <code>v</code>
+and where <code>m'</code> is <code>m</code> with <code>key</code> removed from its domain.  If <code>key</code>
+is not in the domain of <code>m</code>, then it returns <code>NONE</code>.</p>
+</dd>
 <dt class="hdlist1"><code><span class="kw">val</span> first : 'a map -&gt; 'a option</code></dt>
 <dd>
 <p><code>first m</code> returns <code>SOME item</code> when <code>item</code> is the value associated with
@@ -336,10 +348,22 @@ Note that this list will contain duplicates when multiple keys in
 <dd>
 <p><code>listKeys m</code> returns a list of the keys in the domain of <code>m</code>.</p>
 </dd>
-<dt class="hdlist1"><code><span class="kw">val</span> collate : ('a * 'a -&gt; order) -&gt; ('a map * 'a map) -&gt; order</code></dt>
+<dt class="hdlist1"><code><span class="kw">val</span> equiv : ('a * 'b -&gt; order) -&gt; ('a map * 'b map) -&gt; bool</code></dt>
+<dd>
+<p><code>equiv eqV (m1, m2)</code> returns true if the two maps have the same domains
+and if, for all <code>x</code> in the domain of the maps, <code>eqV(lookup(m1, x), lookup(m2, x))</code>
+evaluates to <code>true</code>.</p>
+</dd>
+<dt class="hdlist1"><code><span class="kw">val</span> collate : ('a * 'b -&gt; order) -&gt; ('a map * 'b map) -&gt; order</code></dt>
 <dd>
 <p><code>collate cmpV (m1, m2)</code> returns the order of the two maps, where <code>cmpV</code> is
-used to compare the values in the domain.</p>
+used to compare the values in the range of the maps.</p>
+</dd>
+<dt class="hdlist1"><code><span class="kw">val</span> extends : ('a * 'b -&gt; order) -&gt; ('a map * 'b map) -&gt; bool</code></dt>
+<dd>
+<p><code>extends exV (m1, m2)</code> returns <code>true</code> if the domain of <code>m2</code> is a subset of the
+domain of <code>m1</code> and if, for all <code>x</code> in the domain of <code>m2</code>,
+<code>exV(lookup(m1, x), lookup(m2, x))</code> evaluates to <code>true</code>.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> unionWith  : ('a * 'a -&gt; 'a) -&gt; ('a map * 'a map) -&gt; 'a map</code></dt>
 <dd>
@@ -637,8 +661,8 @@ is fast for small sets, but does not scale well to large sizes.</p>
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99 (December 24, 2020)<br />
-	  Last updated 2020-05-21 15:31:07 UTC
+	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
+	  Last updated 2025-04-25 20:04:52 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->

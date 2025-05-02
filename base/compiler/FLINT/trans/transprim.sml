@@ -1,6 +1,6 @@
 (* transprim.sml
  *
- * COPYRIGHT (c) 2019 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * COPYRIGHT (c) 2021 The Fellowship of SML/NJ (http://www.smlnj.org)
  * All rights reserved.
  *
  * Translation of primops to PLambda.  The translation adds extra
@@ -77,42 +77,108 @@ structure TransPrim : sig
   (* get length of sequence *)
     fun lenOp seqtc = L.PRIM(PO.LENGTH, lt_len, [seqtc])
 
-  (* inline operators for numeric types *)
-    fun inlops nk = let
-	  val (lt_arg, zero, negate) = (case nk
-		 of PO.INT sz => let
-		      val lt_arg = LT.ltc_num sz
-		      val lt_neg = lt_arw (lt_arg, lt_arg)
-		      in (
-			lt_arg, L.INT{ival = 0, ty = sz},
-			L.PRIM(PO.IARITH{oper = PO.INEG, sz = sz}, lt_neg, [])
-		      ) end
-		  | PO.UINT sz => let
-		      val lt_arg = LT.ltc_num sz
-		      val lt_neg = lt_arw (lt_arg, lt_arg)
-		      in (
-			lt_arg, L.WORD{ival = 0, ty = sz},
-			L.PRIM(PO.PURE_ARITH{oper = PO.NEG, kind = nk}, lt_neg, [])
-		      ) end
+  (* inline operations and constants for a given numeric kind *)
+    type inline_ops = {
+	lt_arg : LT.lty,	(* PLambda type for this kind of number *)
+	lt_argpair : LT.lty,	(* PLambda type for pairs of numbers *)
+	lt_cmp : LT.lty,	(* PLambda type of comparison function *)
+	multiply : L.lexp,	(* multiplication primitive function *)
+	negate : L.lexp,	(* negation primitive function *)
+	less : L.lexp,		(* less-than primitive function *)
+	greater : L.lexp,	(* greater-than primitive function *)
+	equal : L.lexp,		(* equality primitive function *)
+	zero : L.lexp,		(* the value 0 for the given type *)
+	negOne : L.lexp		(* the value -1 for the given type *)
+      }
+
+  (* a cache of the inline_ops records *)
+    local
+      fun mkInlineOps nk = let
+	    val (lt_arg, lt_argpair, multiply, negate, zero, negOne) = (case nk
+		   of PO.INT sz => let
+			val lt_arg = LT.ltc_num sz
+	    		val lt_argpair = lt_tup [lt_arg, lt_arg]
+			val lt_mul = lt_arw (lt_argpair, lt_arg)
+			val lt_neg = lt_arw (lt_arg, lt_arg)
+			in (
+			  lt_arg, lt_argpair,
+			  L.PRIM(PO.IARITH{oper = PO.IMUL, sz = sz}, lt_mul, []),
+			  L.PRIM(PO.IARITH{oper = PO.INEG, sz = sz}, lt_neg, []),
+			  L.INT{ival = 0, ty = sz},
+			  L.INT{ival = ~1, ty = sz}
+			) end
+		    | PO.UINT sz => let
+			val lt_arg = LT.ltc_num sz
+	    		val lt_argpair = lt_tup [lt_arg, lt_arg]
+			val lt_mul = lt_arw (lt_argpair, lt_arg)
+			val lt_neg = lt_arw (lt_arg, lt_arg)
+			in (
+			  lt_arg, lt_argpair,
+			  L.PRIM(PO.PURE_ARITH{oper = PO.MUL, kind = nk}, lt_mul, []),
+			  L.PRIM(PO.PURE_ARITH{oper = PO.NEG, kind = nk}, lt_neg, []),
+			  L.WORD{ival = 0, ty = sz},
+			  L.WORD{ival = ~1, ty = sz} (* unused *)
+			) end
+		    | PO.FLOAT sz => let
 (* REAL64: type will depend on size *)
-		  | PO.FLOAT sz => let
-		      val lt_arg = LT.ltc_real
-		      val lt_neg = lt_arw (lt_arg, lt_arg)
-		      in (
-			lt_arg, L.REAL{rval = RealLit.zero false, ty = sz},
-			L.PRIM(PO.PURE_ARITH{oper = PO.NEG, kind = nk}, lt_neg, [])
-		      ) end
-		(* end case *))
-	  val lt_argpair = lt_tup [lt_arg, lt_arg]
-	  val lt_cmp = lt_arw (lt_argpair, lt_bool)
-	  val less = L.PRIM (PO.CMP { oper = PO.LT, kind = nk }, lt_cmp, [])
-	  val greater = L.PRIM (PO.CMP { oper = PO.GT, kind = nk }, lt_cmp, [])
-	  val equal = L.PRIM (PO.CMP { oper = PO.EQL, kind = nk }, lt_cmp, [])
-	  in {
-	    lt_arg = lt_arg, lt_argpair = lt_argpair, lt_cmp = lt_cmp,
-	    less = less, greater = greater, equal = equal,
-	    zero = zero, negate = negate
-	  } end
+			val lt_arg = LT.ltc_real
+	    		val lt_argpair = lt_tup [lt_arg, lt_arg]
+			val lt_mul = lt_arw (lt_argpair, lt_arg)
+			val lt_neg = lt_arw (lt_arg, lt_arg)
+			in (
+			  lt_arg, lt_argpair,
+			  L.PRIM(PO.PURE_ARITH{oper = PO.MUL, kind = nk}, lt_mul, []),
+			  L.PRIM(PO.PURE_ARITH{oper = PO.NEG, kind = nk}, lt_neg, []),
+			  L.REAL{rval = RealLit.zero false, ty = sz},
+			  L.REAL{rval = RealLit.m_one, ty = sz} (* unused *)
+			) end
+		  (* end case *))
+	    val lt_cmp = lt_arw (lt_argpair, lt_bool)
+	    val less = L.PRIM (PO.CMP { oper = PO.LT, kind = nk }, lt_cmp, [])
+	    val greater = L.PRIM (PO.CMP { oper = PO.GT, kind = nk }, lt_cmp, [])
+	    val equal = L.PRIM (PO.CMP { oper = PO.EQL, kind = nk }, lt_cmp, [])
+	    in {
+	      lt_arg = lt_arg, lt_argpair = lt_argpair, lt_cmp = lt_cmp,
+	      multiply = multiply, negate = negate,
+	      less = less, greater = greater, equal = equal,
+	      zero = zero, negOne = negOne
+	    } end
+
+    (* equality on number kinds *)
+      fun sameNK (PO.INT sz1, PO.INT sz2) = (sz1 = sz2)
+	| sameNK (PO.UINT sz1, PO.UINT sz2) = (sz1 = sz2)
+	| sameNK (PO.FLOAT sz1, PO.FLOAT sz2) = (sz1 = sz2)
+	| sameNK _ = false
+
+    (* hash number kinds *)
+      fun hashNK (PO.INT sz) = Word.fromInt sz
+	| hashNK (PO.UINT sz) = Word.fromInt sz + 0w1
+	| hashNK (PO.FLOAT sz) = Word.fromInt sz + 0w3
+
+    (* hash tables keyed by number kinds *)
+      structure NKTbl = HashTableFn (
+	struct
+	  type hash_key = PO.numkind
+	  val hashVal= hashNK
+	  val sameKey = sameNK
+	end)
+
+      val tbl : inline_ops NKTbl.hash_table = NKTbl.mkTable (16, Fail "num-kind table")
+      val find = NKTbl.find tbl
+
+      in
+      fun inlops nk = (case find nk
+	     of NONE => let
+		  val ops = mkInlineOps nk
+		  in
+		    NKTbl.insert tbl (nk, ops);
+		    ops
+		  end
+	      | SOME ops => ops
+	    (* end case *))
+      end (* local*)
+
+  (* inline operators for numeric types *)
 
     fun baselt (PO.UINT sz) = LT.ltc_num sz
 
@@ -138,7 +204,7 @@ structure TransPrim : sig
     local
       fun pickName (cvt32, cvt64) sz =
 	    if (sz = 64) then cvt64
-	    else if (sz = Tgt.mlValueSz) then cvt32
+	    else if (sz = Tgt.mlValueSz) then cvt32 (* NOTE: sz must be 32 here! *)
 	    else if (sz > Tgt.defaultIntSz)
 	      then bug(concat["bogus size ", Int.toString sz, " for intinf conversion"])
 	    else if Tgt.is64
@@ -219,7 +285,7 @@ structure TransPrim : sig
 			val (argTy, resTy) = (case LT.ltd_arrow lt
 			       of (_, [a], [r]) => (a, r)
 				| _ => bug (concat[
-				      "unexpected type ", LT.lt_print lt, " of TEST"
+				      "unexpected type ", LT.lt_print lt, " of TESTU"
 				    ])
 			      (* end case *))
 			val extraTy = lt_arw (argTy, resTy)
@@ -399,6 +465,10 @@ structure TransPrim : sig
 			      "unexpected type ", LT.lt_print primoplt, " of ", opname
 			    ])
 		      (* end case *))
+(* FIXME: on a 32-bit platform, the conversions from 64-bits to IntInf take a pair
+ * of words as the argument type, so the use of `lt_fixed_int` as the domain here
+ * does not look correct.
+ *)
 		val extra_arg_lt = LT.ltc_parrow(lt_fixed_int, res_lt)
 		val new_arg_lt = LT.ltc_tuple [orig_arg_lt, extra_arg_lt]
 		val new_lt = LT.ltc_parrow (new_arg_lt, res_lt)
@@ -570,6 +640,15 @@ structure TransPrim : sig
 	      | PO.TEST_INF sz => inlFromInf ("TEST_INF", testInf sz, prim, lt)
 	      | PO.COPY_INF sz => inlToInf ("COPY", copyInf sz, prim, lt)
 	      | PO.EXTEND_INF sz => inlToInf ("EXTEND_INF", extendInf sz, prim, lt)
+            (* host properties *)
+              | PO.HOST_WORD_SIZE =>
+                  mkFn LT.ltc_unit (fn _ => L.INT{
+                      ival = IntInf.fromInt Target.mlValueSz,
+                      ty = Target.defaultIntSz
+                    })
+              | PO.HOST_BIG_ENDIAN =>
+                  mkFn LT.ltc_unit (fn _ =>
+                    if Target.bigEndian then trueLexp else falseLexp)
 	    (* default handling for all other primops *)
 	      | _ => mkPrim(prim, lt, ts)
 	    (* end case *)

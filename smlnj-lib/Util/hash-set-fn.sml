@@ -1,6 +1,6 @@
 (* hash-set-fn.sml
  *
- * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * COPYRIGHT (c) 2023 The Fellowship of SML/NJ (http://www.smlnj.org)
  * All rights reserved.
  *
  * AUTHOR:  John Reppy
@@ -12,8 +12,8 @@ functor HashSetFn (Key : HASH_KEY) : MONO_HASH_SET =
   struct
 
     structure Key = Key
-  (* NOTE: someday we will change the HASH_KEY signature to follow the naming conventions of
-   * the SML basis, so we use those names internally to ease future porting.
+  (* NOTE: someday we will change the HASH_KEY signature to follow the naming
+   * conventions of the SML basis, so we use those names internally to ease future porting.
    *)
     type item = Key.hash_key
     val hash = Key.hashVal
@@ -34,15 +34,7 @@ functor HashSetFn (Key : HASH_KEY) : MONO_HASH_SET =
    * sizes, since that give efficient indexing, and assume a minimum size of 32.
    *)
     val minSize = 32
-    val maxSize = let
-	  fun f i = let
-		  val i' = i+i
-		  in
-		    if i' < Array.maxLen then f i' else i
-		  end
-	  in
-	    f 0x10000
-	  end
+    val maxSize = MaxHashTableSize.maxSize
 
   (* round up `n` to the next hash-table size *)
     fun roundUp n = if (n >= maxSize)
@@ -79,34 +71,31 @@ functor HashSetFn (Key : HASH_KEY) : MONO_HASH_SET =
 	    val sz = Array.length arr
 	    in
 	      if (nItems >= sz)
-		then (table := growTable (arr, sz+sz); true)
-		else false
+		then table := growTable (arr, sz+sz)
+		else ()
 	    end
 
   (* reverse-append for buckets *)
     fun revAppend (NIL, b) = b
       | revAppend (B(h, x, r), b) = revAppend(r, B(h, x, b))
 
+  (* look for an item with hash `h` in a bucket *)
+    fun findInBucket (NIL, h, item) = false
+      | findInBucket (B (h', item', r), h, item) =
+          ((h = h') andalso same (item, item')) orelse findInBucket (r, h, item)
+
     fun addWithHash (tbl as SET{table, nItems}, h, item) = let
 	  val arr = !table
 	  val sz = Array.length arr
 	  val indx = index (h, sz)
-	  fun look NIL = (
-		Array.update(arr, indx, B(h, item, Array.sub(arr, indx)));
-		nItems := !nItems + 1;
-		growTableIfNeeded (table, !nItems);
-		NIL)
-	    | look (B(h', item', r)) = if ((h = h') andalso same(item, item'))
-		then NIL (* item already present *)
-		else (case (look r)
-		   of NIL => NIL
-		    | rest => B(h', item', rest)
-		  (* end case *))
+          val bucket = Array.sub (arr, indx)
 	  in
-	    case (look (Array.sub (arr, indx)))
-	     of NIL => ()
-	      | b => Array.update(arr, indx, b)
-	    (* end case *)
+            if findInBucket (bucket, h, item)
+              then ()
+              else (
+                Array.update (arr, indx, B (h, item, bucket));
+                nItems := !nItems + 1;
+                growTableIfNeeded (table, !nItems))
 	  end
 
   (* Add an item to a set *)
@@ -183,10 +172,8 @@ functor HashSetFn (Key : HASH_KEY) : MONO_HASH_SET =
 	  val sz = Array.length arr
 	  val h = hash item
 	  val indx = index (h, sz)
-	  fun look NIL = false
-	    | look (B(h', item', r)) = ((h = h') andalso same(item, item')) orelse look r
           in
-            look (Array.sub(arr, indx))
+            findInBucket (Array.sub(arr, indx), h, item)
           end
 
   (* Return true if and only if the set is empty *)
@@ -198,7 +185,7 @@ functor HashSetFn (Key : HASH_KEY) : MONO_HASH_SET =
             then let
               val arr1 = !tbl1 and arr2 = !tbl2
               val sz1 = Array.length arr1 and sz2 = Array.length arr2
-              fun lp i = if (i <= sz1)
+              fun lp i = if (i < sz1)
                     then let
                     (* iterate over the items in bucket i *)
                       fun look1 NIL = lp(i+1)

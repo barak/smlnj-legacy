@@ -199,6 +199,8 @@ functor Convert (MachSpec : MACH_SPEC) : CONVERT =
 	    | AP.PURE_ARITH{oper, kind} => PKP(P.PURE_ARITH{oper=oper,kind=numkind kind})
 	    | AP.REAL_TO_INT arg => PKA(P.REAL_TO_INT arg)
 	    | AP.INT_TO_REAL arg => PKP(P.INT_TO_REAL arg)
+            | AP.REAL_TO_BITS sz => PKP(P.REAL_TO_BITS sz)
+            | AP.BITS_TO_REAL sz => PKP(P.BITS_TO_REAL sz)
 
 	    | AP.SUBSCRIPTV => PKP P.SUBSCRIPTV
 	    | AP.MAKEREF =>    PKP P.MAKEREF
@@ -254,7 +256,7 @@ functor Convert (MachSpec : MACH_SPEC) : CONVERT =
   (* appmc : mcont * value list -> cexp *)
     fun appmc (MCONT{cnt, ...}, vs) = cnt(vs)
 
-  (* makmc : (value list -> cexp) * cty list -> cexp *)
+  (* makmc : (value list -> cexp) * cty list -> mcont *)
     fun makmc (cnt, ts) = MCONT{cnt=cnt, ts=ts}
 
   (* rttys : mcont -> cty list *)
@@ -361,8 +363,8 @@ functor Convert (MachSpec : MACH_SPEC) : CONVERT =
 	    in h(vl, [])
 	   end
 
-	 (* loop : F.lexp * (value list -> cexp) -> cexp *)
-	 fun loop' m (le, c) = let val loop = loop' m
+	 (* loop : F.lexp * mcont -> cexp *)
+	 fun loop' m (le, c : mcont) = let val loop = loop' m
 	 in case le
 	     of F.RET vs => appmc(c, lpvars vs)
 	      | F.LET(vs, e1, e2) =>
@@ -673,38 +675,6 @@ functor Convert (MachSpec : MACH_SPEC) : CONVERT =
 	      | F.PRIMOP((_, AP.WORD_TO_PTR, _, _), [arg], res, e) =>
 		  PURE(P.CAST, [lpvar arg], res, PTRt VPT,
 		    loop(e, c))
-
-	    (* bitcast from real to word *)
-	      | F.PRIMOP((_, AP.REAL_TO_BITS sz, _, _), args, res, e) => (
-		  case (Target.is64, sz)
-		   of (false, 64) => let
-			val [arg] = lpvars args
-			val asWord = LV.mkLvar()
-			val num32Ty = boxIntTy 32
-			val hi = LV.mkLvar() and lo = LV.mkLvar()
-		      (* word64 values are [hi, lo], so we need to swap order
-		       * on little-endian targets
-		       *)
-			val rawPair = if Target.bigEndian
-			      then [(VAR hi, OFFp0), (VAR lo, OFFp0)]
-			      else [(VAR lo, OFFp0), (VAR hi, OFFp0)]
-			in
-			  PURE(P.CAST, [arg], asWord, boxIntTy sz,
-			  SELECT(0, VAR asWord, hi, num32Ty,
-			  SELECT(1, VAR asWord, lo, num32Ty,
-			  RECORD(RK_RAWBLOCK, rawPair, res,
-			    loop(e, c)))))
-			end
-		    | (true, 64) => let
-			val [arg] = lpvars args
-			val asWord = LV.mkLvar()
-			in
-			  PURE(P.CAST, [arg], asWord, PTRt VPT,
-			  unwrapInt (sz, VAR asWord, res,
-			    loop(e, c)))
-			end
-		    | _ => raise Fail "invalid size for REAL_TO_BITS" (* REAL32: FIXME *)
-		  (* end case *))
 
 	      | F.PRIMOP(po as (_,p,lt,ts), ul, v, e) =>
 		  let val ct =

@@ -1,9 +1,16 @@
 (* int-hash-table.sml
  *
- * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * COPYRIGHT (c) 2024 The Fellowship of SML/NJ (http://www.smlnj.org)
  * All rights reserved.
  *
- * A specialization of the hash table functor to integer keys.
+ * A specialization of hash tables to integer keys.  The hash values are just the
+ * word representation of the integer keys, so we can eliminate the equality test
+ * on key values.
+ *
+ * Note that we could further specialize the representation of bucket items, since
+ * the hash value and key are the same bit pattern, so we do not need to store
+ * both!  Preliminary experiments, however, suggest that performance might not
+ * improve because of increased GC time (possibly a cache alignment issue).
  *
  * AUTHOR:  John Reppy
  *	    University of Chicago
@@ -44,6 +51,31 @@ structure IntHashTable :> MONO_HASH_TABLE where type Key.hash_key = int =
   (* remove all elements from the table *)
     fun clear (HT{table, n_items, ...}) = (HTRep.clear(!table); n_items := 0)
 
+    fun insertWithi combine (tbl as HT{table, n_items, ...}) (key, item) = let
+	  val arr = !table
+	  val sz = Array.length arr
+	  val hash = hashVal key
+	  val indx = index (hash, sz)
+	  fun look HTRep.NIL = (
+		Array.update(arr, indx, HTRep.B(hash, key, item, Array.sub(arr, indx)));
+		n_items := !n_items + 1;
+		ignore (HTRep.growTableIfNeeded (table, !n_items));
+		HTRep.NIL)
+	    | look (HTRep.B(h, k, v, r)) = if (hash = h)
+		then HTRep.B(hash, key, combine(k, v, item), r)
+		else (case (look r)
+		   of HTRep.NIL => HTRep.NIL
+		    | rest => HTRep.B(h, k, v, rest)
+		  (* end case *))
+	  in
+	    case (look (Array.sub (arr, indx)))
+	     of HTRep.NIL => ()
+	      | b => Array.update(arr, indx, b)
+	    (* end case *)
+	  end
+
+    fun insertWith combine = insertWithi (fn (_, v1, v2) => combine(v1, v2))
+
   (* Insert an item.  If the key already has an item associated with it,
    * then the old item is discarded.
    *)
@@ -55,9 +87,9 @@ structure IntHashTable :> MONO_HASH_TABLE where type Key.hash_key = int =
 	  fun look HTRep.NIL = (
 		Array.update(arr, indx, HTRep.B(hash, key, item, Array.sub(arr, indx)));
 		n_items := !n_items + 1;
-		HTRep.growTableIfNeeded (table, !n_items);
+		ignore (HTRep.growTableIfNeeded (table, !n_items));
 		HTRep.NIL)
-	    | look (HTRep.B(h, k, v, r)) = if ((hash = h) andalso sameKey(key, k))
+	    | look (HTRep.B(h, k, v, r)) = if (hash = h)
 		then HTRep.B(hash, key, item, r)
 		else (case (look r)
 		   of HTRep.NIL => HTRep.NIL
@@ -76,8 +108,7 @@ structure IntHashTable :> MONO_HASH_TABLE where type Key.hash_key = int =
 	  val hash = hashVal key
 	  val indx = index (hash, Array.length arr)
 	  fun look HTRep.NIL = false
-	    | look (HTRep.B(h, k, v, r)) =
-		((hash = h) andalso sameKey(key, k)) orelse look r
+	    | look (HTRep.B(h, k, v, r)) = (hash = h) orelse look r
 	  in
 	    look (Array.sub (arr, indx))
 	  end
@@ -88,7 +119,7 @@ structure IntHashTable :> MONO_HASH_TABLE where type Key.hash_key = int =
 	  val hash = hashVal key
 	  val indx = index (hash, Array.length arr)
 	  fun look HTRep.NIL = raise not_found
-	    | look (HTRep.B(h, k, v, r)) = if ((hash = h) andalso sameKey(key, k))
+	    | look (HTRep.B(h, k, v, r)) = if (hash = h)
 		then v
 		else look r
 	  in
@@ -102,12 +133,31 @@ structure IntHashTable :> MONO_HASH_TABLE where type Key.hash_key = int =
 	  val hash = hashVal key
 	  val indx = index (hash, sz)
 	  fun look HTRep.NIL = NONE
-	    | look (HTRep.B(h, k, v, r)) = if ((hash = h) andalso sameKey(key, k))
+	    | look (HTRep.B(h, k, v, r)) = if (hash = h)
 		then SOME v
 		else look r
 	  in
 	    look (Array.sub (arr, indx))
 	  end
+
+    fun findAndRemove (HT{not_found, table, n_items}) key = let
+	  val arr = !table
+	  val sz = Array.length arr
+	  val hash = hashVal key
+	  val indx = index (hash, sz)
+          fun look HTRep.NIL = raise not_found
+            | look (HTRep.B(h, k, v, r)) = if (hash = h)
+                then (v, r)
+                else let
+                  val (v', r') = look r
+                  in
+                    (v', HTRep.B(h, k, v, r'))
+                  end
+          val (v, bucket) = look (Array.sub (arr, indx))
+          in
+            Array.update (arr, indx, bucket); SOME v
+	  end
+            handle _ => NONE
 
   (* Remove an item.  The table's exception is raised if
    * the item doesn't exist.
@@ -118,7 +168,7 @@ structure IntHashTable :> MONO_HASH_TABLE where type Key.hash_key = int =
 	  val hash = hashVal key
 	  val indx = index (hash, sz)
 	  fun look HTRep.NIL = raise not_found
-	    | look (HTRep.B(h, k, v, r)) = if ((hash = h) andalso sameKey(key, k))
+	    | look (HTRep.B(h, k, v, r)) = if (hash = h)
 		then (v, r)
 		else let val (item, r') = look r in (item, HTRep.B(h, k, v, r')) end
 	  val (item, bucket) = look (Array.sub (arr, indx))

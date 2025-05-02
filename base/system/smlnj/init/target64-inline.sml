@@ -68,6 +68,10 @@ structure InlineT =
 
     val ptreql          : 'a * 'a -> bool = InLine.ptr_eql
 
+    (* machine properties *)
+    val isBigEndian : unit -> bool = InLine.host_big_endian
+    val wordSize : unit -> int = InLine.host_word_size
+
     structure Real64 =
       struct
         val op +   : real * real -> real = InLine.real64_add
@@ -92,17 +96,25 @@ structure InlineT =
 (* FIXME: should use InLine.floor_real64_to_int, but it is currently not supported by
  * the CPS code generator.  Can also use InLine.round_real64_to_int.
  *)
+	local
+	(* the minInt (~4611686018427387904) and maxInt (4611686018427387904)
+	 * values converted to reals (with loss of precision).
+	 *)
+	  val rminInt = ~4611686018427390000.0
+	  val rmaxInt = 4611686018427390000.0
+	in
 	fun floor (x : real) =
-	      if InLine.real64_le(~4611686018427387904.0, x)
-	      andalso InLine.real64_lt(x, 4611686018427387904.0)
+	      if InLine.real64_le(rminInt, x) andalso InLine.real64_le(x, rmaxInt)
 		then Assembly.A.floor x
 	      else if InLine.real64_eql(x, x)
 		then raise Assembly.Overflow
 		else raise Core.Domain (* nan *)
+	end (* local *)
 
 	val signBit : real -> bool = InLine.real64_sgn
 
 	val toBits : real -> word64 = InLine.real64_to_bits
+	val fromBits : word64 -> real = InLine.real64_from_bits
       end
 
     structure Int =
@@ -144,6 +156,9 @@ structure InlineT =
 	val fast_sub : int * int -> int = InLine.int_unsafe_sub
       end
 
+  (* On 64-bit systems, Int32.int is represented as Int.int (i.e., as a tagged 63-bit
+   * 2's complement number.  We manually check for overflow where necessary.
+   *)
     structure Int32 =
       struct
 	val toInt = InLine.int32_to_int
@@ -153,7 +168,7 @@ structure InlineT =
 
 	local
 	(* wrapper that checks the result for Overflow.  Note that
-         * this wrapper breaks the inlining of Word32 arithmetic!
+         * this wrapper breaks the inlining of Int32 arithmetic!
 	 *)
 	  fun i32chk oper args = let
 		val res = oper args
@@ -458,9 +473,6 @@ structure InlineT =
  *)
  	val newArray0 : unit -> array = InLine.newArray0
         val length    : array -> int = InLine.seq_length
-    (* BUG: using "ordof" for W8A.sub is dangerous, because ordof is
-     (technically) fetching from immutable things.  A fancy optimizer might
-     someday be confused. *)
         val sub       : array * int -> word8 = InLine.word8_arr_unsafe_sub
         val chkSub    : array * int -> word8 = InLine.word8_arr_sub
         val update    : array * int * word8 -> unit = InLine.word8_arr_unsafe_update

@@ -55,6 +55,8 @@ val inDomain : ('a map * Key.ord_key) -> bool
 
 val remove : 'a map * Key.ord_key -> 'a map * 'a
 
+val findAndRemove : 'a map * Key.ord_key -> ('a map * 'a) option
+
 val first : 'a map -> 'a option
 val firsti : 'a map -> (Key.ord_key * 'a) option
 
@@ -66,6 +68,7 @@ val listItemsi : 'a map -> (Key.ord_key * 'a) list
 val listKeys : 'a map -> Key.ord_key list
 
 val collate : ('a * 'a -> order) -> ('a map * 'a map) -> order
+val extends : ('a * 'b -> order) -> ('a map * 'b map) -> bool
 
 val unionWith  : ('a * 'a -> 'a) -> ('a map * 'a map) -> 'a map
 val unionWithi : (Key.ord_key * 'a * 'a -> 'a) -> ('a map * 'a map) -> 'a map
@@ -153,6 +156,11 @@ val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
   is not in the domain of `m`, then it raises the exception
   xref:str-LibBase.adoc#exn:NotFound[`NotFound`].
 
+`[.kw]#val# findAndRemove : 'a map * Key.ord_key \-> ('a map * 'a) option`::
+  `findAndRemove (m, key)` returns `SOME(m', v)`, if `m` maps `key` to `v`
+  and where `m'` is `m` with `key` removed from its domain.  If `key`
+  is not in the domain of `m`, then it returns `NONE`.
+
 `[.kw]#val# first : 'a map \-> 'a option`::
   `first m` returns `SOME item` when `item` is the value associated with
   the first (or smallest) key in the domain of the map `m`.  It returns
@@ -177,9 +185,19 @@ val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
 `[.kw]#val# listKeys : 'a map \-> Key.ord_key list`::
   `listKeys m` returns a list of the keys in the domain of `m`.
 
-`[.kw]#val# collate : ('a * 'a \-> order) \-> ('a map * 'a map) \-> order`::
+`[.kw]#val# equiv : ('a * 'b \-> order) \-> ('a map * 'b map) \-> bool`::
+  `equiv eqV (m1, m2)` returns true if the two maps have the same domains
+  and if, for all `x` in the domain of the maps, `eqV(lookup(m1, x), lookup(m2, x))`
+  evaluates to `true`.
+
+`[.kw]#val# collate : ('a * 'b \-> order) \-> ('a map * 'b map) \-> order`::
   `collate cmpV (m1, m2)` returns the order of the two maps, where `cmpV` is
-  used to compare the values in the domain.
+  used to compare the values in the range of the maps.
+
+`[.kw]#val# extends : ('a * 'b \-> order) \-> ('a map * 'b map) \-> bool`::
+  `extends exV (m1, m2)` returns `true` if the domain of `m2` is a subset of the
+  domain of `m1` and if, for all `x` in the domain of `m2`,
+  `exV(lookup(m1, x), lookup(m2, x))` evaluates to `true`.
 
 `[.kw]#val# unionWith  : ('a * 'a \-> 'a) \-> ('a map * 'a map) \-> 'a map`::
   `unionWith comb (m1, m2)` returns the union of the two maps, using the function `comb`

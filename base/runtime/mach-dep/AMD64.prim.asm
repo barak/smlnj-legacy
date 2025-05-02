@@ -12,8 +12,6 @@
 #include "mlstate-offsets.h"	/** this file is generated **/
 #include "ml-limits.h"
 
-#define LLVM_LAYOUT
-
 #if defined(OPSYS_LINUX) && defined(__ELF__)
 /* needed to disable the execution bit on the stack pages */
 .section .note.GNU-stack,"",%progbits
@@ -35,9 +33,9 @@
 
 /* Registers (see compiler/CodeGen/amd64/amd64CpsRegs.sml): */
 #define temp		RAX
-#define misc0		RBX
-#define misc1		RCX
-#define misc2		RDX
+#define misc0		RBX     /* callee save */
+#define misc1		RCX     /* callee save */
+#define misc2		RDX     /* callee save */
 #define misc3		R10
 #define misc4		R11
 #define misc5		R12
@@ -60,53 +58,27 @@
  *
  * for details.
  */
-#ifdef LLVM_LAYOUT
-
-#define tempmem0	REGOFF(8192,RSP)
-#define mlStatePtr	REGOFF(8200,RSP)
-#define signBit		REGOFF(8248,RSP)
-#define negateSignBit	REGOFF(8256,RSP)
-#define pc		REGOFF(8208,RSP)	/* gcLink */
-#define baseptr		REGOFF(8216,RSP)	/* start address of module */
-#define exncont		REGOFF(8224,RSP)
-#define varptr		REGOFF(8232,RSP)
+#define negateSignBit	REGOFF(8264,RSP)
+#define signBit		REGOFF(8256,RSP)
+#define overflowExn	REGOFF(8248,RSP)
 #define start_gc	REGOFF(8240,RSP)	/* holds address of saveregs */
+#define varptr		REGOFF(8232,RSP)
+#define exncont		REGOFF(8224,RSP)
+#define baseptr		REGOFF(8216,RSP)	/* start address of module */
+#define tempmem0	REGOFF(8192,RSP)
+#define pc		REGOFF(8208,RSP)	/* aka gcLink */
+#define mlStatePtr	REGOFF(8200,RSP)
 
 /* space reserved for spilling registers */
 #define ML_SPILL_SIZE	8192
 
 /* size of stack-frame region where ML stuff is stored. */
-#define ML_AREA_SIZE	72
+#define ML_AREA_SIZE	80
 
 /* the amount to bump up the frame after the callee save registers have been
  * pushed onto the stack.
  */
 #define ML_FRAME_SIZE	(ML_SPILL_SIZE+ML_AREA_SIZE)
-
-#else /* MLRISC_LAYOUT */
-
-#define tempmem0	REGOFF(0,RSP)
-#define mlStatePtr	REGOFF(8, RSP)
-#define signBit		REGOFF(16,RSP)
-#define negateSignBit	REGOFF(24,RSP)
-#define baseptr		REGOFF(32,RSP)	/* start address of module */
-#define exncont		REGOFF(40,RSP)
-#define pc		REGOFF(48,RSP)	/* gcLink */
-#define varptr		REGOFF(56,RSP)
-#define start_gc	REGOFF(64,RSP)	/* holds address of saveregs */
-
-/* space reserved for spilling registers */
-#define ML_SPILL_SIZE	8192
-
-/* size of stack-frame region where ML stuff is stored (includes alignment padding). */
-#define ML_AREA_SIZE	88
-
-/* the amount to bump up the frame after the callee save registers have been
- * pushed onto the stack.
- */
-#define ML_FRAME_SIZE	(ML_SPILL_SIZE+ML_AREA_SIZE)
-
-#endif /* LLVM_LAYOUT */
 
 /* we put the request code in tempmem before jumping to set_request */
 #define request_w	tempmem0
@@ -289,8 +261,18 @@ ALIGNED_ENTRY(restoreregs)
 	LEA	(CODEADDR(CSYM(saveregs)), temp2)
 	MOV	(temp2, start_gc)
 	MOV	(temp, mlStatePtr)
-
-/* unclear what the following are being used for */
+      /* Store address of "Overflow" exception in stack */
+#if defined(OPSYS_DARWIN)
+	MOV	(CSYM(_Overflow_id0)@GOTPCREL(%rip), temp2)
+	ADD	(IM(8), temp2)
+	MOV	(temp2, overflowExn)
+#elif defined(OPSYS_LINUX)
+	LEA	(CODEADDR(8+CSYM(_Overflow_id0)), temp2)
+	MOV	(temp2, overflowExn)
+#else
+    /* for now we do nothing, since we do not have LLVM support for this system */
+#endif
+      /* Store bitmasks to support floating-point "neg" and "abs" in stack */
 	MOV	($0x8000000000000000, temp2)
 	MOV	(temp2, signBit)
 	MOV	($0x7fffffffffffffff, temp2)
@@ -361,11 +343,9 @@ ALIGNED_ENTRY(array_a)
 	SAR	(IM(1),temp)			/* temp := length untagged */
 	CMP	(IM(SMALL_OBJ_SZW),temp)	/* small object? */
 	JGE	(L_array_large)
-	/* use misc0 and misc1 as temporary registers */
-#define temp1 misc0
-#define temp2 misc1
-	PUSH	(misc0)
-	PUSH	(misc1)
+	/* use misc5 and misc6 as temporary registers */
+#define temp1 misc5
+#define temp2 misc6
 	/* build data object descriptor in temp1 */
 	MOV	(temp,temp1)
 	SAL	(IM(TAG_SHIFTW),temp1)
@@ -389,9 +369,6 @@ LABEL(L_array_lp)
 	MOV	(temp1, REGIND(allocptr))	/* store pointer to data */
 	MOV	(temp, REGOFF(8,allocptr))	/* store length */
 	ADD	(IM(16),allocptr)
-	/* restore misc0 and misc1 */
-	POP	(misc1)
-	POP	(misc0)
 	CONTINUE
 #undef temp1
 #undef temp2
@@ -626,16 +603,15 @@ ALIGNED_ENTRY(floor_a)
 	INC		(stdarg)
 	CONTINUE
 
-/* logb : real -> int
- * Extract the unbiased exponent pointed to by stdarg.
- * Note: Using fxtract, and fistl does not work for inf's and nan's.
- */
+/* DEPRECATED, but required for linking */
 ALIGNED_ENTRY(logb_a)
 	/* DEPRECATED */
 	CONTINUE
 
+#define SIGN_MASK	IM(0x8000000000000000)
 #define EXP_MASK	IM(0x7ff0000000000000)
 #define NOT_EXP_MASK	IM(0x800fffffffffffff)
+#define INFINITY        EXP_MASK
 
 /* scalb : (real * int) -> real
  * Scale the first argument by 2 raised to the second argument.
@@ -648,11 +624,9 @@ ALIGNED_ENTRY(scalb_a)
 	MOV	(REGOFF(8,stdarg), temp)	/* get second arg */
 	SAR	(IM(1), temp)			/* untag second arg */
 	MOV	(REGIND(stdarg), stdarg)	/* put pointer to real in stdarg */
-	PUSH	(misc0)
-	PUSH	(misc1)
-#define temp1 misc0
-#define temp2 misc1
-	MOV	(REGIND(stdarg), temp1)		/* put bits in temp1 */
+#define temp1 misc5
+#define temp2 misc6
+	MOV	(REGIND(stdarg), temp1)		/* put real bits in temp1 */
 	MOV	(EXP_MASK, temp2)
 	AND	(temp1, temp2)			/* temp2 has shifted exponent */
 	TEST	(temp2, temp2)
@@ -676,16 +650,18 @@ L_scalb_alloc:
 	ADD	(WORD_SZB_IM,allocptr)		/* allocptr += 1 */
 
 L_scalb_return:
-	POP	(misc1)
-	POP	(misc0)
 	CONTINUE
 
 L_scalb_under:
 	XOR	(temp1,temp1)			/* temp1 = 0 */
 	JMP	(L_scalb_alloc)
 
-L_scalb_over:
-	INT4					/* signal Overflow */
+L_scalb_over:                                   /* Overflow, so return infinity */
+	MOV	(SIGN_MASK, temp)		/* temp1 := sign bit of temp1 */
+	AND	(temp, temp1)
+        MOV     (INFINITY, temp)                /* temp1 := sign | infinity */
+        OR      (temp, temp1)
+        JMP     L_scalb_alloc
 #undef temp1
 #undef temp2
 

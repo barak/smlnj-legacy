@@ -17,7 +17,7 @@ simple applications a bit less obvious.  This tutorial shows how the
 == Assembling an Regular Expression Matcher
 
 Before we can do anything else, we must assemble a regular-expression
-matcher.  For the purposes of this tutorial, we will use a combination
+matcher.  For the purposes of this tutorial, we use a combination
 of the `AwkSyntax` front-end and the `BackTrackEngine` back-end.
 
 [source,sml]
@@ -28,6 +28,14 @@ structure RE = RegExpFn(
 ------------
 
 == Match trees
+
+Regular expressions may contain xref:str-RegExpSyntax.adoc#con:Group[grouping]
+operators.  When a pattern matches a string, these groups induce a nested
+tree structure on the matched string.
+The xref:str-MatchTree.adoc[``MatchTree``] structure defines
+a polymorphic representation of this structure, along with a
+number of utility functions for extracting information from
+a match.
 
 [source,sml]
 ------------
@@ -55,11 +63,11 @@ We can then define the scanner as follows:
 fun scanner getc gets = let
       fun getMatch cons (MT.Match({pos, len}, _)) = cons (gets (pos, len))
       in
-	RE.match [
-	    ("[ \t\n]+", getMatch (fn _ => WS)),
-	    ("[0-9]+", getMatch (fn s => NUM(valOf(IntInf.fromString s)))),
-	    ("[a-zA-Z][a-zA-Z0-9]*", getMatch ID)
-	  ] getc
+        RE.match [
+            ("[ \t\n]+", getMatch (fn _ => WS)),
+            ("[0-9]+", getMatch (fn s => NUM(valOf(IntInf.fromString s)))),
+            ("[a-zA-Z][a-zA-Z0-9]*", getMatch ID)
+          ] getc
       end
 ------------
 
@@ -79,12 +87,12 @@ terms of the `getc` function as follows:
 ------------
 fun gets getc (strm, n) = let
       fun getChrs (0, _, chrs) = String.implodeRev chrs
-	| getChrs (n, strm, chrs) = (case getc strm
-	     of NONE => raise Fail "empty stream"
-	      | SOME(c, strm) => getChrs (n-1, strm, c::chrs)
-	    (* end case *))
+        | getChrs (n, strm, chrs) = (case getc strm
+             of NONE => raise Fail "empty stream"
+              | SOME(c, strm) => getChrs (n-1, strm, c::chrs)
+            (* end case *))
       in
-	getChrs (n, strm, [])
+        getChrs (n, strm, [])
       end;
 ------------
 
@@ -101,10 +109,10 @@ fun tokens s = let
       fun gets (ss, n) = Substring.string(Substring.slice (ss, 0, SOME n))
       val scan = scanner Substring.getc gets
       fun lp (ss, toks) = (case scan ss
-	     of SOME(tok, ss') => lp (ss', tok::toks)
-	      | NONE => List.rev toks
-	    (* end case *))
+             of SOME(tok, ss') => lp (ss', tok::toks)
+              | NONE => List.rev toks
+            (* end case *))
       in
-	lp (Substring.full s, [])
+        lp (Substring.full s, [])
       end;
 ------------

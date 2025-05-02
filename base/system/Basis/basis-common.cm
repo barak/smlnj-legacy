@@ -1,11 +1,12 @@
 (* basis-common.cm
  *
+ * COPYRIGHT (c) 2022 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
  * This is the full SML/NJ Basis with both the latest Basis Library APIs as
  * well as the signatures for previous versions (e.g., the version published
  * in 2004).  It is included in the base/system/Basis/basis.cm file, but is
  * also used to implement the libraries in the old-basis package (base/old-basis).
- *
- * Copyright (c) 2020 by The Fellowship of SML/NJ
  *)
 
 (primitive)
@@ -69,11 +70,13 @@ Library
 	signature ARRAY_SLICE_2004
 	signature LIST_2004
 	signature LIST_PAIR_2004
+        signature MATH_2004
 	signature MONO_ARRAY_2004
 	signature MONO_ARRAY_SLICE_2004
 	signature MONO_VECTOR_2004
 	signature MONO_VECTOR_SLICE_2004
 	signature OPTION_2004
+        signature REAL_2004
 	signature STRING_2004
 	signature TEXT_2004
 	signature VECTOR_2004
@@ -243,6 +246,10 @@ Library
 
 	structure NetDB
 	structure UnixSock
+
+      (* backward compatible signatures *)
+        signature POSIX_2004
+        signature POSIX_TTY_2004
 
 #elif defined (OPSYS_WIN32)
 

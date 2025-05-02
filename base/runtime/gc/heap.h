@@ -33,10 +33,6 @@ typedef struct mem_obj mem_obj_t;
 typedef struct card_map card_map_t;
 #endif
 
-#if ((defined(COLLECT_STATS) || defined(GC_STATS)) && (! defined(_CNTR_)))
-#include "cntr.h"
-#endif
-
 struct heap_params {
     Addr_t	allocSz;	/* the size of the allocation arena */
     int		numGens;
@@ -70,14 +66,19 @@ struct heap {
 					/* of big objects. */
     ml_val_t	    *weakList;		/* A list of weak pointers forwarded*/
 					/* during GC. */
-#if (defined(COLLECT_STATS) || defined(GC_STATS))
-    cntr_t	    numAlloc;		/* Keep track of the number of bytes */
-					/* allocated and the number copied into */
-#ifdef GC_STATS
-    cntr_t	    numCopied		/* each arena. */
-			[MAX_NUM_GENS][NUM_ARENAS];
+    cntr_t	    numAlloc;		/* Number of bytes allocated in the nursery */
+#ifdef COUNT_STORE_LIST
+    cntr_t          numStores;          /* Number of store-list items */
 #endif
-#endif
+    cntr_t          numAlloc1;          /* Number of bytes allocated directly in the
+                                         * first generation (e.g., for large strings)
+                                         */
+    cntr_t	    numCopied[MAX_NUM_GENS][NUM_ARENAS];
+                                        /* number of bytes copied into each arena */
+    int             numGCsAtReset[MAX_NUM_GENS+1];
+                                        /* the remembered number of GCs by generation
+                                         * at the last call to `ResetGCStats`.
+                                         */
 #ifdef HEAP_MONITOR
     struct monitor  *monitor;		/* The various graphical data structures */
 					/* for monitoring the heap. */

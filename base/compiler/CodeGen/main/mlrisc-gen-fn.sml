@@ -647,6 +647,27 @@ functor MLRiscGen (
 		      hp+ws
 		    end
 
+            (* allocate a 64-bit headerless, uninitialized, memory object that is
+             * 64-bit aligned.  This object is used to implement bit casts between
+             * reals and words (unfortunately, MLRISC does not support such casts,
+             * even though most hardware does).
+             * This function takes the current allocation-pointer offset as an
+             * argument and returns the offset of the 64-bit memory object and
+             * the updated allocation offset.
+             *)
+              fun alloc64Bits hp = let
+		  (* At initialization the allocation pointer is aligned on
+		   * an odd-word boundary, and the heap offset set to zero. If an
+		   * odd number of words have been allocated then the heap pointer
+		   * is misaligned for this record creation. (32-bits only)
+		   *)
+		    val hp = if ws = 4 andalso Word.andb(Word.fromInt hp, 0w4) <> 0w0
+			    then hp+4
+			    else hp
+                    in
+                      (hp, hp+8)
+                    end
+
 	    (* Allocate a header pair for a known-length vector or array *)
 	      fun allocHeaderPair (hdrDesc, mem, dataPtr, len, hp) = (
 		    emit(M.STORE(ity, ea(Regs.allocptr, hp), LI hdrDesc, R.memory));
@@ -996,7 +1017,10 @@ functor MLRiscGen (
 		      gen (e, 0)
 (*+DEBUG*)
 			handle ex => (
-			  print(concat["***** MLRiscGen.genCPSFunction: exception (", exnMessage ex, ")\n"]);
+			  print(concat[
+			      "***** MLRiscGen.genCPSFunction: exception (",
+			      exnMessage ex, ")\n"
+			    ]);
 			  printCPSFun(kind, f, params, tys, e);
 			  raise ex)
 (*-DEBUG*)
@@ -1323,7 +1347,9 @@ functor MLRiscGen (
 	     * Generate code
 	     *)
 		(** RECORD **)
-	      and gen (C.RECORD(C.RK_VECTOR, vl, w, e), hp) = mkVector(vl, w, e, hp)
+	      and gen (C.RECORD(rk, [], _, _), _) =
+                    error ("gen: zero-length " ^ PPCps.rkToString rk)
+                | gen (C.RECORD(C.RK_VECTOR, vl, w, e), hp) = mkVector(vl, w, e, hp)
 		| gen (C.RECORD(C.RK_FCONT, vl, w, e), hp) = mkFblock(vl, w, e, hp)
 		| gen (C.RECORD(C.RK_RAW64BLOCK, vl, w, e), hp) = mkFblock(vl, w, e, hp)
 		| gen (C.RECORD(C.RK_RAWBLOCK, vl, w, e), hp) = mkIntBlock(vl, w, e, hp)
@@ -1366,6 +1392,59 @@ functor MLRiscGen (
 		    if isTaggedInt from
 		      then treeifyDefF64 (x, M.CVTI2F(fty, ity, untagSigned v), e, hp)
 		      else treeifyDefF64 (x, M.CVTI2F(fty, ity, regbind v), e, hp)
+(* REAL32: FIXME *)
+                | gen (C.PURE(P.BITS_TO_REAL 64, [v], x, _, e), hp) = let
+                    val (offset, hp) = alloc64Bits hp
+                    val scratch = ea (Regs.allocptr, offset)
+                    in
+                      (* initialize the scratch memory to contain the 64-bit word *)
+                      if (ws = 8)
+                        then emit (M.STORE(ity, scratch, regbind' v, R.memory))
+                        else let
+                          val v' = regbind' v
+                          val hi32 = M.LOAD(ity, v', R.memory)
+                          val lo32 = M.LOAD(ity, scaleWord(v', cpsInt 1), R.memory)
+                          val scratch4 = ea (Regs.allocptr, offset+4)
+                          in
+                            (* store the two halves into the scratch memory *)
+                            if MS.bigEndian
+                              then ((* 32-bit big-endian *)
+                                emit (M.STORE(ity, scratch, hi32, R.memory));
+                                emit (M.STORE(ity, scratch4, lo32, R.memory)))
+                              else ((* 32-bit little-endian *)
+                                emit (M.STORE(ity, scratch, lo32, R.memory));
+                                emit (M.STORE(ity, scratch4, hi32, R.memory)))
+                          end;
+                      (* load the real from the scratch memory *)
+                      treeifyDefF64 (x, M.FLOAD(fty, scratch, R.memory), e, hp)
+                    end
+(* REAL32: FIXME *)
+                | gen (C.PURE(P.REAL_TO_BITS 64, [v], x, cty, e), hp) = let
+                    val (offset, hp) = alloc64Bits hp
+                    val scratch = ea (Regs.allocptr, offset)
+                    in
+                      (* initialize the scratch memory to contain the real word *)
+                      emit (M.FSTORE(fty, scratch, fregbind v, R.memory));
+                      (* load the word from the scratch memory *)
+                      if (ws = 8)
+                        then treeifyDef (x, M.LOAD(ity, scratch, R.memory), cty, e, hp)
+                        else let
+                          val scratch4 = ea (Regs.allocptr, offset+4)
+                          val (loAdr, hiAdr) = if MS.bigEndian
+                                then (scratch4, scratch)
+                                else (scratch, scratch4)
+                          val lo = M.LOAD(ity, loAdr, R.memory)
+                          val hi = M.LOAD(ity, hiAdr, R.memory)
+                          fun emitSTORE (i, arg) = emit (
+                                M.STORE(ity, ea(Regs.allocptr, hp+4*i), arg, R.memory))
+                          in
+                            (* the representation of a word64 is (hi, lo) *)
+                            emitSTORE (0, LI (D.makeDesc' (2, D.tag_raw)));
+                            emitSTORE (1, hi);
+                            emitSTORE (2, lo);
+                            treeifyAlloc (x, hp+ws, e, hp+3*ws)
+                          end
+                    end
 (* REAL32: FIXME *)
 		| gen (C.PURE(P.PURE_ARITH{oper, kind=P.FLOAT 64}, [v], x, _, e), hp) = let
 		    val r = fregbind v
@@ -1652,7 +1731,7 @@ functor MLRiscGen (
 		      else defINT(x, M.SUBT(ity, zero, regbind v), e, 0))
 		| gen (C.ARITH(P.IARITH{sz=sz, oper}, [v, w], x, _, e), hp) = (
 		    updtHeapPtr hp; (* because of potential exception *)
-		    if (sz <= Target.defaultIntSz)
+		    if isTaggedInt sz
 		      then (case oper
 			 of P.IADD => defTAGINT(x, tagIntAdd(M.ADDT, v, w), e, 0)
 			  | P.ISUB => defTAGINT(x, tagIntSub(M.SUBT, v, w), e, 0)
@@ -1923,6 +2002,11 @@ raise Fail "unexpected constant branch"
 		InvokeGC.emitLongJumpsToGCInvocation stream;
 		compile(endCluster(clusterAnnotations()))
 	      end (* genCluster *)
+handle ex => (
+print "***********************************************\n";
+print (concat["Exception ", General.exnMessage ex, "\n"]);
+List.app printCPSFun cluster;
+raise ex)
 
 	fun finishCompilationUnit file = let
 	      val stream = MLTreeComp.selectInstructions (Flowgen.build ())

@@ -68,6 +68,10 @@ structure InlineT =
 
     val ptreql          : 'a * 'a -> bool = InLine.ptr_eql
 
+    (* machine properties *)
+    val isBigEndian : unit -> bool = InLine.host_big_endian
+    val wordSize : unit -> int = InLine.host_word_size
+
     structure Real64 =
       struct
         val op +   : real * real -> real = InLine.real64_add
@@ -100,6 +104,7 @@ structure InlineT =
 	val signBit : real -> bool = InLine.real64_sgn
 
 	val toBits : real -> word64 = InLine.real64_to_bits
+	val fromBits : word64 -> real = InLine.real64_from_bits
       end
 
     structure Int =
@@ -444,9 +449,6 @@ structure InlineT =
  *)
  	val newArray0 : unit -> array = InLine.newArray0
         val length    : array -> int = InLine.seq_length
-    (* BUG: using "ordof" for W8A.sub is dangerous, because ordof is
-     (technically) fetching from immutable things.  A fancy optimizer might
-     someday be confused. *)
         val sub       : array * int -> word8 = InLine.word8_arr_unsafe_sub
         val chkSub    : array * int -> word8 = InLine.word8_arr_sub
         val update    : array * int * word8 -> unit = InLine.word8_arr_unsafe_update
