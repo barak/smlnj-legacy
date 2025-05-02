@@ -80,14 +80,14 @@ build-arch-stamp: $(ROOT)
 build-indep: build-indep-stamp
 build-indep-stamp: $(ROOT)
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-	cd $(ROOT)/base/cm/Doc; latex manual.tex && latex manual.tex && dvipdfmx -o cm_manual.pdf manual.dvi
-	cd $(ROOT)/ml-lpt/doc; latex manual.tex && latex manual.tex && dvipdfmx -o ml-lpt_manual.pdf manual.dvi
-	cd $(ROOT)/ml-burg/doc; transfig -L ps tree.fig && make && latex doc.tex && latex doc.tex && dvipdfmx -o ml-burg_manual.pdf doc.dvi
-	cd $(ROOT)/nlffi/lib/Doc/manual; latex nlffi.tex && latex nlffi.tex && dvipdfmx nlffi.dvi
-	cd $(ROOT)/MLRISC/Doc; make
-	cd $(ROOT)/MLRISC/Tools/Doc; make
-	cd $(ROOT)/ml-lex/doc; pdflatex ml-lex.tex
-	cd $(ROOT)/ml-yacc/doc; latex mlyacc.tex && latex mlyacc.tex && dvipdfmx mlyacc.dvi
+	cd $(ROOT)/base/cm/Doc && latex manual.tex && latex manual.tex && dvipdfmx -o cm_manual.pdf manual.dvi
+	cd $(ROOT)/ml-lpt/doc && latex manual.tex && latex manual.tex && dvipdfmx -o ml-lpt_manual.pdf manual.dvi
+	cd $(ROOT)/ml-burg/doc && transfig -L ps tree.fig && make && latex doc.tex && latex doc.tex && dvipdfmx -o ml-burg_manual.pdf doc.dvi
+	cd $(ROOT)/nlffi/lib/Doc/manual && latex nlffi.tex && latex nlffi.tex && dvipdfmx nlffi.dvi
+	cd $(ROOT)/MLRISC/Doc && make -j1
+	cd $(ROOT)/MLRISC/Tools/Doc && make
+	cd $(ROOT)/ml-lex/doc && pdflatex ml-lex.tex
+	cd $(ROOT)/ml-yacc/doc && latex mlyacc.tex && latex mlyacc.tex && dvipdfmx mlyacc.dvi
 endif
 	touch $@
 
