@@ -19,6 +19,11 @@ smlnj (110.99.9-1) unstable; urgency=medium
     are now i386/powerpc only
   * Fix doc-base paths for smlnj-doc
   * Add debian/upstream/metadata
+  * Patch typos in sml(1)
+  * Ship the SML/NJ Library HTML documentation (MathJax CDN reference
+    removed) instead of its asciidoc sources
+  * Keep the build directory out of driver scripts and stable libraries
+    (patch: SMLNJ_TRIM_PREFIX trims file names in recorded locations)
 
  -- Barak A. Pearlmutter <bap@debian.org>  Sat, 12 Sep 2026 14:00:00 +0100
 

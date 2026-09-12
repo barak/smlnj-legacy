@@ -18,6 +18,10 @@ VERSION=$(shell cat $(CONFIGDIR)/version)
 # word size of the host architecture; selects x86 vs amd64 on x86_64 kernels
 SIZE_OPT:=-$(DEB_HOST_ARCH_BITS)
 
+# keep the build directory out of source locations recorded in stable
+# libraries (see debian/patches/0004-pathnames-trim-prefix.patch)
+export SMLNJ_TRIM_PREFIX:=$(ROOT)/
+
 srcdirs:=ckit cml config doc eXene heap2asm ml-burg ml-lex ml-lpt MLRISC ml-yacc nlffi pgraph smlnj-c smlnj-lib trace-debug-profile
 basedirs:=cm compiler old-basis runtime system
 
@@ -93,12 +97,18 @@ override_dh_auto_clean:
 	rm -f vars.sed arch-n-opsys boot*tgz
 
 execute_after_dh_install-arch:
-# make sure that the build path doesn't sneak in the link and run scripts
-	sed -i 's,BIN_DIR=".*smlnj.*",BIN_DIR="$(BINDIR)/",' debian/smlnj-runtime$(BINDIR)/.*-sml
+# make sure that the build path doesn't sneak into the driver scripts
+	find debian/*$(BINDIR) -maxdepth 1 -type f \
+	   -exec sed -i 's,$(ROOT)/bin,$(BINDIR),g; s,$(ROOT)/lib,$(SMLNJ_HOME)/lib,g' {} +
 # install extrapathconfig rules to smlnj-runtime package to use as a seed for
 # the trigger-generated pathconfig file
 	install -m 644 config/extrapathconfig debian/smlnj-runtime$(SMLNJ_HOME)/lib/
 	echo bindir ../bin >> debian/smlnj-runtime$(SMLNJ_HOME)/lib/extrapathconfig
+
+# the smlnj-lib HTML documentation loads MathJax from a CDN, but no page uses math
+execute_after_dh_installdocs-arch:
+	find debian/libsmlnj-smlnj/usr/share/doc -name '*.html' \
+	   -exec sed -i '/<!-- support for latexmath -->/,/MathJax.js/d' {} +
 
 override_dh_installchangelogs:
 	dh_installchangelogs -psmlnj base/compiler/ChangeLog

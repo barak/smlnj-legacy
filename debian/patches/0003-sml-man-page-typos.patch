@@ -1,0 +1,44 @@
+From: "Barak A. Pearlmutter" <bap@debian.org>
+Date: Sat, 12 Sep 2026 20:30:00 +0100
+Subject: fix typos in sml(1) man page
+
+Forwarded: https://github.com/smlnj/legacy/issues/382
+---
+ doc/man/man1/sml.1 | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/doc/man/man1/sml.1 b/doc/man/man1/sml.1
+index 4203057..96e0abc 100644
+--- a/doc/man/man1/sml.1
++++ b/doc/man/man1/sml.1
+@@ -79,7 +79,7 @@ echo the heap suffix for the system to standard output and then exit
+ .sp
+ \fB@SMLalloc\fP=\fISIZE\fP
+ .RS 4
+-Specify the prefered size of the allocation area
++Specify the preferred size of the allocation area
+ .RE
+ .sp
+ \fB@SMLrun\fP=\fIRUNTIME\fP
+@@ -150,8 +150,8 @@ list all the controls along with their default value
+ \fB\-s\fP\fIlevel\fP
+ .RS 4
+ print a limited list of settings.
+-The number of levels of the control heirarchy is controled by \fIlevel\fP, with 0 printing
+-just the root of the heirarchy.
++The number of levels of the control hierarchy is controlled by \fIlevel\fP, with 0 printing
++just the root of the hierarchy.
+ .RE
+ .sp
+ \fB\-E\fP
+@@ -162,8 +162,8 @@ list all the controls along with their corresponding environment variables
+ \fB\-e\fP\fIlevel\fP
+ .RS 4
+ print a limited list of environment variables;
+-The number of levels of the control heirarchy is controled by \fIlevel\fP, with 0 printing
+-just the root of the heirarchy.
++The number of levels of the control hierarchy is controlled by \fIlevel\fP, with 0 printing
++just the root of the hierarchy.
+ .RE
+ .sp
+ \fB\-m\fP

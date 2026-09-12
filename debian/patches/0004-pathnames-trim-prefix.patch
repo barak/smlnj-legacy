@@ -1,0 +1,43 @@
+From: "Barak A. Pearlmutter" <bap@debian.org>
+Date: Sat, 12 Sep 2026 21:30:00 +0100
+Subject: let SMLNJ_TRIM_PREFIX trim file names in diagnostics
+
+Pathnames.trim is applied to file names in error locations, including
+the locations recorded in stabilized libraries, but was the identity.
+Make it strip the prefix given by the SMLNJ_TRIM_PREFIX environment
+variable, so the Debian build can keep its build directory out of the
+installed libraries.
+
+Forwarded: https://github.com/smlnj/legacy/issues/383
+---
+ base/compiler/Basics/source/pathnames.sml | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/base/compiler/Basics/source/pathnames.sml b/base/compiler/Basics/source/pathnames.sml
+index fb6d7c6..33a6591 100644
+--- a/base/compiler/Basics/source/pathnames.sml
++++ b/base/compiler/Basics/source/pathnames.sml
+@@ -1,11 +1,21 @@
+ (* pathnames.sml
+  *
+- *   This currently doesn't do anything useful.
++ *   Trimming of file names in diagnostic messages.
++ *
++ *   If the environment variable SMLNJ_TRIM_PREFIX is set, that prefix
++ *   is removed from file names.  This keeps build-directory paths out
++ *   of the source locations recorded in stabilized libraries.
+  *
+  * Copyright (c) 2004 by The Fellowship of SML/NJ
+  *)
+ structure Pathnames : sig
+     val trim : string -> string
+ end = struct
+-    fun trim path = path
++    fun trim path = (case OS.Process.getEnv "SMLNJ_TRIM_PREFIX"
++	   of SOME prefix =>
++		if prefix <> "" andalso String.isPrefix prefix path
++		  then String.extract (path, size prefix, NONE)
++		  else path
++	    | NONE => path
++	  (* end case *))
+ end

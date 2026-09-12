@@ -1,0 +1,9 @@
+Document: libsmlnj-smlnj
+Title: The SML/NJ Library
+Author: John Reppy
+Abstract: Reference documentation for the SML/NJ Library.
+Section: Programming
+
+Format: HTML
+Index: /usr/share/doc/libsmlnj-smlnj/smlnj-lib/index.html
+Files: /usr/share/doc/libsmlnj-smlnj/smlnj-lib/*/*.html

@@ -1,0 +1,8 @@
+# the heap image records the boot directory used when it was created
+smlnj: file-references-package-build-path [usr/lib/smlnj/bin/.heap/*]
+# CM metadata, not OCaml
+smlnj: ocaml-dangling-cmi *
+smlnj: ocaml-dev-file-in-nondev-package *
+smlnj: ocaml-dev-file-not-in-usr-lib-ocaml *
+# SML code inside a shell here-document
+smlnj: bash-term-in-posix-shell * [usr/lib/smlnj/bin/ml-makedepend:*]

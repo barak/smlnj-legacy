@@ -1,0 +1,2 @@
+# "acces" is the errno name (EACCES), exposed as Posix.Error.acces
+smlnj-runtime: spelling-error-in-binary acces access *
