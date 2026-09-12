@@ -3,7 +3,7 @@
  * Stateful pseudo-random generation using the 32-bit Mersenne Twister
  * algorithm.
  *
- * COPYRIGHT (c) 2023 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * COPYRIGHT (c) 2023 The Fellowship of SML/NJ (https://smlnj.org)
  * All rights reserved.
  *
  * This code is derived from the 32-bit C version that can be found at
@@ -59,6 +59,11 @@ structure Random :> RANDOM =
     val ^^ = W32.xorb
     val >> = W32.>>
     val << = W32.<<
+
+    (* conversions to default types *)
+    fun toWord w = Word.fromLarge(W32.toLarge w)
+    fun toInt w = Word.toIntX(Word.fromLarge(W32.toLarge w))
+    fun toNat w = Word.toIntX(Word.>>(Word.fromLarge(W32.toLarge w), 0w1))
 
     infix 0 << >>
     infix 1 || ^^
@@ -249,23 +254,11 @@ structure Random :> RANDOM =
 
   (***** old Random functions *****)
 
-    fun randInt rs = let
-          val w = randNativeWord rs
-          in
-            W32.toIntX(W32.~>>(w, 0w1))
-          end
+    fun randInt rs = toInt (randNativeWord rs)
 
-    fun randNat rs = let
-          val w = randNativeWord rs
-          in
-            W32.toIntX(W32.>>(w, 0w2))
-          end
+    fun randNat rs = toNat (randNativeWord rs)
 
-    fun randWord rs = let
-          val w = randNativeWord rs
-          in
-            Word.fromLarge(W32.toLarge(W32.>>(w, 0w1)))
-          end
+    fun randWord rs = toWord (randNativeWord rs)
 
     fun randReal rs = let
           val w = randNativeWord rs

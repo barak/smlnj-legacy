@@ -1,6 +1,6 @@
 (* frep-to-real64.sml
  *
- * COPYRIGHT (c) 2024 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * COPYRIGHT (c) 2025 The Fellowship of SML/NJ (https://smlnj.org)
  * All rights reserved.
  *
  * Conversion of the `FloatRep.float_rep` representation to
@@ -46,6 +46,12 @@ structure FRepToReal64 : sig
               else n - W.fromLarge x
           end
 
+(*+DEBUG**
+    fun w128ToString (hi, lo) = concat[
+	    "(", W64.fmt StringCvt.DEC hi, ", ", W64.fmt StringCvt.DEC lo, ")"
+	  ]
+**-DEBUG*)
+
     val kMantissaBits = 52
     val kExpBits = 11
     val kExpBias = 1023
@@ -75,7 +81,8 @@ structure FRepToReal64 : sig
             0wx54544554, 0wx04055545, 0wx10041000, 0wx00400414, 0wx40010000,
             0wx41155555, 0wx00000454, 0wx00010044, 0wx40000000, 0wx44000041,
             0wx50454450, 0wx55550054, 0wx51655554, 0wx40004000, 0wx01000001,
-            0wx00010500, 0wx51515411, 0wx05555554, 0wx00000000
+            0wx00010500, 0wx51515411, 0wx05555554, 0wx50411500, 0wx40040000,
+            0wx05040110, 0wx00000000
           ]
 
     val pow5Split2Tbl : (Word64.word * Word64.word) vector = #[
@@ -297,10 +304,7 @@ structure FRepToReal64 : sig
                   val pow5 = computeInvPow5 (~e10)
                   val _ = (
                         print(concat["j = ", Int.toString j, "\n"]);
-                        print(concat[
-                            "pow5 = (", W64.fmt StringCvt.DEC (#1 pow5),
-                            ", ", W64.fmt StringCvt.DEC (#2 pow5), ")\n"
-                          ]))
+                        print(concat["pow5 = ", w128ToString pow5, "\n"]))
 **-DEBUG*)
                   val m2 = mulShift64(m10, computeInvPow5(~e10), W.fromInt j)
                   val trailingZeros = multipleOfPowerOf5(m10, W.fromInt(~e10))
@@ -368,7 +372,7 @@ structure FRepToReal64 : sig
           end
 
     val posInf = fromBits 0wx7FF0000000000000
-    val negInf = fromBits 0wx7FF0000000000000
+    val negInf = fromBits 0wxFFF0000000000000
     val posNaN = fromBits 0wx7FF8000000000000
     val negNaN = fromBits 0wxFFF8000000000000
     val posZero = fromBits 0wx0000000000000000
