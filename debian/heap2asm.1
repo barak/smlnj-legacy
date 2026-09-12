@@ -1,0 +1,22 @@
+.TH HEAP2ASM 1 "September 2026" "SML/NJ" "User Commands"
+.SH NAME
+heap2asm \- convert an SML/NJ heap image to an assembly file
+.SH SYNOPSIS
+.B heap2asm
+.I heapfile
+.I asmfile
+.SH DESCRIPTION
+.B heap2asm
+converts an SML/NJ heap image (as produced by
+.B SMLofNJ.exportFn
+or
+.BR ml-build (1))
+into an assembly-language file that embeds the image as data.
+The result can be assembled and linked with the SML/NJ runtime
+system to produce a standalone executable; this is what
+.BR heap2exec (1)
+does.
+.SH SEE ALSO
+.BR heap2exec (1),
+.BR ml-build (1),
+.BR sml (1).

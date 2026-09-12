@@ -8,4 +8,4 @@ Abstract: MLTeX is a special LaTeX package for writing MLRISC
 Section: Programming
 
 Format: PDF
-Files: /usr/share/doc/smlnj-doc/mltexdoc.pdf.gz
+Files: /usr/share/doc/smlnj/mltexdoc.pdf.gz

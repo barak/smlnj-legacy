@@ -1,84 +1,82 @@
 #!/usr/bin/make -f
 
-export DH_OPTIONS
+include /usr/share/dpkg/architecture.mk
 
 SHELL:=/bin/sh
 
 ROOT:=$(CURDIR)/build-dir
 
 CONFIGDIR:=$(ROOT)/config
-SRCDIR:=$(ROOT)/src
 BS_SML:=$(ROOT)/bootstrap/bin/sml
 BS_LINK:=$(ROOT)/bootstrap/bin/.link-sml
 
 SMLNJ_HOME:=/usr/lib/smlnj
 BINDIR:=$(SMLNJ_HOME)/bin
-HEAPDIR:=$(BINDIR)/heap
-RUNDIR:=$(BINDIR)/run
-LIBDIR:=$(BINDIR)/lib
 
 VERSION=$(shell cat $(CONFIGDIR)/version)
+
+# word size of the host architecture; selects x86 vs amd64 on x86_64 kernels
+SIZE_OPT:=-$(DEB_HOST_ARCH_BITS)
 
 srcdirs:=ckit cml config doc eXene heap2asm ml-burg ml-lex ml-lpt MLRISC ml-yacc nlffi pgraph smlnj-c smlnj-lib trace-debug-profile
 basedirs:=cm compiler old-basis runtime system
 
-notlibs:=smlnj-runtime smlnj-doc
-libpkgs:=$(filter-out $(notlibs),$(shell dh_listpackages))
+%:
+	dh $@
 
 vars.sed:
 	echo "s,@SHELL@,$(SHELL),g" > vars.sed
 	echo "s,@SMLNJ_HOME@,$(SMLNJ_HOME)," >> vars.sed
 	echo "s,@BINDIR@,$(BINDIR)," >> vars.sed
 	echo "s,@VERSION@,$(VERSION)," >> vars.sed
+	echo "s,@SIZE@,$(DEB_HOST_ARCH_BITS)," >> vars.sed
 
 arch-n-opsys: $(CONFIGDIR)/_arch-n-opsys vars.sed
-	cat $< | sed -f vars.sed > $@
-	chmod 777 $@
+	sed -f vars.sed $< > $@
+	chmod 755 $@
 
+# bootstrap compiler from the upstream boot images
 $(BS_SML):
 	for f in $(srcdirs); do cp -a $$f $(ROOT)/bootstrap; done
 	mkdir -p $(ROOT)/bootstrap/base
 	for f in $(basedirs); do cp -a base/$$f $(ROOT)/bootstrap/base; done
-	cd $(ROOT)/bootstrap && URLGETTER=/bin/false ./config/install.sh
+	cd $(ROOT)/bootstrap && env -u MAKEFLAGS URLGETTER=/bin/false ./config/install.sh $(SIZE_OPT) -default $(DEB_HOST_ARCH_BITS)
 
+# rebuild the boot images from source using the bootstrap compiler
 boot.%.tgz: $(BS_SML)
-	cd $(ROOT)/base/system && echo "CMB.make();" | $< "\$$smlnj/cmb.cm";
+	cd $(ROOT)/base/system && PATH=$(ROOT)/bootstrap/bin:$$PATH \
+	   && echo 'OS.Process.exit (if CMB.make () then OS.Process.success else OS.Process.failure);' \
+	      | $< $(SIZE_OPT) "\$$smlnj/cmb.cm"
 	cd $(ROOT)/base/system/sml.boot.$* \
-	   && $(BS_LINK) @SMLboot=BOOTLIST @SMLheap=sml @SMLalloc=1M \
+	   && $(BS_LINK) $(SIZE_OPT) @SMLboot=BOOTLIST @SMLheap=sml @SMLalloc=1M \
 	                 @SMLrebuild="foo"
 	rm -r $(ROOT)/base/system/sml.boot.$*
 	rm -r $(ROOT)/base/system/*.bin.$*
 	mv $(ROOT)/base/system/foo.boot.$* $(ROOT)/base/system/sml.boot.$*
-	cd $(ROOT)/base/system && tar zcf $(ROOT)/$@ sml.boot.$*;
+	cd $(ROOT)/base/system && tar zcf $(ROOT)/$@ sml.boot.$*
 
 boot: arch-n-opsys
-	eval `./arch-n-opsys` && $(MAKE) -f debian/rules boot.$$ARCH-unix.tgz;
+	eval `./arch-n-opsys $(SIZE_OPT)` && $(MAKE) -f debian/rules boot.$$ARCH-unix.tgz
 
 smlnj: boot
-	cd $(ROOT) && ./config/install.sh
-	
+	cd $(ROOT) && env -u MAKEFLAGS ./config/install.sh $(SIZE_OPT) -default $(DEB_HOST_ARCH_BITS)
+	@echo Populate $(ROOT)/wrapper
 	mkdir -p $(ROOT)/wrapper
 	for c in `cd $(ROOT)/bin && ls`; do \
-	  cat debian/wrapper.in | sed -f vars.sed -e "s/@CMD@/$$c/g" > $(ROOT)/wrapper/$$c; \
-	  chmod 555 $(ROOT)/wrapper/$$c; \
+	  sed -f vars.sed -e "s/@CMD@/$$c/g" debian/wrapper.in > $(ROOT)/wrapper/$$c; \
+	  chmod 755 $(ROOT)/wrapper/$$c; \
 	done
 
+# build in a copy of the source tree
 $(ROOT):
 	mkdir -p $(ROOT)
-	for d in $$(ls -A | grep -v -e debian -e build-dir); do cp -a $$d $(ROOT); done
+	cp -a $(srcdirs) base bootstrap $(ROOT)
 
-# Architecture
-build: build-arch-stamp build-indep-stamp
-
-build-arch: build-arch-stamp
-build-arch-stamp: $(ROOT)
-	cp debian/targets build-dir/config/targets
+override_dh_auto_build-arch: $(ROOT)
+	cp debian/targets $(ROOT)/config/targets
 	$(MAKE) -f debian/rules smlnj
-	
-	touch $@
 
-build-indep: build-indep-stamp
-build-indep-stamp: $(ROOT)
+override_dh_auto_build-indep: $(ROOT)
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	cd $(ROOT)/base/cm/Doc && latex manual.tex && latex manual.tex && dvipdfmx -o cm_manual.pdf manual.dvi
 	cd $(ROOT)/ml-lpt/doc && latex manual.tex && latex manual.tex && dvipdfmx -o ml-lpt_manual.pdf manual.dvi
@@ -89,82 +87,27 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	cd $(ROOT)/ml-lex/doc && pdflatex ml-lex.tex
 	cd $(ROOT)/ml-yacc/doc && latex mlyacc.tex && latex mlyacc.tex && dvipdfmx mlyacc.dvi
 endif
-	touch $@
 
-clean:
-	dh_testdir
-	dh_testroot
-	rm -f *-stamp
-	
+override_dh_auto_clean:
 	rm -rf $(ROOT)
-	rm -f vars.sed
-	rm -f arch-n-opsys
-	rm -f boot*tgz
-	rm -rf $(SRCDIR)/system/foo.* $(SRCDIR)/system/sml.*
-	
-	rm -rf sml.boot.*
-	
-	dh_clean
+	rm -f vars.sed arch-n-opsys boot*tgz
 
-install: install-arch-stamp install-indep-stamp
-
-install-indep: build-indep-stamp
-	dh_testdir
-	dh_testroot
-	dh_installdirs -i
-	dh_install -i
-
-install-arch: build-arch-stamp
-	dh_testdir
-	dh_testroot
-	dh_prep
-	dh_installdirs -a
-	
-	dh_installchangelogs -psmlnj base/compiler/ChangeLog upstream
-	dh_installchangelogs -plibcml-smlnj cml/CHANGES upstream
-	dh_installchangelogs -plibexene-smlnj eXene/CHANGES upstream
-	dh_installchangelogs -plibsmlnj-smlnj smlnj-lib/CHANGES upstream
-	dh_installchangelogs -plibckit-smlnj ckit/HISTORY upstream
-	
-	dh_install -a
-	
+execute_after_dh_install-arch:
 # make sure that the build path doesn't sneak in the link and run scripts
-	sed -i 's/BIN_DIR=".*smlnj.*"/BIN_DIR="\/usr\/lib\/smlnj\/bin\/"/' $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/bin/.*-sml
+	sed -i 's,BIN_DIR=".*smlnj.*",BIN_DIR="$(BINDIR)/",' debian/smlnj-runtime$(BINDIR)/.*-sml
 # install extrapathconfig rules to smlnj-runtime package to use as a seed for
 # the trigger-generated pathconfig file
-	install -m 644 config/extrapathconfig $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/lib/
-	echo bindir ../bin >> $(CURDIR)/debian/smlnj-runtime/usr/lib/smlnj/lib/extrapathconfig
+	install -m 644 config/extrapathconfig debian/smlnj-runtime$(SMLNJ_HOME)/lib/
+	echo bindir ../bin >> debian/smlnj-runtime$(SMLNJ_HOME)/lib/extrapathconfig
 
-binary-arch: install-arch
-	dh_testdir -a
-	dh_testroot -a
-	dh_installchangelogs -a
-	dh_installdocs --exclude=".cvsignore" -a
-	dh_installexamples --exclude=".cvsignore" -a
-	dh_installman -a
-	dh_strip -a --no-automatic-dbgsym
-	dh_compress -a
-	dh_fixperms -a
-	dh_installdeb -a
-	dh_shlibdeps -a
-	dh_gencontrol -a
-	dh_md5sums -a
-	dh_builddeb -a
+override_dh_installchangelogs:
+	dh_installchangelogs -psmlnj base/compiler/ChangeLog
+	dh_installchangelogs -plibcml-smlnj cml/CHANGES
+	dh_installchangelogs -plibexene-smlnj eXene/CHANGES
+	dh_installchangelogs -plibsmlnj-smlnj smlnj-lib/CHANGES
+	dh_installchangelogs -plibckit-smlnj ckit/HISTORY
+	dh_installchangelogs --remaining-packages
 
-binary-indep: install-indep
-	dh_testdir -i
-	dh_testroot -i
-	dh_installchangelogs -i
-	dh_installdocs --exclude=".cvsignore" -i
-	dh_installexamples --exclude=".cvsignore" -i
-	dh_installman -i
-	dh_compress -i
-	dh_fixperms -i
-	dh_installdeb -i
-	dh_shlibdeps -i
-	dh_gencontrol -i
-	dh_md5sums -i
-	dh_builddeb -i
-
-binary: binary-arch binary-indep
-.PHONY: build build-arch build-indep clean binary-arch binary-indep binary install install-arch install-indep
+# upstream does not build with -g, so there is nothing for a dbgsym package
+override_dh_strip:
+	dh_strip --no-automatic-dbgsym

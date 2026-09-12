@@ -1,11 +1,26 @@
-smlnj (110.99.8-1) UNRELEASED; urgency=medium
+smlnj (110.99.9-1) unstable; urgency=medium
 
-  * Update standards version to 4.7.2, no changes needed.
-  * Update debian/mkorig to changed upstream download URL
-  * New upstream version.
-  * Forward port quilt patches.
+  * New upstream version (closes: #1075518)
+  * Build natively on amd64 using upstream's 64-bit code generator,
+    instead of 32-bit x86 via gcc-multilib (closes: #796661)
+  * Keep package in unstable (closes: #1147437)
+  * Debhelper 14, dh sequencer
+  * Standards version 4.7.4
+  * uscan v5 debian/watch, update debian/mkorig (https, amd64 boot image)
+  * Machine-readable debian/copyright
+  * Forward port quilt patches
+  * Quote arguments in wrapper scripts
+  * Drop obsolete Replaces: sml-nj
+  * Rewrite README.Debian
+  * Use upstream man pages; add heap2asm(1)
+  * Install new libraries (json, sexp, xml, html4, uuid, pp-extras,
+    basis-2004, compiler) and heap2asm/heap2exec
+  * NLFFI is 32-bit only upstream, so libmlnlffi-smlnj and ml-nlffigen
+    are now i386/powerpc only
+  * Fix doc-base paths for smlnj-doc
+  * Add debian/upstream/metadata
 
- -- Barak A. Pearlmutter <bap@debian.org>  Fri, 02 May 2025 13:01:59 +0100
+ -- Barak A. Pearlmutter <bap@debian.org>  Sat, 12 Sep 2026 14:00:00 +0100
 
 smlnj (110.79-8) unstable; urgency=medium
 

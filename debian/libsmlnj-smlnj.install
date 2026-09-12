@@ -1,6 +1,13 @@
-build-dir/lib/SMLNJ-LIB usr/lib/smlnj/lib
 build-dir/lib/hash-cons-lib.cm usr/lib/smlnj/lib
+build-dir/lib/html4-lib.cm usr/lib/smlnj/lib
+build-dir/lib/html-lib.cm usr/lib/smlnj/lib
 build-dir/lib/inet-lib.cm usr/lib/smlnj/lib
+build-dir/lib/json-lib.cm usr/lib/smlnj/lib
+build-dir/lib/pp-extras-lib.cm usr/lib/smlnj/lib
 build-dir/lib/reactive-lib.cm usr/lib/smlnj/lib
 build-dir/lib/regexp-lib.cm usr/lib/smlnj/lib
+build-dir/lib/sexp-lib.cm usr/lib/smlnj/lib
+build-dir/lib/SMLNJ-LIB usr/lib/smlnj/lib
 build-dir/lib/unix-lib.cm usr/lib/smlnj/lib
+build-dir/lib/uuid-lib.cm usr/lib/smlnj/lib
+build-dir/lib/xml-lib.cm usr/lib/smlnj/lib

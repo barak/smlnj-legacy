@@ -1,5 +1,6 @@
 /*.substvars
 /.debhelper/
+/debhelper-build-stamp
 /files
 /libckit-smlnj/
 /libcml-smlnj/
@@ -15,5 +16,6 @@
 /ml-nlffigen/
 /ml-yacc/
 /nowhere/
+/smlnj-doc/
 /smlnj-runtime/
 /smlnj/

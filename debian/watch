@@ -1,13 +1,13 @@
-# This watchfile will call the debian/mkorig script, which will
-# download the individual parts of the upstream distribution and construct
-# a tarball from them in the directory below the source directory.
-#
-# For this watchfile to download the tarball, you will need to run:
-#
-# $ chmod +x debian/mkorig
-#
+# Upstream ships many separate tarballs, so uscan downloads only
+# config.tgz to detect the version, and debian/mkorig then fetches
+# the rest and assembles the real orig tarball.  (The 20xx.y releases
+# are the new LLVM-based development series; Debian follows the
+# 110.99.x "legacy" series.)
+Version: 5
 
-version=3
-https://www.smlnj.org/ \
-		      dist/working/(.*)/index.html \
-                debian debian/mkorig
+Source: https://www.smlnj.org/dist/working/
+Matching-Pattern: (110\.[\d.]+)/index\.html
+Download-URL-Mangle: s/index\.html$/config.tgz/
+Filename-Mangle: s/.*?(110[\d.]+)\/index\.html$/smlnj-config-$1.tgz/
+Compression: gzip
+Update-Script: debian/mkorig

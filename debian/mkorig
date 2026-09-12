@@ -1,10 +1,10 @@
 #!/bin/sh
 
-# Builds upstream tarball
-# Uses the new layout of 110.60 version
+# Builds upstream tarball from the individual upstream distribution
+# tarballs.  Called by uscan via debian/watch, or manually:
+#   debian/mkorig --upstream-version 110.99.9
 
-# Updated by Daniel Moerner in October 2009 to accept --upstream-version
-# argument so this script can be called by uscan.
+set -e
 
 if [ "$1" != "--upstream-version" ] ; then
     echo "Usage: mkorig --upstream-version version"
@@ -16,13 +16,14 @@ shift
 version=$1
 orig=../smlnj-$version
 
-url=http://smlnj.org/dist/working
+url=https://smlnj.org/dist/working
 
 root_tarballs="ckit config pgraph smlnj-lib MLRISC cml eXene heap2asm \
 	       ml-burg ml-lex ml-yacc smlnj-c nlffi ml-lpt \
 	       trace-debug-profile doc"
 base_tarballs="cm compiler old-basis runtime system"
-archs="x86 ppc sparc"
+# bootstrap images for the Debian architectures we build for
+archs="amd64 x86 ppc"
 
 mkdir -p $orig
 for t in $root_tarballs ; do
@@ -43,6 +44,8 @@ for t in $base_tarballs ; do
     tar ax -C $orig/base -f $orig/base/$t.tgz && rm -f $orig/base/$t.tgz
 done
 
-tar zcf ../smlnj_$version.orig.tar.gz $orig
+rm -f ../smlnj_$version.orig.tar.*
+tar --sort=name --owner=0 --group=0 --numeric-owner \
+    -C .. -czf ../smlnj_$version.orig.tar.gz smlnj-$version
 rm -rf $orig
 rm -f ../index.html

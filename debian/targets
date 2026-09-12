@@ -30,14 +30,11 @@ request eXene
 request mlrisc
 request ckit
 
-# This preview release currently works under X86/Linux, Sparc/Solaris,
-# PPC/MacOSX, and X86/Win32.
-#
-request ml-nlffi-lib
-# This preview release currently works under X86/Linux, Sparc/Solaris,
-# PPC/MacOSX, and X86/Win32.
-#
-request ml-nlffigen
+# NLFFI is not supported on 64-bit machines
+if SIZE_32
+  request ml-nlffi-lib
+  request ml-nlffigen
+endif
 
 request mlrisc-tools
 request nowhere

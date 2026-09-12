@@ -1,40 +1,81 @@
-This package was debianized by Aaron Matthew Read <amread@nyx.net> on
-Fri, 25 Oct 2002 16:54:10 -0800.
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Standard ML of New Jersey
+Upstream-Contact: The SML/NJ Fellowship <smlnj-dev-list@lists.sourceforge.net>
+Source: https://www.smlnj.org/dist/working/
+Comment:
+ Upstream distributes the system as a collection of separate tarballs.
+ The orig tarball is assembled from them by debian/mkorig (via uscan),
+ and also includes the upstream boot images needed to bootstrap the
+ compiler (bootstrap/).  See debian/README.Debian.
 
-It was downloaded from http://smlnj.cs.uchicago.edu/dist/working
+Files: *
+Copyright: 1989-2002 Lucent Technologies (Bell Laboratories)
+           1989-1998 AT&T Bell Laboratories, AT&T Research
+           2003-2025 The Fellowship of SML/NJ
+License: SMLNJ
 
-Upstream Authors: The SML/NJ Team <smlnj-dev-list@lists.sourceforge.net>
+Files: cml/* eXene/*
+Copyright: 1989-2003 John H. Reppy
+           1995-1996 AT&T Bell Laboratories
+           2003-2025 The Fellowship of SML/NJ
+License: SMLNJ
 
-Copyright:	2003-2008	The SML/NJ Fellowship
-		1989-2002	Lucent Technologies
-		1991-2003	John Reppy
-		1996-1998,2000	YALE FLINT PROJECT
-		1992		Vrije Universiteit, The Netherlands
-		1989-1992	Andrew W. Appel, James S. Mattson, David R. Tarditi
-		1988		Evans & Sutherland Computer Corporation, Salt Lake City, Utah
+Files: ml-yacc/*
+Copyright: 1989-1990 David R. Tarditi Jr. and Andrew W. Appel
+           2003-2025 The Fellowship of SML/NJ
+License: SMLNJ
+Comment: Same license text with "David R. Tarditi Jr. and Andrew W. Appel"
+ in place of "Lucent Technologies".
 
-STANDARD ML OF NEW JERSEY COPYRIGHT NOTICE, LICENSE AND DISCLAIMER.
+Files: ml-lex/*
+Copyright: 1989-1992 Andrew W. Appel, James S. Mattson, David R. Tarditi
+           2003-2025 The Fellowship of SML/NJ
+License: SMLNJ
 
-Copyright (c) 1989-2002 by Lucent Technologies
+Files: ckit/*
+Copyright: 1996-2000 Lucent Technologies (Bell Laboratories)
+           2003-2025 The Fellowship of SML/NJ
+License: SMLNJ
 
-Permission to use, copy, modify, and distribute this software and its
-documentation for any purpose and without fee is hereby granted,
-provided that the above copyright notice appear in all copies and that
-both the copyright notice and this permission notice and warranty
-disclaimer appear in supporting documentation, and that the name of
-Lucent Technologies, Bell Labs or any Lucent entity not be used in
-advertising or publicity pertaining to distribution of the software
-without specific, written prior permission.
+Files: base/runtime/c-libs/smlnj-math/dtoa.c
+Copyright: 1991 Lucent Technologies
+License: dtoa
+ Permission to use, copy, modify, and distribute this software for any
+ purpose without fee is hereby granted, provided that this entire notice
+ is included in all copies of any software which is or includes a copy
+ or modification of this software and in all copies of the supporting
+ documentation for such software.
+ .
+ THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED
+ WARRANTY.  IN PARTICULAR, NEITHER THE AUTHOR NOR LUCENT MAKES ANY
+ REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
+ OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
 
-Lucent disclaims all warranties with regard to this software,
-including all implied warranties of merchantability and fitness. In no
-event shall Lucent be liable for any special, indirect or
-consequential damages or any damages whatsoever resulting from loss of
-use, data or profits, whether in an action of contract, negligence or
-other tortious action, arising out of or in connection with the use
-or performance of this software.
+Files: debian/*
+Copyright: 2002 Aaron Matthew Read <amread@nyx.net>
+           2009 Daniel Moerner <dmoerner@gmail.com>
+           2016 James McCoy <jamessan@debian.org>
+           2022-2026 Barak A. Pearlmutter <bap@debian.org>
+License: SMLNJ
 
-
-The SML/NJ distribution also includes code licensed under the same
-terms as above, but with "David R. Tarditi Jr. and Andrew W. Appel",
-"Vrije Universiteit" or "Evans & Sutherland" instead of "Lucent".
+License: SMLNJ
+ Permission to use, copy, modify, and distribute this software and its
+ documentation for any purpose and without fee is hereby granted,
+ provided that the above copyright notice appear in all copies and that
+ both the copyright notice and this permission notice and warranty
+ disclaimer appear in supporting documentation, and that the name of
+ Lucent Technologies, Bell Labs or any Lucent entity not be used in
+ advertising or publicity pertaining to distribution of the software
+ without specific, written prior permission.
+ .
+ Lucent disclaims all warranties with regard to this software,
+ including all implied warranties of merchantability and fitness. In no
+ event shall Lucent be liable for any special, indirect or
+ consequential damages or any damages whatsoever resulting from loss of
+ use, data or profits, whether in an action of contract, negligence or
+ other tortious action, arising out of or in connection with the use
+ or performance of this software.
+ .
+ Some components carry the same license text naming AT&T Bell
+ Laboratories, John H. Reppy, David R. Tarditi Jr. and Andrew W. Appel,
+ or the Fellowship of SML/NJ in place of Lucent Technologies.

@@ -1,8 +1,7 @@
 Source: smlnj
 Section: devel
-Priority: optional
 Maintainer: Barak A. Pearlmutter <bap@debian.org>
-Build-Depends: debhelper-compat (= 13), gcc-multilib [amd64]
+Build-Depends: debhelper-compat (= 14)
 Build-Depends-Indep: ghostscript,
                      latexmk,
                      texlive-binaries,
@@ -13,7 +12,7 @@ Build-Depends-Indep: ghostscript,
                      texlive-science,
                      texlive-pictures,
                      transfig
-Standards-Version: 4.7.2
+Standards-Version: 4.7.4
 Homepage: https://www.smlnj.org/
 Vcs-Git: https://salsa.debian.org/debian/smlnj.git
 Vcs-Browser: https://salsa.debian.org/debian/smlnj
@@ -21,7 +20,6 @@ Vcs-Browser: https://salsa.debian.org/debian/smlnj
 Package: smlnj
 Architecture: amd64 i386 powerpc
 Depends: smlnj-runtime (= ${binary:Version}), ${misc:Depends}
-Replaces: sml-nj
 Recommends: libsmlnj-smlnj
 Suggests: smlnj-doc
 Description: Standard ML of New Jersey interactive compiler
@@ -159,7 +157,7 @@ Description: SML library for parsing and type-checking C programs
  domain-specific languages as well as C dialects.
 
 Package: libmlnlffi-smlnj
-Architecture: amd64 i386 powerpc
+Architecture: i386 powerpc
 Depends: smlnj (= ${binary:Version}), ${misc:Depends}
 Recommends: ml-nlffigen
 Description: No Longer Foreign Function Interface
@@ -170,7 +168,7 @@ Description: No Longer Foreign Function Interface
  access.
 
 Package: ml-nlffigen
-Architecture: amd64 i386 powerpc
+Architecture: i386 powerpc
 Depends: libckit-smlnj (= ${binary:Version}),
          libsmlnj-smlnj (= ${binary:Version}),
          ${misc:Depends}
