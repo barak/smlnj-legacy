@@ -94,7 +94,9 @@
       <li class="toc-page"><a href="sig-INTERVAL_DOMAIN.html"><span class="toc-lib-page">The <code>INTERVAL_DOMAIN</code> signature</span></a></li>
       <li class="toc-page"><a href="fun-IntervalSetFn.html"><span class="toc-lib-page">The <code>IntervalSetFn</code> functor</span></a></li>
       <li class="toc-page"><a href="str-IOUtil.html"><span class="toc-lib-page">The <code>IOUtil</code> structure</span></a></li>
+      <li class="toc-page"><a href="str-JSON.html"><span class="toc-lib-page">The <code>JSON</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-KeywordFn.html"><span class="toc-lib-page">The <code>KeywordFn</code> functor</span></a></li>
+      <li class="toc-page"><a href="str-LEB128.html"><span class="toc-lib-page">The <code>LEB128</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-LeftPriorityQFn.html"><span class="toc-lib-page">The <code>MONO_PRIORITYQ</code> signature</span></a></li>
       <li class="toc-page"><a href="str-LibBase.html"><span class="toc-lib-page">The <code>LibBase</code> structure</span></a></li>
       <li class="toc-page"><a href="str-ListFormat.html"><span class="toc-lib-page">The <code>ListFormat</code> structure</span></a></li>
@@ -137,8 +139,8 @@
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>The <code>HashSetFn</code> functor provides a hash-table-based implementation
-of imperative sets parameterized over a <code>Key</code> structure.</p>
+<p>The <code>HashSetFn</code> functor provides an imperative, hash-table-based
+implementation of sets parameterized over a <code>Key</code> structure.</p>
 </div>
 </div>
 </div>
@@ -197,14 +199,20 @@ will be the type of the elements in the hash set.</p>
 <span class="tok-kr">val</span> <span class="tok-nv">toList</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">item</span> <span class="tok-n">list</span>
 
 <span class="tok-kr">val</span> <span class="tok-nv">add</span>  <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">item</span> <span class="tok-p">-&gt;</span> <span class="tok-n">unit</span>
+<span class="tok-kr">val</span> <span class="tok-nv">add&#39;</span> <span class="tok-p">:</span> <span class="tok-n">item</span> <span class="tok-n">*</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">unit</span>
 <span class="tok-kr">val</span> <span class="tok-nv">addc</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">item</span> <span class="tok-p">-&gt;</span> <span class="tok-n">unit</span>
 
 <span class="tok-kr">val</span> <span class="tok-nv">addList</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">item</span> <span class="tok-n">list</span> <span class="tok-p">-&gt;</span> <span class="tok-n">unit</span>
 
+<span class="tok-kr">val</span> <span class="tok-nv">addSet</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">unit</span>
+
 <span class="tok-kr">val</span> <span class="tok-nv">subtract</span>  <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">item</span> <span class="tok-p">-&gt;</span> <span class="tok-n">unit</span>
+<span class="tok-kr">val</span> <span class="tok-nv">subtract&#39;</span> <span class="tok-p">:</span> <span class="tok-n">item</span> <span class="tok-n">*</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">unit</span>
 <span class="tok-kr">val</span> <span class="tok-nv">subtractc</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">item</span> <span class="tok-p">-&gt;</span> <span class="tok-n">unit</span>
 
 <span class="tok-kr">val</span> <span class="tok-nv">subtractList</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">item</span> <span class="tok-n">list</span> <span class="tok-p">-&gt;</span> <span class="tok-n">unit</span>
+
+<span class="tok-kr">val</span> <span class="tok-nv">subtractSet</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">unit</span>
 
 <span class="tok-kr">val</span> <span class="tok-nv">delete</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">item</span> <span class="tok-p">-&gt;</span> <span class="tok-n">bool</span>
 
@@ -214,7 +222,13 @@ will be the type of the elements in the hash set.</p>
 
 <span class="tok-kr">val</span> <span class="tok-nv">isSubset</span> <span class="tok-p">:</span> <span class="tok-p">(</span><span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">set</span><span class="tok-p">)</span> <span class="tok-p">-&gt;</span> <span class="tok-n">bool</span>
 
+<span class="tok-kr">val</span> <span class="tok-nv">disjoint</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">bool</span>
+
 <span class="tok-kr">val</span> <span class="tok-nv">numItems</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span>  <span class="tok-n">int</span>
+
+<span class="tok-kr">val</span> <span class="tok-nv">union</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">set</span>
+<span class="tok-kr">val</span> <span class="tok-nv">intersection</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">set</span>
+<span class="tok-kr">val</span> <span class="tok-nv">difference</span> <span class="tok-p">:</span> <span class="tok-n">set</span> <span class="tok-n">*</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">set</span>
 
 <span class="tok-kr">val</span> <span class="tok-nv">map</span> <span class="tok-p">:</span> <span class="tok-p">(</span><span class="tok-n">item</span> <span class="tok-p">-&gt;</span> <span class="tok-n">item</span><span class="tok-p">)</span> <span class="tok-p">-&gt;</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">set</span>
 <span class="tok-kr">val</span> <span class="tok-nv">mapPartial</span> <span class="tok-p">:</span> <span class="tok-p">(</span><span class="tok-n">item</span> <span class="tok-p">-&gt;</span> <span class="tok-n">item</span> <span class="tok-n">option</span><span class="tok-p">)</span> <span class="tok-p">-&gt;</span> <span class="tok-n">set</span> <span class="tok-p">-&gt;</span> <span class="tok-n">set</span>
@@ -279,6 +293,10 @@ at least <code>n</code> items.</p>
 <dd>
 <p><code>add (set, item)</code> destructively adds the item to the set.</p>
 </dd>
+<dt class="hdlist1"><code><span class="kw">val</span> add' : item * set  -&gt; unit</code></dt>
+<dd>
+<p><code>add (item, set)</code> destructively adds the item to the set.</p>
+</dd>
 <dt class="hdlist1"><code><span class="kw">val</span> addc : set -&gt; item -&gt; unit</code></dt>
 <dd>
 <p><code>addc set item</code> destructively adds the item to the set.</p>
@@ -286,6 +304,10 @@ at least <code>n</code> items.</p>
 <dt class="hdlist1"><code><span class="kw">val</span> addList : set * item list -&gt; unit</code></dt>
 <dd>
 <p><code>addList (set, items)</code> destructively adds the list of items to the set.</p>
+</dd>
+<dt class="hdlist1"><code><span class="kw">val</span> addSet : set * set -&gt; unit</code></dt>
+<dd>
+<p><code>addSet (set1, set2)</code> destructively adds the items of <code>set2</code> to <code>set1</code>.</p>
 </dd>
 </dl>
 </div>
@@ -296,20 +318,29 @@ at least <code>n</code> items.</p>
 <p><code>subtract (set, item)</code> removes the object <code>item</code> from <code>set</code>; it has no
 effect if <code>item</code> is not in <code>set</code>.</p>
 </dd>
+<dt class="hdlist1"><code><span class="kw">val</span> subtract' : item * set -&gt; unit</code></dt>
+<dd>
+<p><code>subtract (item, set)</code> removes the object <code>item</code> from <code>set</code>; it has no
+effect if <code>item</code> is not in <code>set</code>.</p>
+</dd>
 <dt class="hdlist1"><code><span class="kw">val</span> subtractc : set -&gt; item -&gt; unit</code></dt>
 <dd>
 <p><code>subtractc set item</code> removes the object <code>item</code> from <code>set</code>; it has no
 effect if <code>item</code> is not in <code>set</code>.</p>
 </dd>
-<dt class="hdlist1"><code><span class="kw">val</span> subtractList : set -&gt; item list -&gt; unit</code></dt>
+<dt class="hdlist1"><code><span class="kw">val</span> subtractList : set * item list -&gt; unit</code></dt>
 <dd>
-<p><code>subtractList set items</code> removes the <code>items</code> from <code>set</code>.  This expression
+<p><code>subtractList (set, items)</code> removes the <code>items</code> from <code>set</code>.  This expression
 is equivalent to</p>
 <div class="listingblock">
 <div class="content">
 <pre class="pygments highlight"><code data-lang="sml"><span></span><span class="tok-nn">List</span><span class="tok-p">.</span><span class="tok-n">app</span> <span class="tok-p">(</span><span class="tok-n">subtractc</span> <span class="tok-n">set</span><span class="tok-p">)</span> <span class="tok-n">items</span></code></pre>
 </div>
 </div>
+</dd>
+<dt class="hdlist1"><code><span class="kw">val</span> subtractSet : set * set -&gt; unit</code></dt>
+<dd>
+<p><code>subtractSet (set1, set2)</code> removes the <code>items</code> that are in <code>set2</code> from <code>set1</code>.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> delete : set * item -&gt; bool</code></dt>
 <dd>
@@ -326,6 +357,11 @@ is an element of <code>set</code>.</p>
 <dd>
 <p><code>isEmpty set</code> returns true if, and only if, <code>set</code> is empty.</p>
 </dd>
+<dt class="hdlist1"><code><span class="kw">val</span> disjoint : (set * set) -&gt; bool</code></dt>
+<dd>
+<p><code>isSubset (set1, set2)</code> returns true if, and only if, the two
+sets are disjoint.</p>
+</dd>
 <dt class="hdlist1"><code><span class="kw">val</span> isSubset : (set * set) -&gt; bool</code></dt>
 <dd>
 <p><code>isSubset (set1, set2)</code> returns true if, and only if, <code>set1</code>
@@ -335,6 +371,21 @@ element of <code>set2</code>).</p>
 <dt class="hdlist1"><code><span class="kw">val</span> numItems : set -&gt;  int</code></dt>
 <dd>
 <p><code>numItems set</code> returns the number of items in the <code>set</code>.</p>
+</dd>
+<dt class="hdlist1"><code><span class="kw">val</span> union : set * set -&gt; set</code></dt>
+<dd>
+<p><code>union (set1, set2)</code> returns a new set that is the union of the two sets.</p>
+</dd>
+<dt class="hdlist1"><code><span class="kw">val</span> intersection : set * set -&gt; set</code></dt>
+<dd>
+<p><code>intersection (set1, set2)</code> returns a new set that is  the intersection
+of the two sets.</p>
+</dd>
+<dt class="hdlist1"><code><span class="kw">val</span> difference : set * set -&gt; set</code></dt>
+<dd>
+<p><code>difference (set1, set2)</code> returns a new set that is  the difference
+of the two sets; <em>i.e.</em>, the set of items that are in <code>set1</code>, but not in
+<code>set2</code>.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> map : (item -&gt; item) -&gt; set -&gt; set</code></dt>
 <dd>
@@ -431,8 +482,8 @@ returned.  Items are tested in an undefined order.</p>
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
-	  Last updated 2025-04-25 20:04:52 UTC
+	  <strong>SML/NJ</strong> Version 110.99.9 (November 4, 2025)<br />
+	  Last updated 2025-11-04 15:48:25 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->

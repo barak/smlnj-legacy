@@ -61,7 +61,6 @@
   <li class="toc-lib"><a href="../INet/inet-lib.html"><span class="toc-lib-title">The INet Library</span></a></li>
   <li class="toc-lib"><span class="toc-lib-title" id="toc-current">The JSON Library</span>
     <ul class="toc-page-list">
-      <li class="toc-page"><a href="str-JSON.html"><span class="toc-lib-page">The <code>JSON</code> structure</span></a></li>
       <li class="toc-page"><a href="str-JSONParser.html"><span class="toc-lib-page">The <code>JSONParser</code> structure</span></a></li>
       <li class="toc-page"><a href="str-JSONPrinter.html"><span class="toc-lib-page">The <code>JSONPrinter</code> structure</span></a></li>
       <li class="toc-page"><a href="str-JSONUtil.html"><span class="toc-lib-page">The <code>JSONUtil</code> structure</span></a></li>
@@ -88,9 +87,11 @@
 <h2 id="_overview">Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The <strong>JSON Library</strong> provides a representation of the
-<a href="https://www.json.org/json-en.html">JavaScript Object Notation (<strong>JSON</strong>)</a>
-with support for parsing, printing, and manipulating <strong>JSON</strong>
+<p>The <strong>JSON Library</strong> provides operations on the datatype representation
+of <a href="https://www.json.org/json-en.html"><strong>JSON</strong> (JavaScript Object Notation)</a>
+values.  The datatype representation is defined in the <a href="../Util/str-JSON.html"><code>JSON</code></a>
+structure, which is part of the <a href="util-lib.html">the <em>Util Library</em></a>.
+This library provides support for parsing, printing, and manipulating <strong>JSON</strong>
 values as trees.  There is also support for processing <strong>JSON</strong> data as
 streams using a "SAX-style" API.</p>
 </div>
@@ -103,10 +104,6 @@ streams using a "SAX-style" API.</p>
 <h3 id="_tree_based_api">Tree-based API</h3>
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="str-JSON.html"><code><span class="kw">structure</span> JSON</code></a></dt>
-<dd>
-<p>Defines the representation of <strong>JSON</strong> values as an <strong>SML</strong> datatype.</p>
-</dd>
 <dt class="hdlist1"><a href="str-JSONParser.html"><code><span class="kw">structure</span> JSONParser</code></a></dt>
 <dd>
 <p>A parser for <strong>JSON</strong> input.</p>
@@ -169,8 +166,8 @@ streams using a "SAX-style" API.</p>
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
-	  Last updated 2025-04-25 20:04:52 UTC
+	  <strong>SML/NJ</strong> Version 110.99.9 (November 4, 2025)<br />
+	  Last updated 2025-11-04 15:48:25 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->

@@ -94,7 +94,9 @@
       <li class="toc-page"><a href="sig-INTERVAL_DOMAIN.html"><span class="toc-lib-page">The <code>INTERVAL_DOMAIN</code> signature</span></a></li>
       <li class="toc-page"><a href="fun-IntervalSetFn.html"><span class="toc-lib-page">The <code>IntervalSetFn</code> functor</span></a></li>
       <li class="toc-page"><a href="str-IOUtil.html"><span class="toc-lib-page">The <code>IOUtil</code> structure</span></a></li>
+      <li class="toc-page"><a href="str-JSON.html"><span class="toc-lib-page">The <code>JSON</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-KeywordFn.html"><span class="toc-lib-page">The <code>KeywordFn</code> functor</span></a></li>
+      <li class="toc-page"><a href="str-LEB128.html"><span class="toc-lib-page">The <code>LEB128</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-LeftPriorityQFn.html"><span class="toc-lib-page">The <code>MONO_PRIORITYQ</code> signature</span></a></li>
       <li class="toc-page"><a href="str-LibBase.html"><span class="toc-lib-page">The <code>LibBase</code> structure</span></a></li>
       <li class="toc-page"><a href="str-ListFormat.html"><span class="toc-lib-page">The <code>ListFormat</code> structure</span></a></li>
@@ -140,7 +142,10 @@
 <p>The <code>Random</code> structure implements a random number generator
 using the <a href="http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/emt.html">
 <em>Mersenne Twister</em> algorithm</a>.  The implementation is specialized
-to the native word size.</p>
+to the native word size.  In the description below, we assume that
+the default word and integer types (<code>Word.word</code> and <code>Int.int</code>)
+have a representation that is smaller than the native size
+(<em>e.g.</em>, 63 or 32 bits on a 64-bit machine).</p>
 </div>
 <div class="paragraph">
 <p>Note that prior to 2023.1 (and 110.99.4), this structure was implemented
@@ -254,19 +259,19 @@ platform&#8217;s native word size (<em>e.g.</em>, 32 or 64).</p>
 <dd>
 <p><code>randInt rand</code> generates a random integer with a uniform distribution in
 the range \([-2^{k-1} .. 2^{k-1}-1\)], where \(k\)
-is the host platform&#8217;s default word size (<em>e.g.</em>, 31 or 63).</p>
+is the size of the <code>Int.int</code> type.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> randWord : rand -&gt; word</code></dt>
 <dd>
 <p><code>randWord rand</code> generates a random word with a uniform distribution in
 the range \([0 .. 2^k-1\)], where \(k\)
-is the host platform&#8217;s default word size (<em>e.g.</em>, 31 or 63).</p>
+is the number of bits in the <code>Word.word</code> type.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> randNat : rand -&gt; int</code></dt>
 <dd>
 <p><code>randNat rand</code> generates a random integer with a uniform distribution in
 the range \([0 .. 2^{k-1}-1\)], where \(k\)
-is the host platform&#8217;s default word size (<em>e.g.</em>, 31 or 63).</p>
+is the number of bits in the <code>Int.int</code> type.</p>
 </dd>
 <dt class="hdlist1"><code><span class="kw">val</span> randReal : rand -&gt; real</code></dt>
 <dd>
@@ -297,8 +302,8 @@ if <code>hi &lt; lo</code>.</p>
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
-	  Last updated 2025-04-25 20:04:52 UTC
+	  <strong>SML/NJ</strong> Version 110.99.9 (November 4, 2025)<br />
+	  Last updated 2025-11-04 15:48:25 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->

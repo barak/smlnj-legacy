@@ -1,13 +1,14 @@
 (* json-lib.cm
  *
- * COPYRIGHT (c) 2021 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * COPYRIGHT (c) 2021 The Fellowship of SML/NJ (https://smlnj.org)
  * All rights reserved.
  *)
 
 Library
 
+  structure JSON (* defined in smlnj-lib.cm *)
+
 (* DOM-style API (tree based) *)
-  structure JSON
   structure JSONParser
   structure JSONPrinter
   structure JSONDecode
@@ -25,7 +26,6 @@ is
   $/smlnj-lib.cm
 
   errors.sml
-  json.sml
   json-buffer-printer.sml
   json-decode.sml
   json-parser.sml

@@ -512,8 +512,8 @@ pre.pygments .tok-il { color: #666666 } /* Literal.Number.Integer.Long */
 <h1>Standard ML of New Jersey Change Log</h1>
 <div class="details">
 <span id="author" class="author">The Fellowship of SML/NJ</span><br>
-<span id="revnumber">version 110.99.8,</span>
-<span id="revdate">April 25, 2025</span>
+<span id="revnumber">version 110.99.9,</span>
+<span id="revdate">November 4, 2025</span>
 </div>
 </div>
 <div id="content">
@@ -526,6 +526,95 @@ the compiler, the compilation manager (<strong>CM</strong>), the <strong>MLRISC<
 the runtime system.  There are occasional entries about other components
 (<em>e.g.</em>, the <strong>SML/NJ Library</strong> and <strong>ML-LPT</strong>), but these components have
 their own change logs that should be consulted.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_version_110_99_9_20251104">Version 110.99.9; 2025/11/04</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">[2025-10-06]</dt>
+<dd>
+<p>Fix for <a href="https://github.com/smlnj/legacy/issues/372"><code>Int32.toString</code> can generate an <code>Overflow</code>
+exception</a>.  This issue was fixed by refactoring the modules for
+conversions between strings and numbers.  There are now conversion
+modules for 32-bit int/word types, the default int/word types, and
+64-bit int/word types.  On 64-bit targets, the first two of these
+are just wrappers around the 64-bit conversions, while on 32-bit targets,
+the default conversions are implemented as wrappers around the 32-bit
+conversions.</p>
+<div class="paragraph">
+<p><a href="https://cs.uchicago.edu/~jhr">John Reppy</a></p>
+</div>
+</dd>
+</dl>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">[2025-10-06]</dt>
+<dd>
+<p>Fix for <a href="https://github.com/smlnj/legacy/issues/370"><code>Int32</code> operations do not properly raise
+<code>Overflow</code></a>.  <code>Int32.int</code> values are represented as 63-bit signed
+integers on 64-bit targets with explicit checks for overflow.  The
+problem was that the checks were disabled when converting the result
+of an operation to the default integer type.  I replaced the conversion,
+which was doing sign extension, with a cast.</p>
+<div class="paragraph">
+<p><a href="https://cs.uchicago.edu/~jhr">John Reppy</a></p>
+</div>
+</dd>
+</dl>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">[2025-09-10]</dt>
+<dd>
+<p>Ported fix for <a href="https://github.com/smlnj/sml/issues/319">Development Issue #319
+(Nondeterministic import order)</a> from development repository to legacy.
+The description of this change, which is owed to Byron Zhong, is below.</p>
+<div class="paragraph">
+<p>Changed the way external references are passed during translation to
+PLambda. Previously, the external references are grouped by the PIDs
+of their compilation units, and the units are sorted by the PIDs. As a
+result, the input order is a property of the external module. This
+change sorts the units by the order of their appearances in the source
+code; modules that are referenced earlier are put before those
+referenced later. This makes the input order a property of the code
+itself.</p>
+</div>
+<div class="paragraph">
+<p><a href="https://cs.uchicago.edu/~jhr">John Reppy</a></p>
+</div>
+</dd>
+</dl>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">[2025-05-05]</dt>
+<dd>
+<p>Fixed an issue where trailing zeros were being included for the
+<code>GEN</code> mode float-point to string conversions.</p>
+<div class="paragraph">
+<p><a href="https://cs.uchicago.edu/~jhr">John Reppy</a></p>
+</div>
+</dd>
+</dl>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">[2025-04-30]</dt>
+<dd>
+<p>Changed the type of the <code>pow5Tbl</code> table in the <code>FRepToReal64</code> structure
+to <code>Word64.word vector</code> (from <code>word vector</code>), since the latter does not
+have sufficient bits on 32-bit systems.  This change fixes <a href="https://github.com/smlnj/legacy/issues/356">
+Issue #356 (Problem with <code>Real.fromString</code> evaluating non-whole number
+strings on 32-bit systems)</a>.</p>
+<div class="paragraph">
+<p><a href="https://cs.uchicago.edu/~jhr">John Reppy</a></p>
+</div>
+</dd>
+</dl>
 </div>
 </div>
 </div>
@@ -23027,8 +23116,8 @@ eliminated, though)</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 110.99.8<br>
-Last updated 2025-04-25 15:04:52 -0500
+Version 110.99.9<br>
+Last updated 2025-11-04 09:48:25 -0600
 </div>
 </div>
 <script type="text/x-mathjax-config">

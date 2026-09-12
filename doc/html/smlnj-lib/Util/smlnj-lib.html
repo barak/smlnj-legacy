@@ -94,7 +94,9 @@
       <li class="toc-page"><a href="sig-INTERVAL_DOMAIN.html"><span class="toc-lib-page">The <code>INTERVAL_DOMAIN</code> signature</span></a></li>
       <li class="toc-page"><a href="fun-IntervalSetFn.html"><span class="toc-lib-page">The <code>IntervalSetFn</code> functor</span></a></li>
       <li class="toc-page"><a href="str-IOUtil.html"><span class="toc-lib-page">The <code>IOUtil</code> structure</span></a></li>
+      <li class="toc-page"><a href="str-JSON.html"><span class="toc-lib-page">The <code>JSON</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-KeywordFn.html"><span class="toc-lib-page">The <code>KeywordFn</code> functor</span></a></li>
+      <li class="toc-page"><a href="str-LEB128.html"><span class="toc-lib-page">The <code>LEB128</code> structure</span></a></li>
       <li class="toc-page"><a href="fun-LeftPriorityQFn.html"><span class="toc-lib-page">The <code>MONO_PRIORITYQ</code> signature</span></a></li>
       <li class="toc-page"><a href="str-LibBase.html"><span class="toc-lib-page">The <code>LibBase</code> structure</span></a></li>
       <li class="toc-page"><a href="str-ListFormat.html"><span class="toc-lib-page">The <code>ListFormat</code> structure</span></a></li>
@@ -287,20 +289,31 @@ sets are represented by intervals.</p>
 <dd>
 <p>Provides support for redirecting the standard input and output streams.</p>
 </dd>
+<dt class="hdlist1"><a href="str-JSON.html"><code><span class="kw">structure</span> JSON</code></a></dt>
+<dd>
+<p>Defines the representation of <strong>JSON</strong> values as an <strong>SML</strong> datatype.  See
+the <a href="../json-lib.html"><em>JSON Library</em></a> for operations on this
+type.</p>
+</dd>
 <dt class="hdlist1"><a href="fun-KeywordFn.html"><code><span class="kw">functor</span> KeywordFn</code></a></dt>
 <dd>
 <p>Provides a simple way to support a table of keyword
 (or reserved) identifiers in a scanner.</p>
+</dd>
+</dl>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="str-LEB128.html"><code><span class="kw">structure</span> LEB128</code></a></dt>
+<dd>
+<p>Provides binary encoding/decoding of integer and word types using the
+<a href="https://en.wikipedia.org/wiki/LEB128">Little-Endian-Base-128 (LEB128)</a> format.</p>
 </dd>
 <dt class="hdlist1"><a href="fun-LeftPriorityQFn.html"><code><span class="kw">functor</span> LeftPriorityQFn</code></a></dt>
 <dd>
 <p>Provides a functional implementation of priority
 queues using leaftist heaps.</p>
 </dd>
-</dl>
-</div>
-<div class="dlist">
-<dl>
 <dt class="hdlist1"><a href="str-LibBase.html"><code><span class="kw">structure</span> LibBase</code></a></dt>
 <dd>
 <p>Provides some common definitions that are
@@ -338,6 +351,10 @@ over the "Cartesian product" of two lists.</p>
 <dd>
 <p>Defines an interface to imperative hash tables with monomorphic keys.</p>
 </dd>
+</dl>
+</div>
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><a href="str-Native.html"><code><span class="kw">structure</span> NativeInt</code></a></dt>
 <dd>
 <p>An alias to the native-sized integer structure (<em>e.g.</em>, <code>Int64</code>).</p>
@@ -346,10 +363,6 @@ over the "Cartesian product" of two lists.</p>
 <dd>
 <p>An alias to the native-sized word structure (<em>e.g.</em>, <code>Word64</code>).</p>
 </dd>
-</dl>
-</div>
-<div class="dlist">
-<dl>
 <dt class="hdlist1"><a href="sig-ORD_KEY.html"><code><span class="kw">signature</span> ORD_KEY</code></a></dt>
 <dd>
 <p>Defines an interface to an abstract type
@@ -385,6 +398,10 @@ of property lists.</p>
 <dd>
 <p>Provides a simple random number generator.</p>
 </dd>
+</dl>
+</div>
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><a href="str-Random.html"><code><span class="kw">structure</span> Random</code></a></dt>
 <dd>
 <p>Pseudo-random-number generation using the
@@ -395,10 +412,6 @@ algorithm</a>.</p>
 <dd>
 <p><strong>To be written</strong></p>
 </dd>
-</dl>
-</div>
-<div class="dlist">
-<dl>
 <dt class="hdlist1"><a href="fun-RedBlackMapFn.html"><code><span class="kw">functor</span> RedBlackMapFn</code></a></dt>
 <dd>
 <p>Provides a red-black-tree implementation of the
@@ -436,11 +449,6 @@ time of a computation.</p>
 <dd>
 <p>Provides mutable references with <em>Union-Find</em> semantics.</p>
 </dd>
-<dt class="hdlist1"><a href="str-UTF8.html"><code><span class="kw">structure</span> UTF8</code></a></dt>
-<dd>
-<p>Provides support for working with <a href="https://en.wikipedia.org/wiki/UTF-8"><strong>UTF-8</strong></a>
-encoded strings.</p>
-</dd>
 </dl>
 </div>
 </div>
@@ -448,6 +456,15 @@ encoded strings.</p>
 <div class="sect1">
 <h2 id="_usage">Usage</h2>
 <div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="str-UTF8.html"><code><span class="kw">structure</span> UTF8</code></a></dt>
+<dd>
+<p>Provides support for working with <a href="https://en.wikipedia.org/wiki/UTF-8"><strong>UTF-8</strong></a>
+encoded strings.</p>
+</dd>
+</dl>
+</div>
 <div class="paragraph">
 <p>By default, the <strong>Util Library</strong> is autoloaded by <strong>CM</strong>, which means that it is
 immediately available to interactive use in the <strong>SML/NJ</strong> REPL.</p>
@@ -467,8 +484,8 @@ immediately available to interactive use in the <strong>SML/NJ</strong> REPL.</p
     <div id="layout-footer-box">
       <div id="layout-footer">
 	<div id="layout-footer-text">
-	  <strong>SML/NJ</strong> Version 110.99.8 (April 25, 2025)<br />
-	  Last updated 2025-04-25 20:04:52 UTC
+	  <strong>SML/NJ</strong> Version 110.99.9 (November 4, 2025)<br />
+	  Last updated 2025-11-04 15:48:25 UTC
 	</div> <!-- layout-footer-text -->
       </div> <!-- layout-footer -->
     </div> <!-- layout-footer-box -->
