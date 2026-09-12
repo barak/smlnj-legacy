@@ -59,7 +59,7 @@ boot: arch-n-opsys
 	eval `./arch-n-opsys $(SIZE_OPT)` && $(MAKE) -f debian/rules boot.$$ARCH-unix.tgz
 
 smlnj: boot
-	cd $(ROOT) && env -u MAKEFLAGS ./config/install.sh $(SIZE_OPT) -default $(DEB_HOST_ARCH_BITS)
+	cd $(ROOT) && env -u MAKEFLAGS URLGETTER=/bin/false ./config/install.sh $(SIZE_OPT) -default $(DEB_HOST_ARCH_BITS)
 	@echo Populate $(ROOT)/wrapper
 	mkdir -p $(ROOT)/wrapper
 	for c in `cd $(ROOT)/bin && ls`; do \
