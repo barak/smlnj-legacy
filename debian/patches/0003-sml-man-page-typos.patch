@@ -2,7 +2,7 @@ From: "Barak A. Pearlmutter" <bap@debian.org>
 Date: Sat, 12 Sep 2026 20:30:00 +0100
 Subject: fix typos in sml(1) man page
 
-Forwarded: https://github.com/smlnj/legacy/issues/382
+Forwarded: https://github.com/smlnj/legacy/pull/384
 ---
  doc/man/man1/sml.1 | 10 +++++-----
  1 file changed, 5 insertions(+), 5 deletions(-)

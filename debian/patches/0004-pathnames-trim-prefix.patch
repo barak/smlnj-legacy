@@ -8,7 +8,7 @@ Make it strip the prefix given by the SMLNJ_TRIM_PREFIX environment
 variable, so the Debian build can keep its build directory out of the
 installed libraries.
 
-Forwarded: https://github.com/smlnj/legacy/issues/383
+Forwarded: https://github.com/smlnj/legacy/pull/385
 ---
  base/compiler/Basics/source/pathnames.sml | 14 ++++++++++++--
  1 file changed, 12 insertions(+), 2 deletions(-)
