@@ -2,7 +2,13 @@
 
 include /usr/share/dpkg/architecture.mk
 
-SHELL:=/bin/sh
+# recipes run under bash with pipefail, so that the "| cat" used below to
+# give the SML processes a non-seekable stdout cannot hide a failure
+SHELL:=/bin/bash
+.SHELLFLAGS:=-o pipefail -c
+
+# the shell substituted into the installed driver scripts
+SML_SHELL:=/bin/sh
 
 ROOT:=$(CURDIR)/build-dir
 
@@ -22,6 +28,25 @@ SIZE_OPT:=-$(DEB_HOST_ARCH_BITS)
 # libraries (see debian/patches/0004-pathnames-trim-prefix.patch)
 export SMLNJ_TRIM_PREFIX:=$(ROOT)/
 
+# make LaTeX date macros follow SOURCE_DATE_EPOCH, so that the "TeX output
+# <date>" string dvipdfmx puts in the PDFs is reproducible
+export FORCE_SOURCE_DATE:=1
+
+# heap images record absolute addresses, so they are only reproducible with
+# address space layout randomization turned off
+SETARCH:=$(shell setarch -R true 2>/dev/null && echo setarch -R)
+
+# ... and the heap contents depend on when garbage collections happen, which
+# varies with scheduling, so pin the heap-building steps to one CPU
+TASKSET:=$(shell taskset -c 0 true 2>/dev/null && echo taskset -c 0)
+
+# both, for the steps that create heap images
+PIN:=$(TASKSET) $(SETARCH)
+
+# SML records the file position of stdout in the heap images it writes, so
+# those images depend on the size of the build log unless stdout is a pipe
+NOSEEK:=2>&1 | cat
+
 srcdirs:=ckit cml config doc eXene heap2asm ml-burg ml-lex ml-lpt MLRISC ml-yacc nlffi pgraph smlnj-c smlnj-lib trace-debug-profile
 basedirs:=cm compiler old-basis runtime system
 
@@ -29,7 +54,7 @@ basedirs:=cm compiler old-basis runtime system
 	dh $@
 
 vars.sed:
-	echo "s,@SHELL@,$(SHELL),g" > vars.sed
+	echo "s,@SHELL@,$(SML_SHELL),g" > vars.sed
 	echo "s,@SMLNJ_HOME@,$(SMLNJ_HOME)," >> vars.sed
 	echo "s,@BINDIR@,$(BINDIR)," >> vars.sed
 	echo "s,@VERSION@,$(VERSION)," >> vars.sed
@@ -44,16 +69,22 @@ $(BS_SML):
 	for f in $(srcdirs); do cp -a $$f $(ROOT)/bootstrap; done
 	mkdir -p $(ROOT)/bootstrap/base
 	for f in $(basedirs); do cp -a base/$$f $(ROOT)/bootstrap/base; done
-	cd $(ROOT)/bootstrap && env -u MAKEFLAGS URLGETTER=/bin/false ./config/install.sh $(SIZE_OPT) -default $(DEB_HOST_ARCH_BITS)
+	cd $(ROOT)/bootstrap && $(PIN) env -u MAKEFLAGS URLGETTER=/bin/false ./config/install.sh $(SIZE_OPT) -default $(DEB_HOST_ARCH_BITS) $(NOSEEK)
 
 # rebuild the boot images from source using the bootstrap compiler
 boot.%.tgz: $(BS_SML)
 	cd $(ROOT)/base/system && PATH=$(ROOT)/bootstrap/bin:$$PATH \
 	   && echo 'OS.Process.exit (if CMB.make () then OS.Process.success else OS.Process.failure);' \
-	      | $< $(SIZE_OPT) "\$$smlnj/cmb.cm"
+	      | $(PIN) $< $(SIZE_OPT) "\$$smlnj/cmb.cm" $(NOSEEK)
+# The bootstrap compiler still stamps compilation units with time-based
+# GUIDs (see debian/patches/0005-reproducible-guid.patch); discard them,
+# and the binfiles that carry them, so that the second stage -- run by the
+# compiler we have just built -- regenerates them from SOURCE_DATE_EPOCH.
+	find $(ROOT) -type d -name GUID -prune -exec rm -rf {} +
+	rm -rf $(ROOT)/base/system/sml.bin.$*
 	cd $(ROOT)/base/system/sml.boot.$* \
-	   && $(BS_LINK) $(SIZE_OPT) @SMLboot=BOOTLIST @SMLheap=sml @SMLalloc=1M \
-	                 @SMLrebuild="foo"
+	   && $(PIN) $(BS_LINK) $(SIZE_OPT) @SMLboot=BOOTLIST @SMLheap=sml @SMLalloc=1M \
+	                 @SMLrebuild="foo" $(NOSEEK)
 	rm -r $(ROOT)/base/system/sml.boot.$*
 	rm -r $(ROOT)/base/system/*.bin.$*
 	mv $(ROOT)/base/system/foo.boot.$* $(ROOT)/base/system/sml.boot.$*
@@ -63,7 +94,7 @@ boot: arch-n-opsys
 	eval `./arch-n-opsys $(SIZE_OPT)` && $(MAKE) -f debian/rules boot.$$ARCH-unix.tgz
 
 smlnj: boot
-	cd $(ROOT) && env -u MAKEFLAGS URLGETTER=/bin/false ./config/install.sh $(SIZE_OPT) -default $(DEB_HOST_ARCH_BITS)
+	cd $(ROOT) && $(PIN) env -u MAKEFLAGS URLGETTER=/bin/false ./config/install.sh $(SIZE_OPT) -default $(DEB_HOST_ARCH_BITS) $(NOSEEK)
 	@echo Populate $(ROOT)/wrapper
 	mkdir -p $(ROOT)/wrapper
 	for c in `cd $(ROOT)/bin && ls`; do \
@@ -91,6 +122,10 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	cd $(ROOT)/ml-lex/doc && pdflatex ml-lex.tex
 	cd $(ROOT)/ml-yacc/doc && latex mlyacc.tex && latex mlyacc.tex && dvipdfmx mlyacc.dvi
 endif
+
+# smlnj-lib/Doc/configure is not run during the build, so leave its
+# config.guess and config.sub alone (updating them dirties the source tree)
+override_dh_update_autotools_config:
 
 override_dh_auto_clean:
 	rm -rf $(ROOT)

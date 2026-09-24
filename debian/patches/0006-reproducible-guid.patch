@@ -1,0 +1,41 @@
+From: "Barak A. Pearlmutter" <bap@debian.org>
+Date: Thu, 24 Sep 2026 21:00:00 +0100
+Subject: honour SOURCE_DATE_EPOCH when generating compilation unit GUIDs
+
+CM gives every compilation unit a GUID built from the current time, and
+Rehash.addGUID mixes that GUID into the unit's persistent id, which in
+turn is embedded in the generated code.  Two builds of identical sources
+therefore produce different binfiles and stable libraries.
+
+Use SOURCE_DATE_EPOCH in place of the current time when it is set, which
+makes compilation reproducible; behaviour is unchanged when it is unset.
+
+Forwarded: no
+---
+ base/cm/smlfile/smlinfo.sml | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/base/cm/smlfile/smlinfo.sml b/base/cm/smlfile/smlinfo.sml
+index 0b2ccf4..8cb39d2 100644
+--- a/base/cm/smlfile/smlinfo.sml
++++ b/base/cm/smlfile/smlinfo.sml
+@@ -274,9 +274,18 @@ structure SmlInfo :> SMLINFO = struct
+ 		fun setguid g = (guid_cache := SOME g; tofile g)
+ 		fun saveguid g = (setguid g; g)
+ 		fun getguid () = let
++		    (* for reproducible builds, SOURCE_DATE_EPOCH takes the
++		     * place of the current time *)
++		    fun timestamp () = (case OS.Process.getEnv "SOURCE_DATE_EPOCH"
++			   of SOME s => (case LargeInt.fromString s
++				 of SOME t => Time.fromSeconds t
++				  | NONE => Time.now ()
++				(* end case *))
++			    | NONE => Time.now ()
++			  (* end case *))
+ 		    fun newguid () =
+ 			concat ["guid-", SrcPath.descr sourcepath, "-",
+-				Time.toString (Time.now ()), "\n"]
++				Time.toString (timestamp ()), "\n"]
+ 		in
+ 		    case !guid_cache of
+ 			SOME g => g

@@ -1,8 +1,18 @@
-smlnj (110.99.9-2) UNRELEASED; urgency=medium
+smlnj (110.99.9-2) unstable; urgency=medium
 
   * nowhere: fix match compiler unbound vars bug (closes: #829204)
+  * Make build reproducible, so package can migrate to testing:
+    + patch 0006: derive compilation unit GUIDs from SOURCE_DATE_EPOCH,
+      and discard the bootstrap compiler's GUIDs before the second stage
+    + patch 0007: reproducible footer in the generated MLRISC HTML
+    + patch 0008: do not record build-time timings in exported heap images
+    + patch 0009: keep the process id out of ml-build temporary file names
+    + FORCE_SOURCE_DATE=1, so LaTeX dates follow SOURCE_DATE_EPOCH
+    + debian/rules build heap images with ASLR off, pinned to one CPU, and
+      with a pipe on stdout (SML records its file position in the image)
+  * Point patch Forwarded headers at upstream pull requests
 
- -- Barak A. Pearlmutter <bap@debian.org>  Sat, 26 Sep 2026 19:12:42 +0100
+ -- Barak A. Pearlmutter <bap@debian.org>  Sat, 26 Sep 2026 19:15:13 +0100
 
 smlnj (110.99.9-1) unstable; urgency=medium
 

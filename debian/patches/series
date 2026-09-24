@@ -3,3 +3,7 @@
 0003-sml-man-page-typos.patch
 0004-pathnames-trim-prefix.patch
 0005-match-compiler-select-free-vars.patch
+0006-reproducible-guid.patch
+0007-mltex2html-reproducible.patch
+0008-reproducible-heap-timers.patch
+0009-ml-build-no-pid-in-temp-names.patch

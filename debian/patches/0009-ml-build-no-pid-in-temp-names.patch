@@ -1,0 +1,35 @@
+From: "Barak A. Pearlmutter" <bap@debian.org>
+Date: Thu, 24 Sep 2026 23:55:00 +0100
+Subject: do not put the process id in ml-build's temporary file names
+
+ml-build generates a small SML file whose name contains the process id,
+and compiles it; the name is recorded in the resulting heap image, so
+every run produces a different image.  Name the temporary files after
+the heap file being built instead.
+
+Forwarded: no
+---
+ config/_ml-build | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/config/_ml-build b/config/_ml-build
+index 7146bcb..5bd41e6 100644
+--- a/config/_ml-build
++++ b/config/_ml-build
+@@ -93,6 +93,16 @@ else
+     usage no CM description file specified
+ fi
+ 
++# The name of the generated SML file below is recorded in the heap image
++# that we are about to build, so base the temporary file names on the heap
++# file rather than on the process id; otherwise the image depends on the
++# pid of this script.
++xx=`basename "$heap"`
++smlfile=$xx-export.sml
++cmfile=$xx-export.cm
++listfile=$xx-BOOTLIST
++linkargsfile=$xx-LINKARGS
++
+ rare=XYZ_XXX_0123
+ 
+ cat >$smlfile <<EOF

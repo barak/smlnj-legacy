@@ -1,0 +1,50 @@
+From: "Barak A. Pearlmutter" <bap@debian.org>
+Date: Thu, 24 Sep 2026 22:45:00 +0100
+Subject: reproducible footer in generated MLRISC HTML
+
+The generated pages end with "Last modified: <date> by <user>@<host>",
+which differs between builds.  Use SOURCE_DATE_EPOCH, and drop the user
+and host name, when that variable is set.
+
+Forwarded: no
+---
+ MLRISC/Doc/html/mltex2html | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/MLRISC/Doc/html/mltex2html b/MLRISC/Doc/html/mltex2html
+index ff8b48a..a14ab2f 100755
+--- a/MLRISC/Doc/html/mltex2html
++++ b/MLRISC/Doc/html/mltex2html
+@@ -56,12 +56,18 @@ $PAPER_WIDTH = "8.5in";
+ @AUTHORS=("Lal George", "Allen Leung");
+ @EMAILS=('george@research.bell-labs.com','leunga@cs.nyu.edu');
+ $PWD=`pwd`;
+-$DATE=`date`;
+-$HOSTNAME=`hostname`;
+-chop $HOSTNAME;
+-chop $DATE;
+ chop $PWD;
+-$USER=$ENV{"USER"};
++if (defined $ENV{"SOURCE_DATE_EPOCH"}) {
++    # reproducible builds: a fixed date, and no user or host name
++    $MODIFIED = gmtime($ENV{"SOURCE_DATE_EPOCH"}) . " UTC";
++} else {
++    $DATE=`date`;
++    $HOSTNAME=`hostname`;
++    chop $HOSTNAME;
++    chop $DATE;
++    $USER=$ENV{"USER"};
++    $MODIFIED = "$DATE by $USER\@$HOSTNAME";
++}
+ $WWWHOST="www.cs.nyu.edu";
+ $URLPREFIX="leunga/MLRISC/Doc/html/";
+ 
+@@ -451,7 +457,7 @@ $FOOTER= <<"END";
+   </tr>
+   <tr> <td>
+     <font size="-2">
+-    Last modified: $DATE by $USER\@$HOSTNAME
++    Last modified: $MODIFIED
+     </font>
+     </td>
+   </tr>

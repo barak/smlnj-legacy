@@ -1,0 +1,120 @@
+From: "Barak A. Pearlmutter" <bap@debian.org>
+Date: Thu, 24 Sep 2026 23:15:00 +0100
+Subject: do not record build-time timings in exported heap images
+
+The initial CPU and real timers are captured when the system boots, and
+the compiler's Stats counters accumulate during the build; both are then
+written into every exported heap image, which therefore records how long
+the build took and when it ran.  Both are reset when an image is resumed
+(the AtInit cleaners), so the recorded values are never used.  Zero them
+at export instead, without reading the clock.
+
+Forwarded: no
+---
+ base/compiler/Basics/stats/stats.sml                | 10 +++++++---
+ base/system/Basis/Implementation/NJ/internals.sig   |  1 +
+ base/system/Basis/Implementation/NJ/internals.sml   |  1 +
+ base/system/Basis/Implementation/internal-timer.sml | 11 +++++++++++
+ base/system/smlnj/internal/int-sys.sml              |  6 ++++--
+ 5 files changed, 24 insertions(+), 5 deletions(-)
+
+diff --git a/base/compiler/Basics/stats/stats.sml b/base/compiler/Basics/stats/stats.sml
+index 30b0cce..6534a19 100644
+--- a/base/compiler/Basics/stats/stats.sml
++++ b/base/compiler/Basics/stats/stats.sml
+@@ -134,17 +134,21 @@ structure Stats :> STATS =
+       end
+       val last = ref (gettime())
+     in 
+-    fun reset() = (
+-	  last := gettime();
++    fun clear() = (
+ 	  app (fn PHASE{this,accum,...} => (this := zeros; accum := zeros)) 
+             (!allPhases);
+ 	  app (fn STAT{tot,...} => app (fn C{c,...} => c:=0) tot) (!allStats))
++    fun reset() = (last := gettime(); clear())
+ 
+     structure CU = SMLofNJ.Internals.CleanUp
+     val _ = CU.addCleaner (
+ 	  "CompilerStats",
+ 	  [CU.AtExportML, CU.AtExportFn, CU.AtInit],
+-	  fn CU.AtInit => reset() | _ => last := zeros)
++	  (* when exporting, clear the counters without reading the clock,
++	   * so that the exported image does not record how long the build
++	   * took (the counters are reset when the image is resumed)
++	   *)
++	  fn CU.AtInit => reset() | _ => (last := zeros; clear()))
+ 
+     fun since() = let
+ (***
+diff --git a/base/system/Basis/Implementation/NJ/internals.sig b/base/system/Basis/Implementation/NJ/internals.sig
+index d314bfa..240829a 100644
+--- a/base/system/Basis/Implementation/NJ/internals.sig
++++ b/base/system/Basis/Implementation/NJ/internals.sig
+@@ -24,6 +24,7 @@ signature INTERNALS = sig
+ 
+   (* reset the total real and CPU time timers *)
+     val resetTimers : unit -> unit
++    val zeroTimers : unit -> unit
+ 
+   (* generic trace/debug/profile control; M.Blume 10/2004 *)
+     structure TDP : sig
+diff --git a/base/system/Basis/Implementation/NJ/internals.sml b/base/system/Basis/Implementation/NJ/internals.sml
+index 56b23f6..94e5d40 100644
+--- a/base/system/Basis/Implementation/NJ/internals.sml
++++ b/base/system/Basis/Implementation/NJ/internals.sml
+@@ -19,6 +19,7 @@ structure Internals : INTERNALS = struct
+     val resetSigTbl = InternalSignals.resetSigTbl
+ 
+     val resetTimers = InternalTimer.resetTimers
++    val zeroTimers = InternalTimer.zeroTimers
+ 
+     structure TDP = struct
+         type plugin = Core.tdp_plugin
+diff --git a/base/system/Basis/Implementation/internal-timer.sml b/base/system/Basis/Implementation/internal-timer.sml
+index b3d10c2..ff3a4f5 100644
+--- a/base/system/Basis/Implementation/internal-timer.sml
++++ b/base/system/Basis/Implementation/internal-timer.sml
+@@ -9,6 +9,7 @@ structure InternalTimer : sig
+     include TIMER
+ 
+     val resetTimers : unit -> unit
++    val zeroTimers : unit -> unit
+ 
+   end = struct
+ 
+@@ -47,6 +48,16 @@ structure InternalTimer : sig
+     fun resetTimers () =
+ 	(initCPUTime := startCPUTimer ();
+ 	 initRealTime := startRealTimer ())
++    (* set the timers to zero; this is used when exporting an image, so that
++     * the image does not record the time at which it was built (the timers
++     * are reset when the image is resumed anyway)
++     *)
++    fun zeroTimers () = let
++	  val zero = { usr = Time.zeroTime, sys = Time.zeroTime }
++	  in
++	    initCPUTime := CPUT { nongc = zero, gc = zero };
++	    initRealTime := RealT Time.zeroTime
++	  end
+     end (* local *)
+ 
+     local
+diff --git a/base/system/smlnj/internal/int-sys.sml b/base/system/smlnj/internal/int-sys.sml
+index 1aca9f4..6256d22 100644
+--- a/base/system/smlnj/internal/int-sys.sml
++++ b/base/system/smlnj/internal/int-sys.sml
+@@ -71,9 +71,11 @@ structure InteractiveSystem : sig end =
+     local
+       structure I = SMLofNJ.Internals
+       structure C = I.CleanUp
+-      fun reset _ = (I.resetTimers (); Stats.reset ())
++      fun reset C.AtInit = (I.resetTimers (); Stats.reset ())
++	| reset _ = I.zeroTimers ()
+     in
+-    val _ = C.addCleaner ("initialize-timers-and-stats", [C.AtInit], reset)
++    val _ = C.addCleaner ("initialize-timers-and-stats",
++			  [C.AtInit, C.AtExportML, C.AtExportFn], reset)
+     end (* local *)
+ 
+     (* initialize control *)
