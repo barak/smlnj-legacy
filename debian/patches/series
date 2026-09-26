@@ -2,3 +2,4 @@
 0002-update-copyright-notice.patch
 0003-sml-man-page-typos.patch
 0004-pathnames-trim-prefix.patch
+0005-match-compiler-select-free-vars.patch

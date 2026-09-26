@@ -1,0 +1,43 @@
+From: "Barak A. Pearlmutter" <bap@debian.org>
+Date: Thu, 24 Sep 2026 22:40:00 +0100
+Subject: fix free variables of SELECT states in the match compiler
+
+A shared DFA state becomes a function whose parameters are the state's
+free variables.  For a SELECT state that set was computed as
+
+    val bs = foldr (fn ((p,_),S) => add(S,PVAR p)) s bs
+    val fvs = diff(s, bs)
+
+seeding the fold with s itself, so bs is always a superset of s and fvs
+is always empty.  A shared SELECT state therefore became a function of
+no arguments whose body still referred to path variables bound in the
+caller, and nowhere(1) emitted code with unbound variables:
+
+    fun state_8 () = let val (v_8, v_7) = v_1 in ... v_5 ... end
+
+Subtract only the variables the SELECT itself binds.
+
+Bug-Debian: https://bugs.debian.org/829204
+Forwarded: no
+---
+ MLRISC/Tools/MatchCompiler/match-compiler.sml | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/MLRISC/Tools/MatchCompiler/match-compiler.sml b/MLRISC/Tools/MatchCompiler/match-compiler.sml
+index cd016d3..718a5fe 100644
+--- a/MLRISC/Tools/MatchCompiler/match-compiler.sml
++++ b/MLRISC/Tools/MatchCompiler/match-compiler.sml
+@@ -1137,9 +1137,10 @@ struct
+                   | SELECT(p, bs, x) => 
+                     let val (s, h) = visit(x, PVs)
+                         val s  = add(s, PVAR p)
+-                        val bs = foldr (fn ((p,_),S) => add(S,PVAR p)) s bs 
+-                        val fvs = diff(s, bs)
+-                    in  occurs bs; 
++                        val bound = foldr (fn ((p,_),S) => add(S,PVAR p))
++                                          empty bs 
++                        val fvs = diff(s, bound)
++                    in  occurs (union(s, bound)); 
+                         (set(freeVars, fvs), setH(height,h+1)) 
+                     end 
+                   | CONT(k, x) =>
