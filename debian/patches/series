@@ -7,3 +7,4 @@
 0007-mltex2html-reproducible.patch
 0008-reproducible-heap-timers.patch
 0009-ml-build-no-pid-in-temp-names.patch
+0010-powerpc-autobuild.patch

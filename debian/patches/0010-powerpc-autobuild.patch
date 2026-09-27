@@ -1,0 +1,24 @@
+From: "copilot-swe-agent[bot]" <198982749+Copilot@users.noreply.github.com>
+Date: Sun, 27 Sep 2026 10:15:25 +0000
+Subject: powerpc autobuild
+
+On the powerpc autobuilders, the running kernel might be 64-bit even
+if the build is in a 32-bit environment. So accept more powerpc kernel
+machine names.
+---
+ config/_arch-n-opsys | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/config/_arch-n-opsys b/config/_arch-n-opsys
+index e0c262d..285953d 100644
+--- a/config/_arch-n-opsys
++++ b/config/_arch-n-opsys
+@@ -129,7 +129,7 @@ case `uname -s` in
+       x86_64)
+ 	ARCH=$(pick_arch x86 amd64)
+ 	;;
+-      ppc)
++      ppc | powerpc | ppc64 | powerpc64)
+ 	ARCH=$(pick_arch ppc ppc64)
+ 	case `uname -r` in
+ 	  *osfmach*) OPSYS=mklinux ;;
