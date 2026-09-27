@@ -8,9 +8,12 @@ machine names.
 ---
  config/_arch-n-opsys | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
+ mode change 100644 => 100755 config/_arch-n-opsys
 
 diff --git a/config/_arch-n-opsys b/config/_arch-n-opsys
-index e0c262d..285953d 100644
+old mode 100644
+new mode 100755
+index e0c262d..6180c70
 --- a/config/_arch-n-opsys
 +++ b/config/_arch-n-opsys
 @@ -129,7 +129,7 @@ case `uname -s` in
@@ -18,7 +21,7 @@ index e0c262d..285953d 100644
  	ARCH=$(pick_arch x86 amd64)
  	;;
 -      ppc)
-+      ppc | powerpc | ppc64 | powerpc64)
++      ppc* | powerpc*)
  	ARCH=$(pick_arch ppc ppc64)
  	case `uname -r` in
  	  *osfmach*) OPSYS=mklinux ;;
